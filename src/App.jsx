@@ -1,10 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 import MainLayout from './layout/MainLayout';
 import DashboardPage from './pages/DashboardPage';
 import { authService } from './services/authService';
 
-// Protected route component to check authentication
+// Tạo theme tùy chỉnh
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#1E8449',
+    },
+    secondary: {
+      main: '#E75A99',
+    },
+  },
+  typography: {
+    fontFamily: "'Roboto', 'Helvetica', 'Arial', sans-serif",
+  },
+});
+
+// Protected route component để kiểm tra xác thực
 const ProtectedRoute = ({ element }) => {
   const token = authService.getCurrentUser();
   return token ? element : <Navigate to="/" />;
@@ -15,23 +31,26 @@ function App() {
   const [authenticated, setAuthenticated] = useState(false);
 
   useEffect(() => {
-    // Check if user is already logged in
+    // Kiểm tra xem người dùng đã đăng nhập chưa
     const token = authService.getCurrentUser();
     setAuthenticated(!!token);
     setLoading(false);
   }, []);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <div>Đang tải...</div>;
   }
 
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={authenticated ? <Navigate to="/dashboard" /> : <MainLayout />} />
-        <Route path="/dashboard" element={<ProtectedRoute element={<DashboardPage />} />} />
-      </Routes>
-    </Router>
+    <ThemeProvider theme={theme}>
+      <Router>
+        <Routes>
+          <Route path="/" element={authenticated ? <Navigate to="/dashboard" /> : <MainLayout />} />
+          <Route path="/dashboard" element={<ProtectedRoute element={<DashboardPage />} />} />
+          {/* Thêm các route khác ở đây nếu cần */}
+        </Routes>
+      </Router>
+    </ThemeProvider>
   );
 }
 
