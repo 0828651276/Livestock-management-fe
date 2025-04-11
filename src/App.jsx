@@ -4,6 +4,7 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import MainLayout from './layout/MainLayout';
 import DashboardPage from './pages/DashboardPage';
 import { authService } from './services/authService';
+import PigPenPage from "./pages/PigPenPage.jsx";
 
 // Tạo theme tùy chỉnh
 const theme = createTheme({
@@ -48,6 +49,7 @@ function App() {
           <Route path="/" element={authenticated ? <Navigate to="/dashboard" /> : <MainLayout />} />
           <Route path="/dashboard" element={<ProtectedRoute element={<DashboardPage />} />} />
           {/* Thêm các route khác ở đây nếu cần */}
+          <Route path="/pigpens" element={<ProtectedRoute element={<PigPenPage />} />} />
         </Routes>
       </Router>
     </ThemeProvider>
