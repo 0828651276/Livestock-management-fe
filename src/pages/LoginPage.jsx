@@ -7,6 +7,10 @@ import Paper from '@mui/material/Paper';
 import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
 import { authService } from '../services/authService';
+import InputAdornment from '@mui/material/InputAdornment';
+import PersonIcon from '@mui/icons-material/Person';
+import LockIcon from '@mui/icons-material/Lock';
+import CloseIcon from '@mui/icons-material/Close';
 
 function LoginPage() {
   const [credentials, setCredentials] = useState({
@@ -37,17 +41,11 @@ function LoginPage() {
         setLoading(false);
         return;
       }
-      
-      console.log('Form submission with credentials:', { username, password });
-
-      // For debugging - log what format Postman uses
-      console.log('Expected request format (should match Postman):', 
-                  JSON.stringify({ username, password }));
 
       await authService.login(username, password);
       
       // Redirect or handle successful login
-      window.location.href = '/dashboard'; // You'll need to create this page later
+      window.location.href = '/dashboard';
     } catch (error) {
       setError('Tên đăng nhập hoặc mật khẩu không đúng');
       console.error('Login submission error:', error);
@@ -60,22 +58,29 @@ function LoginPage() {
     <Paper 
       elevation={6} 
       sx={{ 
-        padding: { xs: 3, md: 4 },
+        padding: { xs: 3, md: 5 },
         width: '100%', 
         maxWidth: 500,
-        backgroundColor: 'rgba(255, 255, 255, 0.98)',
-        borderRadius: 2 
+        backgroundColor: 'rgba(40, 40, 40, 0.9)',
+        borderRadius: 2,
+        color: 'white',
+        position: 'relative',
+        minHeight: 600
       }}
     >
-      <Typography 
-        variant="h4" 
-        component="h1" 
-        gutterBottom 
-        align="center" 
-        sx={{ mb: 3, fontWeight: '500' }}
+      <div className="close-button">
+        <CloseIcon fontSize="small" />
+      </div>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          mb: 4
+        }}
       >
-        Đăng Nhập
-      </Typography>
+        <img src="/src/assets/pig-icon.svg" alt="Pig Icon" width="120" height="120" />
+      </Box>
       
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
@@ -85,33 +90,69 @@ function LoginPage() {
       
       <Box component="form" noValidate autoComplete="off" onSubmit={handleSubmit}>
         <TextField
-          label="Tên đăng nhập"
+          placeholder="TÊN TÀI KHOẢN"
           name="username"
           value={credentials.username}
           onChange={handleChange}
-          variant="outlined"
+          variant="filled"
           fullWidth
           margin="normal"
           required
-          InputLabelProps={{ shrink: true }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <PersonIcon sx={{ color: 'rgba(255, 255, 255, 0.7)' }} />
+              </InputAdornment>
+            ),
+            sx: { 
+              backgroundColor: 'rgba(60, 60, 60, 0.8)', 
+              color: 'white',
+              '&:hover': {
+                backgroundColor: 'rgba(70, 70, 70, 0.8)'
+              },
+              '& .MuiFilledInput-input': {
+                color: 'white',
+                padding: '16px 14px'
+              }
+            }
+          }}
+          sx={{ mb: 3 }}
         />
+        
         <TextField
-          label="Mật khẩu"
+          placeholder="MẬT KHẨU"
           name="password"
           type="password"
           value={credentials.password}
           onChange={handleChange}
-          variant="outlined"
+          variant="filled"
           fullWidth
           margin="normal"
           required
-          InputLabelProps={{ shrink: true }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <LockIcon sx={{ color: 'rgba(255, 255, 255, 0.7)' }} />
+              </InputAdornment>
+            ),
+            sx: { 
+              backgroundColor: 'rgba(60, 60, 60, 0.8)', 
+              color: 'white',
+              '&:hover': {
+                backgroundColor: 'rgba(70, 70, 70, 0.8)'
+              },
+              '& .MuiFilledInput-input': {
+                color: 'white',
+                padding: '16px 14px'
+              }
+            }
+          }}
+          sx={{ mb: 4 }}
         />
         
         <Button
           type="submit"
           variant="contained" 
-          color="primary"
           fullWidth
           size="large"
           disabled={loading}
@@ -119,10 +160,14 @@ function LoginPage() {
             mt: 3,
             mb: 2,
             fontWeight: 'bold',
-            height: 48
+            height: 56,
+            backgroundColor: '#E75A99',
+            '&:hover': {
+              backgroundColor: '#D4337F'
+            }
           }}
         >
-          {loading ? <CircularProgress size={24} color="inherit" /> : 'Đăng Nhập'}
+          {loading ? <CircularProgress size={24} color="inherit" /> : 'ĐĂNG NHẬP'}
         </Button>
       </Box>
     </Paper>
