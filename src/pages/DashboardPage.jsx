@@ -87,6 +87,7 @@ function DashboardPage() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [activeMenu, setActiveMenu] = useState('dashboard'); // Để theo dõi menu đang active
   const open = Boolean(anchorEl);
 
   useEffect(() => {
@@ -119,8 +120,15 @@ function DashboardPage() {
 
   const handleProfile = () => {
     handleUserMenuClose();
+    setActiveMenu('profile');
     console.log('Mở trang Profile');
     // Xử lý mở profile
+  };
+
+  const handleMenuClick = (menuId) => {
+    setActiveMenu(menuId);
+    console.log(`Menu ${menuId} được chọn`);
+    // Xử lý chuyển trang
   };
 
   const handleFeatureClick = (featureId) => {
@@ -144,26 +152,43 @@ function DashboardPage() {
       <List>
         <ListItem 
           button 
+          onClick={() => handleMenuClick('dashboard')}
           sx={{ 
-            backgroundColor: '#333',
+            backgroundColor: activeMenu === 'dashboard' ? '#333' : 'transparent',
             my: 0.5,
             borderRadius: '4px',
+            cursor: 'pointer', // Thêm con trỏ kiểu bàn tay
             '&:hover': {
-              backgroundColor: '#444'
+              backgroundColor: activeMenu === 'dashboard' ? '#444' : 'rgba(255, 255, 255, 0.08)'
             }
           }}
         >
-          <ListItemIcon sx={{ color: '#FF5722' }}><DashboardIcon /></ListItemIcon>
+          <ListItemIcon sx={{ color: activeMenu === 'dashboard' ? '#FF5722' : 'white' }}>
+            <DashboardIcon />
+          </ListItemIcon>
           <ListItemText primary="Dashboard" />
         </ListItem>
         
-        <ListItem button>
-          <ListItemIcon sx={{ color: 'white' }}><PersonIcon /></ListItemIcon>
+        <ListItem 
+          button 
+          onClick={() => handleMenuClick('profile')}
+          sx={{ 
+            backgroundColor: activeMenu === 'profile' ? '#333' : 'transparent',
+            my: 0.5,
+            borderRadius: '4px',
+            cursor: 'pointer', // Thêm con trỏ kiểu bàn tay
+            '&:hover': {
+              backgroundColor: activeMenu === 'profile' ? '#444' : 'rgba(255, 255, 255, 0.08)'
+            }
+          }}
+        >
+          <ListItemIcon sx={{ color: activeMenu === 'profile' ? '#FF5722' : 'white' }}>
+            <PersonIcon />
+          </ListItemIcon>
           <ListItemText primary="Profile" />
         </ListItem>
       </List>
       
-      {/* Không cần nút đăng xuất ở đây nữa */}
       <Box sx={{ flexGrow: 1 }} />
     </div>
   );
@@ -195,7 +220,14 @@ function DashboardPage() {
           </Typography>
 
           {/* Admin Menu */}
-          <Box sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={handleUserMenuOpen}>
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              cursor: 'pointer' // Đã có sẵn cursor: pointer ở đây
+            }} 
+            onClick={handleUserMenuOpen}
+          >
             <IconButton color="inherit">
               <PersonIcon />
             </IconButton>
@@ -218,14 +250,14 @@ function DashboardPage() {
               horizontal: 'right',
             }}
           >
-            <MenuItem onClick={handleProfile}>
+            <MenuItem onClick={handleProfile} sx={{ cursor: 'pointer' }}>
               <ListItemIcon>
                 <PersonIcon fontSize="small" />
               </ListItemIcon>
               <ListItemText>Profile</ListItemText>
             </MenuItem>
             <Divider />
-            <MenuItem onClick={handleLogout}>
+            <MenuItem onClick={handleLogout} sx={{ cursor: 'pointer' }}>
               <ListItemIcon>
                 <LogoutIcon fontSize="small" />
               </ListItemIcon>
@@ -241,6 +273,15 @@ function DashboardPage() {
         sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
         aria-label="mailbox folders"
       >
+        {/* CSS toàn cục cho tất cả các ListItem trong drawer */}
+        <style>
+          {`
+            .MuiListItem-root {
+              cursor: pointer !important;
+            }
+          `}
+        </style>
+        
         {/* Responsive drawer - hiển thị trên mobile */}
         <Drawer
           variant="temporary"
@@ -264,6 +305,7 @@ function DashboardPage() {
         >
           {drawer}
         </Drawer>
+        
         {/* Permanent drawer - hiển thị trên desktop */}
         <Drawer
           variant="permanent"
@@ -298,45 +340,61 @@ function DashboardPage() {
       >
         <Toolbar /> {/* Tạo khoảng trống phía trên để tránh nội dung bị AppBar che mất */}
         
-        {/* Grid hiển thị các icon chức năng chính */}
-        <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-          <Grid container spacing={4} justifyContent="center">
-            {features.map((feature) => (
-              <Grid item xs={12} sm={6} md={4} key={feature.id}>
-                <Paper 
-                  elevation={3} 
-                  sx={{ 
-                    p: 3, 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    alignItems: 'center',
-                    cursor: 'pointer',
-                    transition: 'transform 0.2s',
-                    '&:hover': {
-                      transform: 'scale(1.03)'
-                    }
-                  }}
-                  onClick={() => handleFeatureClick(feature.id)}
-                >
-                  <FeatureIcon color={feature.color}>
-                    {feature.icon}
-                  </FeatureIcon>
-                  <Typography 
-                    variant="subtitle1" 
-                    align="center" 
+        {/* Hiển thị nội dung dựa trên menu đang active */}
+        {activeMenu === 'dashboard' && (
+          <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+            <Grid container spacing={4} justifyContent="center">
+              {features.map((feature) => (
+                <Grid item xs={12} sm={6} md={4} key={feature.id}>
+                  <Paper 
+                    elevation={3} 
                     sx={{ 
-                      mt: 2, 
-                      fontWeight: 'bold',
-                      fontSize: '0.9rem'
+                      p: 3, 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      alignItems: 'center',
+                      cursor: 'pointer',
+                      transition: 'transform 0.2s',
+                      '&:hover': {
+                        transform: 'scale(1.03)'
+                      }
                     }}
+                    onClick={() => handleFeatureClick(feature.id)}
                   >
-                    {feature.title}
-                  </Typography>
-                </Paper>
-              </Grid>
-            ))}
-          </Grid>
-        </Container>
+                    <FeatureIcon color={feature.color}>
+                      {feature.icon}
+                    </FeatureIcon>
+                    <Typography 
+                      variant="subtitle1" 
+                      align="center" 
+                      sx={{ 
+                        mt: 2, 
+                        fontWeight: 'bold',
+                        fontSize: '0.9rem'
+                      }}
+                    >
+                      {feature.title}
+                    </Typography>
+                  </Paper>
+                </Grid>
+              ))}
+            </Grid>
+          </Container>
+        )}
+        
+        {/* Nội dung trang Profile */}
+        {activeMenu === 'profile' && (
+          <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
+            <Paper elevation={3} sx={{ p: 4 }}>
+              <Typography variant="h5" gutterBottom>
+                Thông tin cá nhân
+              </Typography>
+              <Typography variant="body1">
+                Đây là trang thông tin cá nhân của bạn. Bạn có thể cập nhật thông tin hoặc thay đổi mật khẩu tại đây.
+              </Typography>
+            </Paper>
+          </Container>
+        )}
       </Box>
     </Box>
   );

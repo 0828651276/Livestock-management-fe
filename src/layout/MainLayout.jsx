@@ -2,7 +2,6 @@ import React from 'react';
 import Box from '@mui/material/Box';
 import CssBaseline from '@mui/material/CssBaseline';
 import LoginPage from '../pages/LoginPage';
-// Không cần import ảnh nữa
 
 function MainLayout() {
     // URL ảnh từ internet
