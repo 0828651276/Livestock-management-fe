@@ -1,65 +1,343 @@
 import React, { useEffect, useState } from 'react';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import Paper from '@mui/material/Paper';
+import { 
+  Box, 
+  Typography, 
+  AppBar, 
+  Toolbar, 
+  Drawer, 
+  List, 
+  ListItem, 
+  ListItemIcon, 
+  ListItemText,
+  IconButton,
+  Paper,
+  Grid,
+  Container,
+  Avatar,
+  Menu,
+  MenuItem,
+  Divider
+} from '@mui/material';
+import { styled } from '@mui/material/styles';
+import MenuIcon from '@mui/icons-material/Menu';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import SettingsIcon from '@mui/icons-material/Settings';
+import PetsIcon from '@mui/icons-material/Pets';
+import InventoryIcon from '@mui/icons-material/Inventory';
+import LocalShippingIcon from '@mui/icons-material/LocalShipping';
+import RestaurantIcon from '@mui/icons-material/Restaurant';
+import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
+import LogoutIcon from '@mui/icons-material/Logout';
+import PersonIcon from '@mui/icons-material/Person';
 import { authService } from '../services/authService';
 
+// Chiều rộng của thanh sidebar
+const drawerWidth = 240;
+
+// Styled component cho các icon menu chính
+const FeatureIcon = styled(Avatar)(({ theme, color }) => ({
+  width: 80,
+  height: 80,
+  backgroundColor: color || theme.palette.primary.main,
+  margin: '0 auto',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  '& .MuiSvgIcon-root': {
+    fontSize: 40,
+    color: 'white'
+  }
+}));
+
+// Danh sách các menu chính
+const features = [
+  { 
+    id: 'system', 
+    title: 'QUẢN LÝ HỆ THỐNG', 
+    icon: <SettingsIcon fontSize="large" />, 
+    color: '#757575' 
+  },
+  { 
+    id: 'pigs', 
+    title: 'QUẢN LÝ THÔNG TIN ĐÀN', 
+    icon: <PetsIcon fontSize="large" />, 
+    color: '#F06292' 
+  },
+  { 
+    id: 'food', 
+    title: 'QUẢN LÝ THỨC ĂN', 
+    icon: <RestaurantIcon fontSize="large" />, 
+    color: '#FFD600' 
+  },
+  { 
+    id: 'health', 
+    title: 'QUẢN LÝ BỆNH LÝ', 
+    icon: <MedicalServicesIcon fontSize="large" />, 
+    color: '#E53935' 
+  },
+  { 
+    id: 'export', 
+    title: 'QUẢN LÝ XUẤT CHUỒNG', 
+    icon: <LocalShippingIcon fontSize="large" />, 
+    color: '#0D47A1' 
+  }
+];
+
 function DashboardPage() {
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
 
   useEffect(() => {
-    // Check if user is authenticated
+    // Kiểm tra xác thực
     const token = authService.getCurrentUser();
     if (!token) {
-      window.location.href = '/'; // Redirect to login if not authenticated
+      window.location.href = '/'; // Chuyển hướng về trang đăng nhập nếu chưa xác thực
     } else {
       setLoading(false);
     }
   }, []);
 
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
+
+  const handleUserMenuOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleUserMenuClose = () => {
+    setAnchorEl(null);
+  };
+
   const handleLogout = () => {
+    handleUserMenuClose();
     authService.logout();
     window.location.href = '/';
   };
 
+  const handleProfile = () => {
+    handleUserMenuClose();
+    console.log('Mở trang Profile');
+    // Xử lý mở profile
+  };
+
+  const handleFeatureClick = (featureId) => {
+    console.log(`Chức năng ${featureId} được chọn`);
+    // Xử lý chuyển trang hoặc hiển thị panel tương ứng
+  };
+
   if (loading) {
-    return <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}>Loading...</Box>;
+    return <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}>Đang tải...</Box>;
   }
 
+  const drawer = (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <Toolbar sx={{ backgroundColor: '#1E8449', color: 'white' }}>
+        <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 'bold' }}>
+          LIVESTOCK
+        </Typography>
+      </Toolbar>
+      
+      {/* Menu chính */}
+      <List>
+        <ListItem 
+          button 
+          sx={{ 
+            backgroundColor: '#333',
+            my: 0.5,
+            borderRadius: '4px',
+            '&:hover': {
+              backgroundColor: '#444'
+            }
+          }}
+        >
+          <ListItemIcon sx={{ color: '#FF5722' }}><DashboardIcon /></ListItemIcon>
+          <ListItemText primary="Dashboard" />
+        </ListItem>
+        
+        <ListItem button>
+          <ListItemIcon sx={{ color: 'white' }}><PersonIcon /></ListItemIcon>
+          <ListItemText primary="Profile" />
+        </ListItem>
+      </List>
+      
+      {/* Không cần nút đăng xuất ở đây nữa */}
+      <Box sx={{ flexGrow: 1 }} />
+    </div>
+  );
+
   return (
-    <Box sx={{ 
-      maxWidth: 1200, 
-      mx: 'auto', 
-      p: 3,
-      height: '100vh',
-      backgroundColor: '#f5f5f5'
-    }}>
-      <Paper 
-        elevation={2} 
-        sx={{ 
-          p: 3, 
-          display: 'flex', 
-          flexDirection: 'column',
-          alignItems: 'center'
+    <Box sx={{ display: 'flex' }}>
+      {/* AppBar - thanh ngang trên cùng */}
+      <AppBar
+        position="fixed"
+        sx={{
+          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          ml: { sm: `${drawerWidth}px` },
+          backgroundColor: 'white',
+          color: '#333'
         }}
       >
-        <Typography variant="h4" component="h1" gutterBottom>
-          Dashboard - Quản lý chăn nuôi
-        </Typography>
-        
-        <Typography variant="body1" sx={{ mb: 3 }}>
-          Bạn đã đăng nhập thành công!
-        </Typography>
-        
-        <Button 
-          variant="contained" 
-          color="secondary" 
-          onClick={handleLogout}
+        <Toolbar>
+          <IconButton
+            color="inherit"
+            aria-label="open drawer"
+            edge="start"
+            onClick={handleDrawerToggle}
+            sx={{ mr: 2, display: { sm: 'none' } }}
+          >
+            <MenuIcon />
+          </IconButton>
+          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+            Livestock - Pig Farm Management System
+          </Typography>
+
+          {/* Admin Menu */}
+          <Box sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={handleUserMenuOpen}>
+            <IconButton color="inherit">
+              <PersonIcon />
+            </IconButton>
+            <Typography variant="body2" sx={{ ml: 1 }}>
+              Admin
+            </Typography>
+          </Box>
+
+          {/* Menu popup khi click vào Admin */}
+          <Menu
+            anchorEl={anchorEl}
+            open={open}
+            onClose={handleUserMenuClose}
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'right',
+            }}
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'right',
+            }}
+          >
+            <MenuItem onClick={handleProfile}>
+              <ListItemIcon>
+                <PersonIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Profile</ListItemText>
+            </MenuItem>
+            <Divider />
+            <MenuItem onClick={handleLogout}>
+              <ListItemIcon>
+                <LogoutIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Đăng xuất</ListItemText>
+            </MenuItem>
+          </Menu>
+        </Toolbar>
+      </AppBar>
+
+      {/* Sidebar - thanh dọc bên trái */}
+      <Box
+        component="nav"
+        sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
+        aria-label="mailbox folders"
+      >
+        {/* Responsive drawer - hiển thị trên mobile */}
+        <Drawer
+          variant="temporary"
+          open={mobileOpen}
+          onClose={handleDrawerToggle}
+          ModalProps={{
+            keepMounted: true,
+          }}
+          sx={{
+            display: { xs: 'block', sm: 'none' },
+            '& .MuiDrawer-paper': { 
+              boxSizing: 'border-box', 
+              width: drawerWidth, 
+              backgroundColor: '#222', 
+              color: 'white' 
+            },
+            '& .MuiListItemIcon-root': {
+              color: 'white' 
+            }
+          }}
         >
-          Đăng xuất
-        </Button>
-      </Paper>
+          {drawer}
+        </Drawer>
+        {/* Permanent drawer - hiển thị trên desktop */}
+        <Drawer
+          variant="permanent"
+          sx={{
+            display: { xs: 'none', sm: 'block' },
+            '& .MuiDrawer-paper': { 
+              boxSizing: 'border-box', 
+              width: drawerWidth, 
+              backgroundColor: '#222', 
+              color: 'white' 
+            },
+            '& .MuiListItemIcon-root': {
+              color: 'white' 
+            }
+          }}
+          open
+        >
+          {drawer}
+        </Drawer>
+      </Box>
+
+      {/* Khu vực chính */}
+      <Box
+        component="main"
+        sx={{ 
+          flexGrow: 1, 
+          p: 3, 
+          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          backgroundColor: '#f5f5f5',
+          minHeight: '100vh'
+        }}
+      >
+        <Toolbar /> {/* Tạo khoảng trống phía trên để tránh nội dung bị AppBar che mất */}
+        
+        {/* Grid hiển thị các icon chức năng chính */}
+        <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+          <Grid container spacing={4} justifyContent="center">
+            {features.map((feature) => (
+              <Grid item xs={12} sm={6} md={4} key={feature.id}>
+                <Paper 
+                  elevation={3} 
+                  sx={{ 
+                    p: 3, 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                    transition: 'transform 0.2s',
+                    '&:hover': {
+                      transform: 'scale(1.03)'
+                    }
+                  }}
+                  onClick={() => handleFeatureClick(feature.id)}
+                >
+                  <FeatureIcon color={feature.color}>
+                    {feature.icon}
+                  </FeatureIcon>
+                  <Typography 
+                    variant="subtitle1" 
+                    align="center" 
+                    sx={{ 
+                      mt: 2, 
+                      fontWeight: 'bold',
+                      fontSize: '0.9rem'
+                    }}
+                  >
+                    {feature.title}
+                  </Typography>
+                </Paper>
+              </Grid>
+            ))}
+          </Grid>
+        </Container>
+      </Box>
     </Box>
   );
 }
