@@ -36,7 +36,6 @@ import { format } from 'date-fns';
 
 // Import services
 import { pigPenService } from '../services/pigPenService';
-import { employeeService } from '../services/EmployeeService.js';
 
 // Header cột của bảng
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -57,7 +56,6 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
 function PigPenPage() {
     const navigate = useNavigate();
     const [pigPens, setPigPens] = useState([]);
-    const [employees, setEmployees] = useState([]);
     const [loading, setLoading] = useState(true);
     const [openDialog, setOpenDialog] = useState(false);
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -71,7 +69,6 @@ function PigPenPage() {
     // Form fields
     const [formData, setFormData] = useState({
         name: '',
-        caretakerId: '',
         createdDate: new Date().toISOString().split('T')[0],
         closedDate: null,
         quantity: 0
@@ -83,13 +80,8 @@ function PigPenPage() {
             try {
                 setLoading(true);
                 // Lấy dữ liệu từ backend
-                const [pigPensData, employeesData] = await Promise.all([
-                    pigPenService.getAllPigPens(),
-                    employeeService.getAllEmployees()
-                ]);
-
+                const pigPensData = await pigPenService.getAllPigPens();
                 setPigPens(pigPensData);
-                setEmployees(employeesData);
             } catch (error) {
                 console.error('Lỗi khi tải dữ liệu:', error);
                 showSnackbar('Lỗi khi tải dữ liệu từ server', 'error');
@@ -121,7 +113,6 @@ function PigPenPage() {
         setCurrentPigPen(null);
         setFormData({
             name: '',
-            caretakerId: '',
             createdDate: new Date().toISOString().split('T')[0],
             closedDate: null,
             quantity: 0
@@ -133,7 +124,6 @@ function PigPenPage() {
         setCurrentPigPen(pigPen);
         setFormData({
             name: pigPen.name,
-            caretakerId: pigPen.caretaker?.employeeId || '',
             createdDate: pigPen.createdDate,
             closedDate: pigPen.closedDate,
             quantity: pigPen.quantity
@@ -175,7 +165,6 @@ function PigPenPage() {
         try {
             const pigPenData = {
                 name: formData.name,
-                caretakerId: formData.caretakerId,
                 createdDate: formData.createdDate,
                 closedDate: formData.closedDate,
                 quantity: parseInt(formData.quantity)
@@ -267,7 +256,6 @@ function PigPenPage() {
                                 <TableRow>
                                     <StyledTableCell>ID</StyledTableCell>
                                     <StyledTableCell>Tên chuồng</StyledTableCell>
-                                    <StyledTableCell>Người phụ trách</StyledTableCell>
                                     <StyledTableCell>Ngày tạo</StyledTableCell>
                                     <StyledTableCell>Ngày đóng</StyledTableCell>
                                     <StyledTableCell>Số lượng</StyledTableCell>
@@ -281,7 +269,6 @@ function PigPenPage() {
                                         <TableRow key={pigPen.penId} hover>
                                             <TableCell>{pigPen.penId}</TableCell>
                                             <TableCell>{pigPen.name}</TableCell>
-                                            <TableCell>{pigPen.caretaker?.fullName || 'N/A'}</TableCell>
                                             <TableCell>{formatDate(pigPen.createdDate)}</TableCell>
                                             <TableCell>{formatDate(pigPen.closedDate)}</TableCell>
                                             <TableCell>{pigPen.quantity}</TableCell>
@@ -306,7 +293,7 @@ function PigPenPage() {
                                     ))
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={8} align="center">
+                                        <TableCell colSpan={7} align="center">
                                             Không có dữ liệu
                                         </TableCell>
                                     </TableRow>
@@ -324,7 +311,7 @@ function PigPenPage() {
                 </DialogTitle>
                 <DialogContent dividers>
                     <Grid container spacing={2}>
-                        <Grid xs={12}>
+                        <Grid item xs={12}>
                             <TextField
                                 autoFocus
                                 margin="normal"
@@ -337,29 +324,7 @@ function PigPenPage() {
                             />
                         </Grid>
 
-                        <Grid xs={12}>
-                            <FormControl fullWidth margin="normal">
-                                <InputLabel id="caretaker-label">Người phụ trách</InputLabel>
-                                <Select
-                                    labelId="caretaker-label"
-                                    name="caretakerId"
-                                    value={formData.caretakerId}
-                                    onChange={handleFormChange}
-                                    label="Người phụ trách"
-                                >
-                                    <MenuItem value="">
-                                        <em>-- Chọn người phụ trách --</em>
-                                    </MenuItem>
-                                    {employees.map((employee) => (
-                                        <MenuItem key={employee.employeeId} value={employee.employeeId}>
-                                            {employee.fullName}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </Grid>
-
-                        <Grid xs={12} sm={6}>
+                        <Grid item xs={12} sm={6}>
                             <TextField
                                 margin="normal"
                                 name="createdDate"
@@ -374,7 +339,7 @@ function PigPenPage() {
                             />
                         </Grid>
 
-                        <Grid xs={12} sm={6}>
+                        <Grid item xs={12} sm={6}>
                             <TextField
                                 margin="normal"
                                 name="closedDate"
@@ -389,7 +354,7 @@ function PigPenPage() {
                             />
                         </Grid>
 
-                        <Grid xs={12}>
+                        <Grid item xs={12}>
                             <TextField
                                 margin="normal"
                                 name="quantity"
