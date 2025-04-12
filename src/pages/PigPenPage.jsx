@@ -16,15 +16,13 @@ import {
     DialogContent,
     DialogActions,
     TextField,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
     Grid,
     Snackbar,
     Alert,
     CircularProgress,
-    Chip
+    Chip,
+    TablePagination,
+    InputAdornment
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { styled } from '@mui/material/styles';
@@ -32,6 +30,7 @@ import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import SearchIcon from '@mui/icons-material/Search';
 import { format } from 'date-fns';
 
 // Import services
@@ -56,15 +55,21 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
 function PigPenPage() {
     const navigate = useNavigate();
     const [pigPens, setPigPens] = useState([]);
+    const [filteredPigPens, setFilteredPigPens] = useState([]);
     const [loading, setLoading] = useState(true);
     const [openDialog, setOpenDialog] = useState(false);
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
     const [currentPigPen, setCurrentPigPen] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
     const [snackbar, setSnackbar] = useState({
         open: false,
         message: '',
         severity: 'success'
     });
+
+    // Phân trang
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(7);
 
     // Form fields
     const [formData, setFormData] = useState({
@@ -82,6 +87,7 @@ function PigPenPage() {
                 // Lấy dữ liệu từ backend
                 const pigPensData = await pigPenService.getAllPigPens();
                 setPigPens(pigPensData);
+                setFilteredPigPens(pigPensData);
             } catch (error) {
                 console.error('Lỗi khi tải dữ liệu:', error);
                 showSnackbar('Lỗi khi tải dữ liệu từ server', 'error');
@@ -92,6 +98,19 @@ function PigPenPage() {
 
         fetchData();
     }, []);
+
+    // Xử lý tìm kiếm
+    useEffect(() => {
+        if (searchTerm.trim() === '') {
+            setFilteredPigPens(pigPens);
+        } else {
+            const filtered = pigPens.filter(pen => 
+                pen.name.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+            setFilteredPigPens(filtered);
+        }
+        setPage(0); // Reset về trang đầu tiên khi tìm kiếm
+    }, [searchTerm, pigPens]);
 
     const handleBackToDashboard = () => {
         navigate('/dashboard');
@@ -139,7 +158,11 @@ function PigPenPage() {
     const confirmDelete = async () => {
         try {
             await pigPenService.deletePigPen(currentPigPen.penId);
-            setPigPens(pigPens.filter(pen => pen.penId !== currentPigPen.penId));
+            const updatedPigPens = pigPens.filter(pen => pen.penId !== currentPigPen.penId);
+            setPigPens(updatedPigPens);
+            setFilteredPigPens(updatedPigPens.filter(pen => 
+                pen.name.toLowerCase().includes(searchTerm.toLowerCase())
+            ));
             showSnackbar('Xóa chuồng thành công');
         } catch (error) {
             console.error('Lỗi khi xóa chuồng:', error);
@@ -161,6 +184,19 @@ function PigPenPage() {
         });
     };
 
+    const handleSearchChange = (event) => {
+        setSearchTerm(event.target.value);
+    };
+
+    const handleChangePage = (event, newPage) => {
+        setPage(newPage);
+    };
+
+    const handleChangeRowsPerPage = (event) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPage(0);
+    };
+
     const handleSubmit = async () => {
         try {
             const pigPenData = {
@@ -174,14 +210,22 @@ function PigPenPage() {
             if (currentPigPen) {
                 // Cập nhật
                 response = await pigPenService.updatePigPen(currentPigPen.penId, pigPenData);
-                setPigPens(pigPens.map(pen =>
+                const updatedPigPens = pigPens.map(pen =>
                     pen.penId === currentPigPen.penId ? response : pen
+                );
+                setPigPens(updatedPigPens);
+                setFilteredPigPens(updatedPigPens.filter(pen => 
+                    pen.name.toLowerCase().includes(searchTerm.toLowerCase())
                 ));
                 showSnackbar('Cập nhật chuồng thành công');
             } else {
                 // Tạo mới
                 response = await pigPenService.createPigPen(pigPenData);
-                setPigPens([...pigPens, response]);
+                const updatedPigPens = [...pigPens, response];
+                setPigPens(updatedPigPens);
+                setFilteredPigPens(updatedPigPens.filter(pen => 
+                    pen.name.toLowerCase().includes(searchTerm.toLowerCase())
+                ));
                 showSnackbar('Tạo chuồng mới thành công');
             }
 
@@ -208,6 +252,17 @@ function PigPenPage() {
             ? <Chip label="Đã đóng" color="error" size="small" />
             : <Chip label="Đang hoạt động" color="success" size="small" />;
     };
+
+    // Tính toán số chuồng sẽ hiển thị
+    const emptyRows = page > 0 
+        ? Math.max(0, (1 + page) * rowsPerPage - filteredPigPens.length) 
+        : 0;
+
+    // Lấy dữ liệu cho trang hiện tại
+    const displayedPigPens = filteredPigPens.slice(
+        page * rowsPerPage,
+        page * rowsPerPage + rowsPerPage
+    );
 
     return (
         <Box sx={{ p: 3 }}>
@@ -239,18 +294,41 @@ function PigPenPage() {
                 </Button>
             </Box>
 
+            {/* Thanh tìm kiếm */}
+            <StyledPaper sx={{ mb: 3, p: 2 }}>
+                <TextField
+                    fullWidth
+                    placeholder="Tìm kiếm theo tên chuồng..."
+                    variant="outlined"
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                    InputProps={{
+                        startAdornment: (
+                            <InputAdornment position="start">
+                                <SearchIcon />
+                            </InputAdornment>
+                        ),
+                    }}
+                />
+            </StyledPaper>
+
             {/* Danh sách chuồng */}
             <StyledPaper>
-                <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold' }}>
-                    Danh sách chuồng lợn
-                </Typography>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                        Danh sách chuồng lợn
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                        Tổng số: {filteredPigPens.length} chuồng
+                    </Typography>
+                </Box>
 
                 {loading ? (
                     <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
                         <CircularProgress />
                     </Box>
                 ) : (
-                    <TableContainer component={Paper} sx={{ maxHeight: 440, overflow: 'auto' }}>
+                    <TableContainer component={Paper}>
                         <Table stickyHeader aria-label="sticky table">
                             <TableHead>
                                 <TableRow>
@@ -264,8 +342,8 @@ function PigPenPage() {
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {pigPens.length > 0 ? (
-                                    pigPens.map((pigPen) => (
+                                {displayedPigPens.length > 0 ? (
+                                    displayedPigPens.map((pigPen) => (
                                         <TableRow key={pigPen.penId} hover>
                                             <TableCell>{pigPen.penId}</TableCell>
                                             <TableCell>{pigPen.name}</TableCell>
@@ -294,12 +372,36 @@ function PigPenPage() {
                                 ) : (
                                     <TableRow>
                                         <TableCell colSpan={7} align="center">
-                                            Không có dữ liệu
+                                            {searchTerm ? 'Không tìm thấy chuồng phù hợp' : 'Không có dữ liệu'}
                                         </TableCell>
+                                    </TableRow>
+                                )}
+                                {emptyRows > 0 && (
+                                    <TableRow style={{ height: 53 * emptyRows }}>
+                                        <TableCell colSpan={7} />
                                     </TableRow>
                                 )}
                             </TableBody>
                         </Table>
+                        <TablePagination
+                            rowsPerPageOptions={[7]}
+                            component="div"
+                            count={filteredPigPens.length}
+                            rowsPerPage={rowsPerPage}
+                            page={page}
+                            onPageChange={handleChangePage}
+                            onRowsPerPageChange={handleChangeRowsPerPage}
+                            labelDisplayedRows={({ from, to, count }) => 
+                                `Trang ${page + 1} / ${Math.ceil(count / rowsPerPage)}`
+                            }
+                            backIconButtonProps={{
+                                'aria-label': 'Trang trước',
+                            }}
+                            nextIconButtonProps={{
+                                'aria-label': 'Trang tiếp theo',
+                            }}
+                            labelRowsPerPage=""
+                        />
                     </TableContainer>
                 )}
             </StyledPaper>
