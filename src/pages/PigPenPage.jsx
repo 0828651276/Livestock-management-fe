@@ -22,7 +22,10 @@ import {
     CircularProgress,
     Chip,
     TablePagination,
-    InputAdornment
+    InputAdornment,
+    FormGroup,
+    FormControlLabel,
+    Checkbox
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { styled } from '@mui/material/styles';
@@ -31,7 +34,8 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SearchIcon from '@mui/icons-material/Search';
-import { format } from 'date-fns';
+import FilterAltIcon from '@mui/icons-material/FilterAlt';
+import { format, parseISO, isAfter, isBefore, isEqual } from 'date-fns';
 
 // Import services
 import { pigPenService } from '../services/pigPenService';
@@ -61,6 +65,11 @@ function PigPenPage() {
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
     const [currentPigPen, setCurrentPigPen] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [showDateFilter, setShowDateFilter] = useState(false);
+    const [dateRange, setDateRange] = useState({
+        startDate: '',
+        endDate: ''
+    });
     const [snackbar, setSnackbar] = useState({
         open: false,
         message: '',
@@ -99,18 +108,47 @@ function PigPenPage() {
         fetchData();
     }, []);
 
-    // Xử lý tìm kiếm
+    // Xử lý tìm kiếm và lọc
     useEffect(() => {
-        if (searchTerm.trim() === '') {
-            setFilteredPigPens(pigPens);
-        } else {
-            const filtered = pigPens.filter(pen => 
+        // Áp dụng tất cả các bộ lọc
+        let filtered = [...pigPens];
+        
+        // Lọc theo tên
+        if (searchTerm.trim() !== '') {
+            filtered = filtered.filter(pen => 
                 pen.name.toLowerCase().includes(searchTerm.toLowerCase())
             );
-            setFilteredPigPens(filtered);
         }
-        setPage(0); // Reset về trang đầu tiên khi tìm kiếm
-    }, [searchTerm, pigPens]);
+        
+        // Lọc theo khoảng ngày tạo
+        if (dateRange.startDate && dateRange.endDate) {
+            const startDate = parseISO(dateRange.startDate);
+            const endDate = parseISO(dateRange.endDate);
+            
+            filtered = filtered.filter(pen => {
+                const createdDate = parseISO(pen.createdDate);
+                return (
+                    (isAfter(createdDate, startDate) || isEqual(createdDate, startDate)) && 
+                    (isBefore(createdDate, endDate) || isEqual(createdDate, endDate))
+                );
+            });
+        } else if (dateRange.startDate) {
+            const startDate = parseISO(dateRange.startDate);
+            filtered = filtered.filter(pen => {
+                const createdDate = parseISO(pen.createdDate);
+                return isAfter(createdDate, startDate) || isEqual(createdDate, startDate);
+            });
+        } else if (dateRange.endDate) {
+            const endDate = parseISO(dateRange.endDate);
+            filtered = filtered.filter(pen => {
+                const createdDate = parseISO(pen.createdDate);
+                return isBefore(createdDate, endDate) || isEqual(createdDate, endDate);
+            });
+        }
+        
+        setFilteredPigPens(filtered);
+        setPage(0); // Reset về trang đầu tiên khi áp dụng bộ lọc
+    }, [searchTerm, dateRange, pigPens]);
 
     const handleBackToDashboard = () => {
         navigate('/dashboard');
@@ -160,9 +198,7 @@ function PigPenPage() {
             await pigPenService.deletePigPen(currentPigPen.penId);
             const updatedPigPens = pigPens.filter(pen => pen.penId !== currentPigPen.penId);
             setPigPens(updatedPigPens);
-            setFilteredPigPens(updatedPigPens.filter(pen => 
-                pen.name.toLowerCase().includes(searchTerm.toLowerCase())
-            ));
+            // Bộ lọc sẽ được áp dụng lại thông qua useEffect
             showSnackbar('Xóa chuồng thành công');
         } catch (error) {
             console.error('Lỗi khi xóa chuồng:', error);
@@ -188,6 +224,33 @@ function PigPenPage() {
         setSearchTerm(event.target.value);
     };
 
+    const handleDateRangeChange = (e) => {
+        const { name, value } = e.target;
+        setDateRange(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const handleToggleDateFilter = () => {
+        setShowDateFilter(!showDateFilter);
+        if (showDateFilter) {
+            // Xóa bộ lọc ngày khi ẩn
+            setDateRange({
+                startDate: '',
+                endDate: ''
+            });
+        }
+    };
+
+    const handleResetFilters = () => {
+        setSearchTerm('');
+        setDateRange({
+            startDate: '',
+            endDate: ''
+        });
+    };
+
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
     };
@@ -210,22 +273,14 @@ function PigPenPage() {
             if (currentPigPen) {
                 // Cập nhật
                 response = await pigPenService.updatePigPen(currentPigPen.penId, pigPenData);
-                const updatedPigPens = pigPens.map(pen =>
-                    pen.penId === currentPigPen.penId ? response : pen
+                setPigPens(prevPens => 
+                    prevPens.map(pen => pen.penId === currentPigPen.penId ? response : pen)
                 );
-                setPigPens(updatedPigPens);
-                setFilteredPigPens(updatedPigPens.filter(pen => 
-                    pen.name.toLowerCase().includes(searchTerm.toLowerCase())
-                ));
                 showSnackbar('Cập nhật chuồng thành công');
             } else {
                 // Tạo mới
                 response = await pigPenService.createPigPen(pigPenData);
-                const updatedPigPens = [...pigPens, response];
-                setPigPens(updatedPigPens);
-                setFilteredPigPens(updatedPigPens.filter(pen => 
-                    pen.name.toLowerCase().includes(searchTerm.toLowerCase())
-                ));
+                setPigPens(prevPens => [...prevPens, response]);
                 showSnackbar('Tạo chuồng mới thành công');
             }
 
@@ -294,22 +349,78 @@ function PigPenPage() {
                 </Button>
             </Box>
 
-            {/* Thanh tìm kiếm */}
+            {/* Thanh tìm kiếm và lọc */}
             <StyledPaper sx={{ mb: 3, p: 2 }}>
-                <TextField
-                    fullWidth
-                    placeholder="Tìm kiếm theo tên chuồng..."
-                    variant="outlined"
-                    value={searchTerm}
-                    onChange={handleSearchChange}
-                    InputProps={{
-                        startAdornment: (
-                            <InputAdornment position="start">
-                                <SearchIcon />
-                            </InputAdornment>
-                        ),
-                    }}
-                />
+                <Grid container spacing={2}>
+                    <Grid item xs={12} md={6}>
+                        <TextField
+                            fullWidth
+                            placeholder="Tìm kiếm theo tên chuồng..."
+                            variant="outlined"
+                            value={searchTerm}
+                            onChange={handleSearchChange}
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <SearchIcon />
+                                    </InputAdornment>
+                                ),
+                            }}
+                        />
+                    </Grid>
+                    <Grid item xs={12} md={6} sx={{display: 'flex', justifyContent: 'flex-end', alignItems: 'center'}}>
+                        <Button 
+                            variant="outlined" 
+                            startIcon={<FilterAltIcon />}
+                            onClick={handleToggleDateFilter}
+                            sx={{ mr: 1 }}
+                        >
+                            {showDateFilter ? 'Ẩn bộ lọc ngày' : 'Lọc theo ngày tạo'}
+                        </Button>
+                        {(searchTerm || dateRange.startDate || dateRange.endDate) && (
+                            <Button 
+                                variant="text" 
+                                color="inherit"
+                                onClick={handleResetFilters}
+                            >
+                                Xóa bộ lọc
+                            </Button>
+                        )}
+                    </Grid>
+                    
+                    {showDateFilter && (
+                        <>
+                            <Grid item xs={12} md={6}>
+                                <TextField
+                                    fullWidth
+                                    margin="dense"
+                                    name="startDate"
+                                    label="Từ ngày"
+                                    type="date"
+                                    value={dateRange.startDate}
+                                    onChange={handleDateRangeChange}
+                                    InputLabelProps={{
+                                        shrink: true,
+                                    }}
+                                />
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                                <TextField
+                                    fullWidth
+                                    margin="dense"
+                                    name="endDate"
+                                    label="Đến ngày"
+                                    type="date"
+                                    value={dateRange.endDate}
+                                    onChange={handleDateRangeChange}
+                                    InputLabelProps={{
+                                        shrink: true,
+                                    }}
+                                />
+                            </Grid>
+                        </>
+                    )}
+                </Grid>
             </StyledPaper>
 
             {/* Danh sách chuồng */}
@@ -372,7 +483,9 @@ function PigPenPage() {
                                 ) : (
                                     <TableRow>
                                         <TableCell colSpan={7} align="center">
-                                            {searchTerm ? 'Không tìm thấy chuồng phù hợp' : 'Không có dữ liệu'}
+                                            {(searchTerm || dateRange.startDate || dateRange.endDate) ? 
+                                                'Không tìm thấy chuồng phù hợp với điều kiện tìm kiếm' : 
+                                                'Không có dữ liệu'}
                                         </TableCell>
                                     </TableRow>
                                 )}
@@ -392,7 +505,7 @@ function PigPenPage() {
                             onPageChange={handleChangePage}
                             onRowsPerPageChange={handleChangeRowsPerPage}
                             labelDisplayedRows={({ from, to, count }) => 
-                                `Trang ${page + 1} / ${Math.ceil(count / rowsPerPage)}`
+                                `Trang ${page + 1} / ${Math.ceil(count / rowsPerPage) || 1}`
                             }
                             backIconButtonProps={{
                                 'aria-label': 'Trang trước',
