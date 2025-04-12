@@ -5,7 +5,6 @@ import MainLayout from './layout/MainLayout';
 import DashboardPage from './pages/DashboardPage';
 import { authService } from './services/authService';
 import PigPenPage from "./pages/PigPenPage.jsx";
-
 // Tạo theme tùy chỉnh
 const theme = createTheme({
   palette: {
