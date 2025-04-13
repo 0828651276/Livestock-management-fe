@@ -2,15 +2,16 @@ import React, { useState } from 'react';
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
-import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
+import Snackbar from '@mui/material/Snackbar';
 import { authService } from '../services/authService';
 import InputAdornment from '@mui/material/InputAdornment';
 import PersonIcon from '@mui/icons-material/Person';
 import LockIcon from '@mui/icons-material/Lock';
 import CloseIcon from '@mui/icons-material/Close';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 
 function LoginPage() {
   const [credentials, setCredentials] = useState({
@@ -19,6 +20,7 @@ function LoginPage() {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -44,14 +46,23 @@ function LoginPage() {
 
       await authService.login(username, password);
       
-      // Redirect or handle successful login
-      window.location.href = '/dashboard';
+      // Hiển thị thông báo thành công
+      setSuccess(true);
+      
+      // Chuyển hướng sau khi hiển thị thông báo (cho 1.5 giây để người dùng đọc thông báo)
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 1500);
+      
     } catch (error) {
       setError('Tên đăng nhập hoặc mật khẩu không đúng');
       console.error('Login submission error:', error);
-    } finally {
       setLoading(false);
     }
+  };
+
+  const handleCloseSnackbar = () => {
+    setSuccess(false);
   };
 
   return (
@@ -170,6 +181,23 @@ function LoginPage() {
           {loading ? <CircularProgress size={24} color="inherit" /> : 'ĐĂNG NHẬP'}
         </Button>
       </Box>
+      
+      {/* Thông báo thành công */}
+      <Snackbar
+        open={success}
+        autoHideDuration={2000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert 
+          severity="success"
+          variant="filled"
+          icon={<CheckCircleOutlineIcon fontSize="inherit" />}
+          sx={{ width: '100%', fontSize: '16px' }}
+        >
+          Đăng nhập thành công!
+        </Alert>
+      </Snackbar>
     </Paper>
   );
 }

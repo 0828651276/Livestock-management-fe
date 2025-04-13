@@ -16,7 +16,13 @@ import {
     Avatar,
     Menu,
     MenuItem,
-    Divider
+    Divider,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogContentText,
+    DialogActions,
+    Button
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -90,6 +96,7 @@ function DashboardPage() {
     const [loading, setLoading] = useState(true);
     const [anchorEl, setAnchorEl] = useState(null);
     const [activeMenu, setActiveMenu] = useState('dashboard'); // Để theo dõi menu đang active
+    const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false); // State cho dialog xác nhận đăng xuất
     const open = Boolean(anchorEl);
 
     useEffect(() => {
@@ -114,8 +121,20 @@ function DashboardPage() {
         setAnchorEl(null);
     };
 
-    const handleLogout = () => {
-        handleUserMenuClose();
+    // Mở dialog xác nhận đăng xuất
+    const handleLogoutConfirmOpen = () => {
+        handleUserMenuClose(); // Đóng menu dropdown
+        setLogoutConfirmOpen(true);
+    };
+
+    // Đóng dialog xác nhận đăng xuất
+    const handleLogoutConfirmClose = () => {
+        setLogoutConfirmOpen(false);
+    };
+
+    // Xử lý đăng xuất khi đã xác nhận
+    const handleLogoutConfirm = () => {
+        setLogoutConfirmOpen(false);
         authService.logout();
         window.location.href = '/';
     };
@@ -285,13 +304,38 @@ function DashboardPage() {
                             <ListItemText>Profile</ListItemText>
                         </MenuItem>
                         <Divider />
-                        <MenuItem onClick={handleLogout} sx={{ cursor: 'pointer' }}>
+                        <MenuItem onClick={handleLogoutConfirmOpen} sx={{ cursor: 'pointer' }}>
                             <ListItemIcon>
                                 <LogoutIcon fontSize="small" />
                             </ListItemIcon>
                             <ListItemText>Đăng xuất</ListItemText>
                         </MenuItem>
                     </Menu>
+
+                    {/* Dialog xác nhận đăng xuất */}
+                    <Dialog
+                        open={logoutConfirmOpen}
+                        onClose={handleLogoutConfirmClose}
+                        aria-labelledby="alert-dialog-title"
+                        aria-describedby="alert-dialog-description"
+                    >
+                        <DialogTitle id="alert-dialog-title">
+                            {"Xác nhận đăng xuất"}
+                        </DialogTitle>
+                        <DialogContent>
+                            <DialogContentText id="alert-dialog-description">
+                                Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?
+                            </DialogContentText>
+                        </DialogContent>
+                        <DialogActions>
+                            <Button onClick={handleLogoutConfirmClose} color="primary">
+                                Hủy
+                            </Button>
+                            <Button onClick={handleLogoutConfirm} color="error" autoFocus>
+                                Đăng xuất
+                            </Button>
+                        </DialogActions>
+                    </Dialog>
                 </Toolbar>
             </AppBar>
 
@@ -373,7 +417,7 @@ function DashboardPage() {
                     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
                         <Grid container spacing={4} justifyContent="center">
                             {features.map((feature) => (
-                                <Grid xs={12} sm={6} md={4} key={feature.id}>
+                                <Grid item xs={12} sm={6} md={4} key={feature.id}>
                                     <Paper
                                         elevation={3}
                                         sx={{
