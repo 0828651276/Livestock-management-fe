@@ -90,7 +90,13 @@ function LoginPage() {
           mb: 4
         }}
       >
-        <img src="/src/assets/pig-icon.svg" alt="Pig Icon" width="120" height="120" />
+        <img 
+          src="https://hienlaptop.com/wp-content/uploads/2024/11/Download-Mien-Phi-File-Vector-PNG-PSD-Hinh-Con-Heo-Dep-Doc-Dao-2.png" 
+          alt="Pig Icon" 
+          width="120" 
+          height="120" 
+          style={{ borderRadius: '50%', objectFit: 'cover' }}
+        />
       </Box>
       
       {error && (
