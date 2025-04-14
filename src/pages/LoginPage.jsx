@@ -12,6 +12,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import LockIcon from '@mui/icons-material/Lock';
 import CloseIcon from '@mui/icons-material/Close';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import {useNavigate} from "react-router-dom";
 
 function LoginPage() {
   const [credentials, setCredentials] = useState({
@@ -21,6 +22,7 @@ function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -49,11 +51,11 @@ function LoginPage() {
       // Hiển thị thông báo thành công
       setSuccess(true);
       
-      // Chuyển hướng sau khi hiển thị thông báo (cho 1.5 giây để người dùng đọc thông báo)
+      // Chuyển hướng sau khi hiển thị thông báo (cho 1 giây để người dùng đọc thông báo)
       setTimeout(() => {
-        window.location.href = '/dashboard';
-      }, 1500);
-      
+          navigate("/dashboard")
+      }, 1000);
+
     } catch (error) {
       setError('Tên đăng nhập hoặc mật khẩu không đúng');
       console.error('Login submission error:', error);
