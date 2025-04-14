@@ -43,16 +43,14 @@ const EmployeeForm = ({ onClose, employeeData }) => {
             if (employeeData) {
                 // Cập nhật
                 await employeeService.update(employee.employeeId, employee);
-                alert("Cập nhật nhân viên thành công!");
             } else {
                 // Thêm mới
                 await employeeService.create(employee);
-                alert("Thêm nhân viên thành công!");
             }
-            onClose();
+            onClose(true); // Truyền true để chỉ ra thành công
         } catch (error) {
             console.error(error);
-            alert("Đã xảy ra lỗi khi lưu nhân viên.");
+            onClose(false); // Truyền false nếu có lỗi
         } finally {
             setLoading(false);
         }
