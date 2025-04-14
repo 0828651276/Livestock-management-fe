@@ -143,7 +143,7 @@ function DashboardPage() {
     const handleLogoutConfirm = () => {
         setLogoutConfirmOpen(false);
         authService.logout();
-        window.location.href = '/';
+        navigate('/')
     };
 
     const handleProfile = () => {
