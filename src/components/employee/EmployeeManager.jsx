@@ -15,13 +15,16 @@ import {
     Dialog,
     DialogTitle,
     DialogContent,
-    Typography
+    Typography,
+    IconButton
 } from "@mui/material";
-import { Add, Edit, Delete, Search } from "@mui/icons-material";
+import { Add, Edit, Delete, Search, ArrowBack } from "@mui/icons-material";
 import EmployeeForm from "./EmployeeForm.jsx";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import { useNavigate } from "react-router-dom";
 
 export default function EmployeeManager() {
+    const navigate = useNavigate();
     const [employees, setEmployees] = useState([]);
     const [searchKeyword, setSearchKeyword] = useState("");
     const [selectedEmployee, setSelectedEmployee] = useState(null);
@@ -67,6 +70,24 @@ export default function EmployeeManager() {
 
     return (
         <Box sx={{ p: 4 }}>
+            {/* Header với nút quay lại */}
+            <Stack direction="row" alignItems="center" spacing={2} mb={3}>
+                <IconButton 
+                    onClick={() => navigate('/dashboard')}
+                    sx={{ 
+                        color: '#1E8449',
+                        '&:hover': {
+                            backgroundColor: 'rgba(30, 132, 73, 0.08)'
+                        }
+                    }}
+                >
+                    <ArrowBack />
+                </IconButton>
+                <Typography variant="h5" component="h1">
+                    Quản lý nhân viên
+                </Typography>
+            </Stack>
+
             {/* Menu */}
             <Stack direction="row" spacing={2} mb={3}>
                 <Button variant="contained" color="primary">

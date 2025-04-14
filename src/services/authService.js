@@ -22,6 +22,8 @@ export const authService = {
       // Store token in localStorage for future requests
       if (data.token) {
         localStorage.setItem('token', data.token);
+        // Lưu thêm tên đăng nhập để hiển thị
+        localStorage.setItem('username', username);
         return data;
       }
     } catch (error) {
@@ -32,11 +34,25 @@ export const authService = {
 
   logout: () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('username');
   },
 
   getCurrentUser: () => {
     const token = localStorage.getItem('token');
     return token;
+  },
+
+  getUserInfo: () => {
+    try {
+      const username = localStorage.getItem('username');
+      if (username) {
+        return { username };
+      }
+      return { username: 'User' };
+    } catch (error) {
+      console.error('Error getting user info:', error);
+      return { username: 'User' };
+    }
   },
 
   // Helper method to get auth header for API calls
