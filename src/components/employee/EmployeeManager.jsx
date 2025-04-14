@@ -15,8 +15,12 @@ import {
     Dialog,
     DialogTitle,
     DialogContent,
+    DialogContentText,
+    DialogActions,
     Typography,
-    IconButton
+    IconButton,
+    Snackbar,
+    Alert
 } from "@mui/material";
 import { Add, Edit, Delete, Search, ArrowBack } from "@mui/icons-material";
 import EmployeeForm from "./EmployeeForm.jsx";
@@ -29,6 +33,27 @@ export default function EmployeeManager() {
     const [searchKeyword, setSearchKeyword] = useState("");
     const [selectedEmployee, setSelectedEmployee] = useState(null);
     const [openForm, setOpenForm] = useState(false);
+    const [notification, setNotification] = useState({
+        open: false,
+        message: '',
+        severity: 'success'
+    });
+    const [deleteDialog, setDeleteDialog] = useState({
+        open: false,
+        employeeId: null
+    });
+
+    const handleCloseNotification = () => {
+        setNotification({ ...notification, open: false });
+    };
+
+    const showNotification = (message, severity = 'success') => {
+        setNotification({
+            open: true,
+            message,
+            severity
+        });
+    };
 
     useEffect(() => {
         fetchEmployees();
@@ -40,6 +65,7 @@ export default function EmployeeManager() {
             setEmployees(res.data);
         } catch (err) {
             console.error("Lỗi khi lấy danh sách nhân viên:", err);
+            showNotification("Không thể tải danh sách nhân viên", "error");
         }
     };
 
@@ -47,8 +73,12 @@ export default function EmployeeManager() {
         try {
             const res = await employeeService.search({ name: searchKeyword });
             setEmployees(res.data);
+            if (res.data.length === 0) {
+                showNotification("Không tìm thấy nhân viên nào", "info");
+            }
         } catch (err) {
             console.error("Lỗi khi tìm kiếm nhân viên:", err);
+            showNotification("Lỗi khi tìm kiếm nhân viên", "error");
         }
     };
 
@@ -57,14 +87,30 @@ export default function EmployeeManager() {
         return d.toLocaleDateString("vi-VN");
     };
 
-    const handleDelete = async (id) => {
-        if (window.confirm("Bạn có chắc muốn xoá nhân viên này?")) {
-            try {
-                await employeeService.delete(id);
-                setEmployees((prev) => prev.filter((e) => e.employeeId !== id));
-            } catch (err) {
-                console.error("Lỗi khi xoá nhân viên:", err);
-            }
+    const handleDeleteClick = (id) => {
+        setDeleteDialog({
+            open: true,
+            employeeId: id
+        });
+    };
+
+    const handleDeleteCancel = () => {
+        setDeleteDialog({
+            open: false,
+            employeeId: null
+        });
+    };
+
+    const handleDeleteConfirm = async () => {
+        try {
+            await employeeService.delete(deleteDialog.employeeId);
+            setEmployees((prev) => prev.filter((e) => e.employeeId !== deleteDialog.employeeId));
+            showNotification("Xóa nhân viên thành công");
+        } catch (err) {
+            console.error("Lỗi khi xoá nhân viên:", err);
+            showNotification("Lỗi khi xóa nhân viên", "error");
+        } finally {
+            handleDeleteCancel();
         }
     };
 
@@ -178,7 +224,7 @@ export default function EmployeeManager() {
                                                 variant="outlined"
                                                 color="error"
                                                 startIcon={<Delete />}
-                                                onClick={() => handleDelete(e.employeeId)}
+                                                onClick={() => handleDeleteClick(e.employeeId)}
                                             >
                                                 Xoá
                                             </Button>
@@ -190,6 +236,23 @@ export default function EmployeeManager() {
                 </Table>
             </TableContainer>
 
+            {/* Snackbar for notifications */}
+            <Snackbar
+                open={notification.open}
+                autoHideDuration={3000}
+                onClose={handleCloseNotification}
+                anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+            >
+                <Alert
+                    onClose={handleCloseNotification}
+                    severity={notification.severity}
+                    variant="filled"
+                    sx={{ width: '100%' }}
+                >
+                    {notification.message}
+                </Alert>
+            </Snackbar>
+
             {/* Dialog form thêm/sửa nhân viên */}
             <Dialog open={openForm} onClose={() => setOpenForm(false)} maxWidth="sm" fullWidth>
                 <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -199,13 +262,41 @@ export default function EmployeeManager() {
                 <DialogContent>
                     <EmployeeForm
                         employeeData={selectedEmployee}
-                        onClose={() => {
+                        onClose={(success) => {
                             setOpenForm(false);
                             setSelectedEmployee(null);
-                            fetchEmployees(); // reload danh sách sau khi cập nhật
+                            if (success) {
+                                showNotification(selectedEmployee ? "Cập nhật nhân viên thành công" : "Thêm nhân viên thành công");
+                                fetchEmployees();
+                            }
                         }}
                     />
                 </DialogContent>
+            </Dialog>
+
+            {/* Dialog xác nhận xóa */}
+            <Dialog
+                open={deleteDialog.open}
+                onClose={handleDeleteCancel}
+                aria-labelledby="alert-dialog-title"
+                aria-describedby="alert-dialog-description"
+            >
+                <DialogTitle id="alert-dialog-title">
+                    Xác nhận xóa
+                </DialogTitle>
+                <DialogContent>
+                    <DialogContentText id="alert-dialog-description">
+                        Bạn có chắc chắn muốn xóa nhân viên này không?
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleDeleteCancel} color="primary">
+                        Hủy
+                    </Button>
+                    <Button onClick={handleDeleteConfirm} color="error" variant="contained" autoFocus>
+                        Xóa
+                    </Button>
+                </DialogActions>
             </Dialog>
         </Box>
     );
