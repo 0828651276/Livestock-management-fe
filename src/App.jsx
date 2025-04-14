@@ -6,7 +6,8 @@ import DashboardPage from './pages/DashboardPage';
 import { authService } from './services/authService';
 import PigPenPage from "./pages/PigPenPage.jsx";
 import EmployeeManager from './components/employee/EmployeeManager.jsx';
-import EmployeeForm from "./components/employee/EmployeeForm.jsx";
+import EmployeeFormUpdate from "./components/employee/EmployeeFormUpdate.jsx";
+import EmployeeFormCreate from "./components/employee/EmployeeFormCreate.jsx";
 // Tạo theme tùy chỉnh
 const theme = createTheme({
   palette: {
@@ -52,7 +53,8 @@ function App() {
           {/* Thêm các route khác ở đây nếu cần */}
           <Route path="/pigpens" element={<ProtectedRoute element={<PigPenPage />} />} />
           <Route path="/employees" element={<EmployeeManager />} />
-          <Route path="/employees/add" element={<EmployeeForm />} />
+          <Route path="/employees/update" element={<EmployeeFormUpdate />} />
+          <Route path="/employees/edit" element={<EmployeeFormCreate />} />
 
         </Routes>
       </Router>
