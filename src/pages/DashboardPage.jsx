@@ -35,6 +35,7 @@ import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 import LogoutIcon from '@mui/icons-material/Logout';
 import PersonIcon from '@mui/icons-material/Person';
 import HouseIcon from '@mui/icons-material/House';
+import PeopleIcon from '@mui/icons-material/People'; // Import icon cho Quản lý nhân viên
 import { authService } from '../services/authService';
 import { useNavigate } from 'react-router-dom';
 
@@ -158,6 +159,8 @@ function DashboardPage() {
         // Xử lý chuyển trang
         if (menuId === 'pigpens') {
             navigate('/pigpens');
+        } else if (menuId === 'employees') {
+            navigate('/employees'); // Điều hướng đến trang quản lý nhân viên
         }
     };
 
@@ -181,7 +184,7 @@ function DashboardPage() {
                 </Typography>
             </Toolbar>
 
-            {/* Menu chính - Đã bỏ nút Profile */}
+            {/* Menu chính */}
             <List>
                 <ListItem
                     component="div"
@@ -200,6 +203,26 @@ function DashboardPage() {
                         <DashboardIcon />
                     </ListItemIcon>
                     <ListItemText primary="Dashboard" />
+                </ListItem>
+
+                {/* Nút Quản lý nhân viên (Mới thêm) */}
+                <ListItem
+                    component="div"
+                    onClick={() => handleMenuClick('employees')}
+                    sx={{
+                        backgroundColor: activeMenu === 'employees' ? '#333' : 'transparent',
+                        my: 0.5,
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        '&:hover': {
+                            backgroundColor: activeMenu === 'employees' ? '#444' : 'rgba(255, 255, 255, 0.08)'
+                        }
+                    }}
+                >
+                    <ListItemIcon sx={{ color: activeMenu === 'employees' ? '#FF5722' : 'white' }}>
+                        <PeopleIcon />
+                    </ListItemIcon>
+                    <ListItemText primary="Quản lý nhân viên" />
                 </ListItem>
 
                 {/* Nút Danh sách Chuồng */}
