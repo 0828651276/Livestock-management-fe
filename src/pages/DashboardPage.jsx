@@ -97,6 +97,7 @@ function DashboardPage() {
     const [anchorEl, setAnchorEl] = useState(null);
     const [activeMenu, setActiveMenu] = useState('dashboard'); // Để theo dõi menu đang active
     const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false); // State cho dialog xác nhận đăng xuất
+    const [user, setUser] = useState({ username: '' }); // State lưu thông tin người dùng
     const open = Boolean(anchorEl);
 
     useEffect(() => {
@@ -106,6 +107,11 @@ function DashboardPage() {
             window.location.href = '/'; // Chuyển hướng về trang đăng nhập nếu chưa xác thực
         } else {
             setLoading(false);
+            // Lấy thông tin người dùng từ authService
+            const userInfo = authService.getUserInfo();
+            if (userInfo) {
+                setUser(userInfo);
+            }
         }
     }, []);
 
@@ -175,7 +181,7 @@ function DashboardPage() {
                 </Typography>
             </Toolbar>
 
-            {/* Menu chính */}
+            {/* Menu chính - Đã bỏ nút Profile */}
             <List>
                 <ListItem
                     component="div"
@@ -215,25 +221,6 @@ function DashboardPage() {
                     </ListItemIcon>
                     <ListItemText primary="Danh sách Chuồng" />
                 </ListItem>
-
-                <ListItem
-                    component="div"
-                    onClick={() => handleMenuClick('profile')}
-                    sx={{
-                        backgroundColor: activeMenu === 'profile' ? '#333' : 'transparent',
-                        my: 0.5,
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        '&:hover': {
-                            backgroundColor: activeMenu === 'profile' ? '#444' : 'rgba(255, 255, 255, 0.08)'
-                        }
-                    }}
-                >
-                    <ListItemIcon sx={{ color: activeMenu === 'profile' ? '#FF5722' : 'white' }}>
-                        <PersonIcon />
-                    </ListItemIcon>
-                    <ListItemText primary="Profile" />
-                </ListItem>
             </List>
 
             <Box sx={{ flexGrow: 1 }} />
@@ -266,7 +253,7 @@ function DashboardPage() {
                         Livestock - Pig Farm Management System
                     </Typography>
 
-                    {/* Admin Menu */}
+                    {/* Admin Menu - Đã cập nhật để hiển thị tên đăng nhập thật */}
                     <Box
                         sx={{
                             display: 'flex',
@@ -279,7 +266,7 @@ function DashboardPage() {
                             <PersonIcon />
                         </IconButton>
                         <Typography variant="body2" sx={{ ml: 1 }}>
-                            Admin
+                            {user.username || 'User'}
                         </Typography>
                     </Box>
 
@@ -417,7 +404,7 @@ function DashboardPage() {
                     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
                         <Grid container spacing={4} justifyContent="center">
                             {features.map((feature) => (
-                                <Grid item xs={12} sm={6} md={4} key={feature.id}>
+                                <Grid xs={12} sm={6} md={4} key={feature.id}>
                                     <Paper
                                         elevation={3}
                                         sx={{
