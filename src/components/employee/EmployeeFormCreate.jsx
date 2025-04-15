@@ -10,7 +10,7 @@ import {
     Avatar,
     IconButton,
 } from "@mui/material";
-import { employeeService } from "../../services/employeeService";
+import { employeeService } from "../../services/EmployeeService.js";
 import PhotoCamera from "@mui/icons-material/PhotoCamera";
 
 const initialState = {
