@@ -22,7 +22,15 @@ import {
     DialogContent,
     DialogContentText,
     DialogActions,
-    Button
+    Button,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Chip,
+    CircularProgress
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -35,9 +43,14 @@ import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 import LogoutIcon from '@mui/icons-material/Logout';
 import PersonIcon from '@mui/icons-material/Person';
 import HouseIcon from '@mui/icons-material/House';
-import PeopleIcon from '@mui/icons-material/People'; // Import icon cho Quản lý nhân viên
+import PeopleIcon from '@mui/icons-material/People';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import AddIcon from '@mui/icons-material/Add';
 import { authService } from '../services/authService';
+import { pigPenService } from '../services/pigPenService';
 import { useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
 
 // Chiều rộng của thanh sidebar
 const drawerWidth = 240;
@@ -55,6 +68,22 @@ const FeatureIcon = styled(Avatar)(({ theme, color }) => ({
         fontSize: 40,
         color: 'white'
     }
+}));
+
+// Header cột của bảng
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+    backgroundColor: theme.palette.primary.main,
+    color: theme.palette.common.white,
+    fontWeight: 'bold',
+    padding: '16px'
+}));
+
+// Styled component cho Paper
+const StyledPaper = styled(Paper)(({ theme }) => ({
+    padding: theme.spacing(3),
+    marginBottom: theme.spacing(3),
+    backgroundColor: '#fff',
+    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)'
 }));
 
 // Danh sách các menu chính
@@ -99,6 +128,16 @@ function DashboardPage() {
     const [activeMenu, setActiveMenu] = useState('dashboard'); // Để theo dõi menu đang active
     const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false); // State cho dialog xác nhận đăng xuất
     const [user, setUser] = useState({ username: '' }); // State lưu thông tin người dùng
+    const [pigPens, setPigPens] = useState([]);
+    const [pigPensLoading, setPigPensLoading] = useState(true);
+    const [showPigPenList, setShowPigPenList] = useState(false); // State để hiển thị/ẩn danh sách chuồng
+    const [currentPigPen, setCurrentPigPen] = useState(null); // State cho pigpen đang được chọn để xóa
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false); // State cho dialog xác nhận xóa
+    const [snackbar, setSnackbar] = useState({
+        open: false,
+        message: '',
+        severity: 'success'
+    });
     const open = Boolean(anchorEl);
 
     useEffect(() => {
@@ -113,8 +152,24 @@ function DashboardPage() {
             if (userInfo) {
                 setUser(userInfo);
             }
+
+            // Fetch danh sách chuồng
+            fetchPigPens();
         }
     }, []);
+
+    // Fetch danh sách chuồng
+    const fetchPigPens = async () => {
+        try {
+            setPigPensLoading(true);
+            const data = await pigPenService.getAllPigPens();
+            setPigPens(data);
+        } catch (error) {
+            console.error('Lỗi khi tải dữ liệu chuồng:', error);
+        } finally {
+            setPigPensLoading(false);
+        }
+    };
 
     const handleDrawerToggle = () => {
         setMobileOpen(!mobileOpen);
@@ -166,10 +221,39 @@ function DashboardPage() {
 
     const handleFeatureClick = (featureId) => {
         console.log(`Chức năng ${featureId} được chọn`);
-        // Xử lý chuyển trang hoặc hiển thị panel tương ứng
+
+        // Hiển thị danh sách chuồng khi nhấp vào "QUẢN LÝ THÔNG TIN ĐÀN"
         if (featureId === 'pigs') {
-            navigate('/pigpens');
+            setShowPigPenList(true); // Hiển thị danh sách chuồng
+        } else {
+            // Xử lý các chức năng khác (có thể điều hướng đến trang khác)
+            console.log(`Chức năng ${featureId} đang được phát triển`);
         }
+    };
+
+    const handleAddPigPen = () => {
+        navigate('/pigpens'); // Điều hướng đến trang pigpen để thêm mới
+    };
+
+    const handleEditPigPen = (penId) => {
+        navigate(`/pigpens?editId=${penId}`); // Điều hướng với query param để mở form edit
+    };
+
+    // Format date
+    const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
+        try {
+            return format(new Date(dateString), 'dd/MM/yyyy');
+        } catch (error) {
+            return dateString;
+        }
+    };
+
+    // Hiển thị trạng thái chuồng
+    const getPenStatus = (closedDate) => {
+        return closedDate
+            ? <Chip label="Đã đóng" color="error" size="small" />
+            : <Chip label="Đang hoạt động" color="success" size="small" />;
     };
 
     if (loading) {
@@ -205,7 +289,7 @@ function DashboardPage() {
                     <ListItemText primary="Dashboard" />
                 </ListItem>
 
-                {/* Nút Quản lý nhân viên (Mới thêm) */}
+                {/* Nút Quản lý nhân viên */}
                 <ListItem
                     component="div"
                     onClick={() => handleMenuClick('employees')}
@@ -425,42 +509,143 @@ function DashboardPage() {
                 {/* Hiển thị nội dung dựa trên menu đang active */}
                 {activeMenu === 'dashboard' && (
                     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-                        <Grid container spacing={4} justifyContent="center">
-                            {features.map((feature) => (
-                                <Grid xs={12} sm={6} md={4} key={feature.id}>
-                                    <Paper
-                                        elevation={3}
-                                        sx={{
-                                            p: 3,
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            alignItems: 'center',
-                                            cursor: 'pointer',
-                                            transition: 'transform 0.2s',
-                                            '&:hover': {
-                                                transform: 'scale(1.03)'
-                                            }
-                                        }}
-                                        onClick={() => handleFeatureClick(feature.id)}
-                                    >
-                                        <FeatureIcon color={feature.color}>
-                                            {feature.icon}
-                                        </FeatureIcon>
-                                        <Typography
-                                            variant="subtitle1"
-                                            align="center"
+                        {/* Phần các chức năng - chỉ hiển thị khi danh sách chuồng không được hiển thị */}
+                        {!showPigPenList && (
+                            <Grid container spacing={4} justifyContent="center" sx={{ mb: 4 }}>
+                                {features.map((feature) => (
+                                    <Grid item xs={12} sm={6} md={4} key={feature.id}>
+                                        <Paper
+                                            elevation={3}
                                             sx={{
-                                                mt: 2,
-                                                fontWeight: 'bold',
-                                                fontSize: '0.9rem'
+                                                p: 3,
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                alignItems: 'center',
+                                                cursor: 'pointer',
+                                                transition: 'transform 0.2s',
+                                                '&:hover': {
+                                                    transform: 'scale(1.03)'
+                                                }
+                                            }}
+                                            onClick={() => handleFeatureClick(feature.id)}
+                                        >
+                                            <FeatureIcon color={feature.color}>
+                                                {feature.icon}
+                                            </FeatureIcon>
+                                            <Typography
+                                                variant="subtitle1"
+                                                align="center"
+                                                sx={{
+                                                    mt: 2,
+                                                    fontWeight: 'bold',
+                                                    fontSize: '0.9rem'
+                                                }}
+                                            >
+                                                {feature.title}
+                                            </Typography>
+                                        </Paper>
+                                    </Grid>
+                                ))}
+                            </Grid>
+                        )}
+
+                        {/* Danh sách chuồng lợn - hiển thị khi showPigPenList = true hoặc mặc định trên dashboard */}
+                        {showPigPenList && (
+                            <StyledPaper>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                        <IconButton
+                                            onClick={handleBackToMainMenu}
+                                            sx={{ mr: 1 }}
+                                            aria-label="Quay lại"
+                                        >
+                                            <ArrowBackIcon />
+                                        </IconButton>
+                                        <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                                            Danh sách chuồng lợn
+                                        </Typography>
+                                    </Box>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                                            Tổng số: {pigPens.length} chuồng
+                                        </Typography>
+                                        <Button
+                                            variant="contained"
+                                            color="primary"
+                                            startIcon={<AddIcon />}
+                                            onClick={handleAddPigPen}
+                                            size="small"
+                                            sx={{
+                                                backgroundColor: '#1E8449',
+                                                '&:hover': {
+                                                    backgroundColor: '#14532d'
+                                                }
                                             }}
                                         >
-                                            {feature.title}
-                                        </Typography>
-                                    </Paper>
-                                </Grid>
-                            ))}
-                        </Grid>
+                                            Thêm chuồng
+                                        </Button>
+                                    </Box>
+                                </Box>
+
+                                {pigPensLoading ? (
+                                    <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                                        <CircularProgress />
+                                    </Box>
+                                ) : (
+                                    <TableContainer>
+                                        <Table>
+                                            <TableHead>
+                                                <TableRow>
+                                                    <StyledTableCell>ID</StyledTableCell>
+                                                    <StyledTableCell>Tên chuồng</StyledTableCell>
+                                                    <StyledTableCell>Ngày tạo</StyledTableCell>
+                                                    <StyledTableCell>Ngày đóng</StyledTableCell>
+                                                    <StyledTableCell>Số lượng</StyledTableCell>
+                                                    <StyledTableCell>Trạng thái</StyledTableCell>
+                                                    <StyledTableCell align="center">Thao tác</StyledTableCell>
+                                                </TableRow>
+                                            </TableHead>
+                                            <TableBody>
+                                                {pigPens.length > 0 ? (
+                                                    pigPens.map((pigPen) => (
+                                                        <TableRow key={pigPen.penId} hover>
+                                                            <TableCell>{pigPen.penId}</TableCell>
+                                                            <TableCell>{pigPen.name}</TableCell>
+                                                            <TableCell>{formatDate(pigPen.createdDate)}</TableCell>
+                                                            <TableCell>{formatDate(pigPen.closedDate)}</TableCell>
+                                                            <TableCell>{pigPen.quantity}</TableCell>
+                                                            <TableCell>{getPenStatus(pigPen.closedDate)}</TableCell>
+                                                            <TableCell align="center">
+                                                                <IconButton
+                                                                    color="primary"
+                                                                    onClick={() => handleEditPigPen(pigPen.penId)}
+                                                                    size="small"
+                                                                >
+                                                                    <EditIcon fontSize="small" />
+                                                                </IconButton>
+                                                                <IconButton
+                                                                    color="error"
+                                                                    onClick={() => handleDeletePigPen(pigPen)}
+                                                                    size="small"
+                                                                >
+                                                                    <DeleteIcon fontSize="small" />
+                                                                </IconButton>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    ))
+                                                ) : (
+                                                    <TableRow>
+                                                        <TableCell colSpan={7} align="center">
+                                                            Không có dữ liệu chuồng
+                                                        </TableCell>
+                                                    </TableRow>
+                                                )}
+                                            </TableBody>
+                                        </Table>
+                                    </TableContainer>
+                                )}
+                            </StyledPaper>
+                        )}
                     </Container>
                 )}
 
