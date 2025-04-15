@@ -22,7 +22,7 @@ import {
     Snackbar,
     Alert,
     InputAdornment,
-    Grid
+    Grid, TablePagination
 } from "@mui/material";
 import {Add, Edit, Delete, Search, ArrowBack} from "@mui/icons-material";
 import PigPenFormUpdate from "./PenFormUpdate.jsx";
@@ -51,7 +51,8 @@ export default function PenManager() {
     const [openUpdateForm, setOpenUpdateForm] = useState(false);
     const [notification, setNotification] = useState({open: false, message: '', severity: 'success'});
     const [deleteDialog, setDeleteDialog] = useState({open: false, penId: null});
-
+    const [page, setPage] = useState(0); // Trang hiện tại
+    const [rowsPerPage, setRowsPerPage] = useState(10); // Số hàng trên mỗi trang
     const handleCloseNotification = () => {
         setNotification({...notification, open: false});
     };
@@ -137,6 +138,16 @@ export default function PenManager() {
         return d.toLocaleDateString("vi-VN");
     };
 
+    const handleChangePage = (event, newPage) => {
+        setPage(newPage);
+    };
+
+    const handleChangeRowsPerPage = (event) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPage(0); // Đặt lại trang về 0 khi thay đổi số hàng trên mỗi trang
+    };
+
+
     const handleDeleteClick = (id) => {
         setDeleteDialog({open: true, penId: id});
     };
@@ -158,6 +169,12 @@ export default function PenManager() {
         }
     };
 
+    const paginatedPigPens = filteredPigPens.slice(
+        page * rowsPerPage,
+        page * rowsPerPage + rowsPerPage
+    );
+
+
     return (
         <Box sx={{p: 4}}>
             <Stack direction="row" spacing={2} mb={3}>
@@ -171,6 +188,7 @@ export default function PenManager() {
                     Thêm Chuồng
                 </Button>
             </Stack>
+
 
             <StyledPaper sx={{mb: 3, p: 2}}>
                 <Grid container spacing={2}>
@@ -233,12 +251,15 @@ export default function PenManager() {
                 </Grid>
             </StyledPaper>
 
+            {/* Hiển thị tổng số chuồng */}
+            <Typography variant="h6" sx={{mb: 3}}>
+                Tổng số chuồng: {filteredPigPens.length}
+            </Typography>
 
             <TableContainer component={Paper}>
                 <Table sx={{minWidth: 650}} aria-label="pigpen table">
                     <TableHead>
                         <TableRow>
-                            <TableCell>Mã chuồng</TableCell>
                             <TableCell>Tên chuồng</TableCell>
                             <TableCell>Người chăm sóc</TableCell>
                             <TableCell>Ngày tạo</TableCell>
@@ -248,9 +269,8 @@ export default function PenManager() {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {filteredPigPens.map((pen, index) => (
+                        {paginatedPigPens.map((pen, index) => (
                             <TableRow key={pen.penId} sx={{backgroundColor: index % 2 === 0 ? "#f9f9f9" : "#ffffff"}}>
-                                <TableCell>{pen.penId}</TableCell>
                                 <TableCell>{pen.name}</TableCell>
                                 <TableCell>{pen.caretaker?.fullName || ""}</TableCell>
                                 <TableCell>{formatDate(pen.createdDate)}</TableCell>
@@ -275,8 +295,19 @@ export default function PenManager() {
                             </TableRow>
                         )}
                     </TableBody>
+
                 </Table>
             </TableContainer>
+
+            <TablePagination
+                rowsPerPageOptions={[10, 25, 50]}
+                component="div"
+                count={filteredPigPens.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={handleChangePage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+            />
 
             <Snackbar open={notification.open} autoHideDuration={3000} onClose={handleCloseNotification}
                       anchorOrigin={{vertical: 'top', horizontal: 'right'}}>
@@ -286,6 +317,7 @@ export default function PenManager() {
                 </Alert>
             </Snackbar>
 
+            {/* Dialogs */}
             <Dialog open={openCreateForm} onClose={() => setOpenCreateForm(false)} maxWidth="md" fullWidth
                     PaperProps={{sx: {maxWidth: '600px'}}}>
                 <DialogTitle sx={{display: "flex", alignItems: "center", gap: 1}}>
