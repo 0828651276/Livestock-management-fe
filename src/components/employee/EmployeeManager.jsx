@@ -166,25 +166,6 @@ export default function EmployeeManager() {
                 >
                     Thêm
                 </Button>
-                {/* Dialog thêm nhân viên */}
-                <Dialog open={openCreateForm} onClose={() => setOpenCreateForm(false)} maxWidth="sm" fullWidth>
-                    <DialogTitle>
-                        <PersonAddIcon sx={{ mr: 1 }} />
-                        Thêm nhân viên
-                    </DialogTitle>
-                    <DialogContent>
-                        <EmployeeFormCreate
-                            onClose={(success) => {
-                                setOpenCreateForm(false);
-                                if (success) {
-                                    showNotification("Thêm nhân viên thành công");
-                                    fetchEmployees();
-                                }
-                            }}
-                        />
-                    </DialogContent>
-                </Dialog>
-
             </Stack>
 
             {/* Bảng danh sách */}
@@ -271,20 +252,55 @@ export default function EmployeeManager() {
                 </Alert>
             </Snackbar>
 
-            {/* Dialog form thêm/sửa nhân viên */}
-            <Dialog open={openUpdateForm} onClose={() => setOpenUpdateForm(false)} maxWidth="sm" fullWidth>
+            {/* Dialog form thêm nhân viên - Đã cập nhật để giống dialog update */}
+            <Dialog 
+                open={openCreateForm} 
+                onClose={() => setOpenCreateForm(false)} 
+                maxWidth="md" 
+                fullWidth
+                PaperProps={{
+                    sx: { maxWidth: '600px' }  // Giới hạn kích thước tối đa
+                }}
+            >
                 <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <PersonAddIcon />
-                    {selectedEmployee ? "Cập nhật nhân viên" : "Thêm nhân viên"}
+                    Thêm nhân viên
                 </DialogTitle>
-                <DialogContent>
+                <DialogContent sx={{ p: 0 }}>  {/* Loại bỏ padding mặc định */}
+                    <EmployeeFormCreate
+                        onClose={(success) => {
+                            setOpenCreateForm(false);
+                            if (success) {
+                                showNotification("Thêm nhân viên thành công");
+                                fetchEmployees();
+                            }
+                        }}
+                    />
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog form cập nhật nhân viên */}
+            <Dialog 
+                open={openUpdateForm} 
+                onClose={() => setOpenUpdateForm(false)} 
+                maxWidth="md" 
+                fullWidth
+                PaperProps={{
+                    sx: { maxWidth: '600px' }  // Giới hạn kích thước tối đa
+                }}
+            >
+                <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <PersonAddIcon />
+                    Cập nhật nhân viên
+                </DialogTitle>
+                <DialogContent sx={{ p: 0 }}>  {/* Loại bỏ padding mặc định */}
                     <EmployeeFormUpdate
                         employeeData={selectedEmployee}
                         onClose={(success) => {
                             setOpenUpdateForm(false);
                             setSelectedEmployee(null);
                             if (success) {
-                                showNotification(selectedEmployee ? "Cập nhật nhân viên thành công" : "Thêm nhân viên thành công");
+                                showNotification("Cập nhật nhân viên thành công");
                                 fetchEmployees();
                             }
                         }}

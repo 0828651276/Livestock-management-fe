@@ -8,12 +8,10 @@ import {
     DialogActions,
     Typography,
     Avatar,
-    Card,
-    CardContent,
-    CardHeader,
-    Divider,
+    IconButton,
 } from "@mui/material";
 import { employeeService } from "../../services/employeeService";
+import PhotoCamera from "@mui/icons-material/PhotoCamera";
 
 const initialState = {
     fullName: "",
@@ -69,53 +67,69 @@ const EmployeeFormCreate = ({ onClose }) => {
         <Box
             component="form"
             onSubmit={handleSubmit}
-            sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 4, p: 2 }}
+            sx={{
+                display: "flex",
+                flexDirection: { xs: "column", md: "column" },
+                gap: 2,
+                p: 4,
+                minHeight: "600px",
+            }}
         >
-            {/* Ảnh đại diện bên trái */}
-            <Card sx={{ width: 260, textAlign: "center", p: 2 }}>
-                <CardHeader title="Ảnh đại diện" />
-                <CardContent>
-                    <Avatar
-                        src={previewUrl}
-                        alt="Avatar Preview"
-                        sx={{
-                            width: 200,
-                            height: 200,
-                            margin: "0 auto",
-                            mb: 1,
-                            border: "2px solid #ccc",
-                        }}
+            {/* Avatar nhỏ hơn */}
+            <Box
+                sx={{
+                    textAlign: "center",
+                    mb: 2,
+                    position: "relative",
+                    width: "fit-content",
+                    margin: "0 auto",
+                }}
+            >
+                <Avatar
+                    src={previewUrl}
+                    alt="Avatar"
+                    sx={{
+                        width: 100,
+                        height: 100,
+                        border: "2px solid #ccc",
+                    }}
+                />
+                <IconButton
+                    color="primary"
+                    aria-label="upload picture"
+                    component="label"
+                    sx={{
+                        position: "absolute",
+                        bottom: 0,
+                        right: -10,
+                        backgroundColor: "#1976d2",
+                        "&:hover": {
+                            backgroundColor: "#1565c0",
+                        },
+                    }}
+                >
+                    <input
+                        type="file"
+                        hidden
+                        accept="image/*"
+                        onChange={handleFileChange}
                     />
-                    <Typography variant="body2" color="text.secondary" gutterBottom>
-                        JPG hoặc PNG không vượt quá 5MB
-                    </Typography>
-                    <Button variant="contained" component="label" fullWidth>
-                        Tải ảnh lên
-                        <input type="file" accept="image/*" hidden onChange={handleFileChange} />
-                    </Button>
-                    {avatar && (
-                        <Typography fontSize={12} mt={1}>
-                            Đã chọn: {avatar.name}
-                        </Typography>
-                    )}
-                </CardContent>
-            </Card>
+                    <PhotoCamera sx={{ color: "white" }} />
+                </IconButton>
+            </Box>
 
-            {/* Thông tin bên phải */}
-            <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
+            <Typography variant="h6" sx={{ mb: 1, fontWeight: "bold" }}>
+                THÔNG TIN CƠ BẢN
+            </Typography>
+
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 <TextField
                     label="Họ tên"
                     name="fullName"
                     value={employee.fullName}
                     onChange={handleChange}
                     required
-                />
-                <TextField
-                    label="Tên đăng nhập"
-                    name="username"
-                    value={employee.username}
-                    onChange={handleChange}
-                    required
+                    sx={{ "& .MuiInputBase-input": { py: 1.5 } }}
                 />
                 <TextField
                     label="Email"
@@ -124,6 +138,7 @@ const EmployeeFormCreate = ({ onClose }) => {
                     value={employee.email}
                     onChange={handleChange}
                     required
+                    sx={{ "& .MuiInputBase-input": { py: 1.5 } }}
                 />
                 <TextField
                     label="Ngày sinh"
@@ -133,27 +148,67 @@ const EmployeeFormCreate = ({ onClose }) => {
                     onChange={handleChange}
                     InputLabelProps={{ shrink: true }}
                     required
+                    sx={{ "& .MuiInputBase-input": { py: 1.5 } }}
                 />
-                <TextField select label="Giới tính" name="gender" value={employee.gender} onChange={handleChange}>
-                    <MenuItem value="MALE">Nam</MenuItem>
-                    <MenuItem value="FEMALE">Nữ</MenuItem>
-                    <MenuItem value="OTHER">Khác</MenuItem>
-                </TextField>
+                <Box sx={{ display: "flex", flexDirection: "row", gap: 3 }}>
+                    <TextField
+                        select
+                        label="Giới tính"
+                        name="gender"
+                        value={employee.gender}
+                        onChange={handleChange}
+                        sx={{ "& .MuiInputBase-input": { py: 1.5 } }}
+                        fullWidth
+                    >
+                        <MenuItem value="MALE">Nam</MenuItem>
+                        <MenuItem value="FEMALE">Nữ</MenuItem>
+                        <MenuItem value="OTHER">Khác</MenuItem>
+                    </TextField>
+                    <TextField
+                        label="Số CCCD"
+                        name="idCardNumber"
+                        value={employee.idCardNumber}
+                        onChange={handleChange}
+                        required
+                        sx={{ "& .MuiInputBase-input": { py: 1.5 } }}
+                        fullWidth
+                    />
+                </Box>
+            </Box>
+
+            <Typography variant="h6" sx={{ mt: 2, mb: 1, fontWeight: "bold" }}>
+                TẠO TÀI KHOẢN
+            </Typography>
+
+            <Box sx={{ display: "flex", flexDirection: "row", gap: 3 }}>
                 <TextField
-                    label="Số CCCD"
-                    name="idCardNumber"
-                    value={employee.idCardNumber}
+                    label="Tên đăng nhập"
+                    name="username"
+                    value={employee.username}
                     onChange={handleChange}
                     required
+                    sx={{ 
+                        "& .MuiInputBase-input": { py: 1.5 },
+                        width: '50%'  // Đặt độ rộng bằng một nửa container
+                    }}
                 />
+            </Box>
 
-                <Divider sx={{ my: 2 }} />
-
-                <DialogActions sx={{ justifyContent: "flex-end" }}>
-                    <Button onClick={() => onClose(false)} color="secondary">
+            <Box sx={{ mt: 2 }}>
+                <DialogActions sx={{ justifyContent: "flex-end", gap: 2 }}>
+                    <Button
+                        onClick={() => onClose(false)}
+                        color="error"
+                        sx={{ px: 3, py: 1 }}
+                    >
                         Hủy
                     </Button>
-                    <Button type="submit" variant="contained" disabled={loading}>
+                    <Button
+                        type="submit"
+                        variant="contained"
+                        disabled={loading}
+                        sx={{ px: 3, py: 1 }}
+                    >
                         {loading ? <CircularProgress size={24} /> : "Thêm mới"}
                     </Button>
                 </DialogActions>
