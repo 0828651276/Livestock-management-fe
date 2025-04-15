@@ -12,7 +12,7 @@ import {
   Grid,
   Paper,
 } from "@mui/material";
-import { employeeService } from "../../services/employeeService";
+import { employeeService } from "../../services/EmployeeService.js";
 
 const initialState = {
   fullName: "",
