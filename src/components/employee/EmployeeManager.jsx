@@ -23,16 +23,18 @@ import {
     Alert
 } from "@mui/material";
 import { Add, Edit, Delete, Search, ArrowBack } from "@mui/icons-material";
-import EmployeeForm from "./EmployeeForm.jsx";
+import EmployeeFormUpdate from "./EmployeeFormUpdate.jsx";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import { useNavigate } from "react-router-dom";
+import EmployeeFormCreate from "./EmployeeFormCreate.jsx";
 
 export default function EmployeeManager() {
     const navigate = useNavigate();
     const [employees, setEmployees] = useState([]);
     const [searchKeyword, setSearchKeyword] = useState("");
     const [selectedEmployee, setSelectedEmployee] = useState(null);
-    const [openForm, setOpenForm] = useState(false);
+    const [openCreateForm, setOpenCreateForm] = useState(false);
+    const [openUpdateForm, setOpenUpdateForm] = useState(false);
     const [notification, setNotification] = useState({
         open: false,
         message: '',
@@ -118,9 +120,9 @@ export default function EmployeeManager() {
         <Box sx={{ p: 4 }}>
             {/* Header với nút quay lại */}
             <Stack direction="row" alignItems="center" spacing={2} mb={3}>
-                <IconButton 
+                <IconButton
                     onClick={() => navigate('/dashboard')}
-                    sx={{ 
+                    sx={{
                         color: '#1E8449',
                         '&:hover': {
                             backgroundColor: 'rgba(30, 132, 73, 0.08)'
@@ -160,13 +162,29 @@ export default function EmployeeManager() {
                     variant="contained"
                     color="success"
                     startIcon={<Add />}
-                    onClick={() => {
-                        setSelectedEmployee(null); // reset khi thêm mới
-                        setOpenForm(true);
-                    }}
+                    onClick={() => setOpenCreateForm(true)}
                 >
                     Thêm
                 </Button>
+                {/* Dialog thêm nhân viên */}
+                <Dialog open={openCreateForm} onClose={() => setOpenCreateForm(false)} maxWidth="sm" fullWidth>
+                    <DialogTitle>
+                        <PersonAddIcon sx={{ mr: 1 }} />
+                        Thêm nhân viên
+                    </DialogTitle>
+                    <DialogContent>
+                        <EmployeeFormCreate
+                            onClose={(success) => {
+                                setOpenCreateForm(false);
+                                if (success) {
+                                    showNotification("Thêm nhân viên thành công");
+                                    fetchEmployees();
+                                }
+                            }}
+                        />
+                    </DialogContent>
+                </Dialog>
+
             </Stack>
 
             {/* Bảng danh sách */}
@@ -214,7 +232,7 @@ export default function EmployeeManager() {
                                                 startIcon={<Edit />}
                                                 onClick={() => {
                                                     setSelectedEmployee(e);
-                                                    setOpenForm(true);
+                                                    setOpenUpdateForm(true);
                                                 }}
                                             >
                                                 Sửa
@@ -254,16 +272,16 @@ export default function EmployeeManager() {
             </Snackbar>
 
             {/* Dialog form thêm/sửa nhân viên */}
-            <Dialog open={openForm} onClose={() => setOpenForm(false)} maxWidth="sm" fullWidth>
+            <Dialog open={openUpdateForm} onClose={() => setOpenUpdateForm(false)} maxWidth="sm" fullWidth>
                 <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <PersonAddIcon />
                     {selectedEmployee ? "Cập nhật nhân viên" : "Thêm nhân viên"}
                 </DialogTitle>
                 <DialogContent>
-                    <EmployeeForm
+                    <EmployeeFormUpdate
                         employeeData={selectedEmployee}
                         onClose={(success) => {
-                            setOpenForm(false);
+                            setOpenUpdateForm(false);
                             setSelectedEmployee(null);
                             if (success) {
                                 showNotification(selectedEmployee ? "Cập nhật nhân viên thành công" : "Thêm nhân viên thành công");
