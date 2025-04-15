@@ -8,6 +8,7 @@ import PigPenPage from "./pages/PigPenPage.jsx";
 import EmployeeManager from './components/employee/EmployeeManager.jsx';
 import EmployeeFormUpdate from "./components/employee/EmployeeFormUpdate.jsx";
 import EmployeeFormCreate from "./components/employee/EmployeeFormCreate.jsx";
+import EmployeeDetail from "./components/employee/EmployeeDetail.jsx";
 // Tạo theme tùy chỉnh
 const theme = createTheme({
   palette: {
@@ -55,6 +56,7 @@ function App() {
           <Route path="/employees" element={<EmployeeManager />} />
           <Route path="/employees/update" element={<EmployeeFormUpdate />} />
           <Route path="/employees/edit" element={<EmployeeFormCreate />} />
+          <Route path="/employees/:employeeId" element={<EmployeeDetail />} />
 
         </Routes>
       </Router>

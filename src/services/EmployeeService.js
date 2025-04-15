@@ -13,6 +13,17 @@ export const employeeService = {
         return res;
     },
 
+    getById: async (id) => {
+        const token = authService.getCurrentUser();
+        const res = await axios.get(`${API_URL}/${id}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+        return res;
+    },
+
+
     search: async ({id, name}) => {
         const token = authService.getCurrentUser();
         const params = {};
