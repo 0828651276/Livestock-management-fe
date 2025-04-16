@@ -1,0 +1,104 @@
+/* EmployeeManager styles */
+
+.search-container {
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.search-container:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.action-button {
+    transition: all 0.2s ease;
+}
+
+.action-button:hover {
+    transform: translateY(-2px);
+}
+
+/* Table styles */
+.employee-table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.employee-table th {
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+}
+
+.employee-table tr:hover {
+    background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Custom scrollbar for tables */
+.table-container::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+}
+
+.table-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+    background: #1E8449;
+    border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+    background: #166e3a;
+}
+
+/* Animation for rows */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.employee-table tbody tr {
+    animation: fadeIn 0.3s ease forwards;
+}
+
+/* Adding some hover effects for buttons */
+.MuiButton-containedPrimary {
+    transition: all 0.3s ease;
+}
+
+.MuiButton-containedPrimary:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+/* Improving avatar in forms */
+.avatar-wrapper {
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.avatar-wrapper:hover {
+    transform: scale(1.05);
+}
+
+/* Custom styles for form inputs */
+.MuiOutlinedInput-root {
+    transition: all 0.3s ease;
+}
+
+.MuiOutlinedInput-root:hover {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Add a subtle effect to the table row when clicked */
+.employee-table tbody tr:active {
+    transform: scale(0.99);
+}
