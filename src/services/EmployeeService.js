@@ -1,4 +1,4 @@
-// src/services/employeeService.js
+// src/services/EmployeeService.js
 import axios from "axios";
 import {authService} from "./authService";
 

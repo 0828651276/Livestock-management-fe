@@ -4,11 +4,14 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import MainLayout from './layout/MainLayout';
 import DashboardPage from './pages/DashboardPage';
 import { authService } from './services/authService';
-import PigPenPage from "./pages/PigPenPage.jsx";
 import EmployeeManager from './components/employee/EmployeeManager.jsx';
 import EmployeeFormUpdate from "./components/employee/EmployeeFormUpdate.jsx";
 import EmployeeFormCreate from "./components/employee/EmployeeFormCreate.jsx";
 import EmployeeDetail from "./components/employee/EmployeeDetail.jsx";
+import PenFormCreate from "./components/pen/PenFormCreate.jsx";
+import PenFormUpdate from "./components/pen/PenFormUpdate.jsx";
+import PigPenManager from "./components/pen/PenManager.jsx"; // Thêm import này
+
 import ChangePasswordForm from './components/employee/ChangePasswordForm.jsx'; // Import form đổi mật khẩu
 
 // Tạo theme tùy chỉnh
@@ -48,22 +51,23 @@ function App() {
   }
 
   return (
-    <ThemeProvider theme={theme}>
-      <Router>
-        <Routes>
-          <Route path="/" element={authenticated ? <Navigate to="/dashboard" /> : <MainLayout />} />
-          <Route path="/dashboard" element={<ProtectedRoute element={<DashboardPage />} />} />
-          {/* Thêm các route khác ở đây nếu cần */}
-          <Route path="/pigpens" element={<ProtectedRoute element={<PigPenPage />} />} />
-          <Route path="/employees" element={<EmployeeManager />} />
-          <Route path="/employees/update" element={<EmployeeFormUpdate />} />
-          <Route path="/employees/edit" element={<EmployeeFormCreate />} />
-          <Route path="/employees/:employeeId" element={<EmployeeDetail />} />
-          <Route path="/change-password" element={<ChangePasswordForm />} />
-
-        </Routes>
-      </Router>
-    </ThemeProvider>
+      <ThemeProvider theme={theme}>
+        <Router>
+          <Routes>
+            <Route path="/" element={authenticated ? <Navigate to="/dashboard" /> : <MainLayout />} />
+            <Route path="/dashboard" element={<ProtectedRoute element={<DashboardPage />} />} />
+            {/* Thêm các route khác ở đây nếu cần */}
+            <Route path="/pigpens" element={<ProtectedRoute element={<PigPenManager />} />} />
+            <Route path="/pigpens/update" element={<ProtectedRoute element={<PenFormUpdate />} />} />
+            <Route path="/pigpens/edit" element={<ProtectedRoute element={<PenFormCreate />} />} />
+            <Route path="/employees" element={<ProtectedRoute element={<EmployeeManager />} />} />
+            <Route path="/employees/update" element={<ProtectedRoute element={<EmployeeFormUpdate />} />} />
+            <Route path="/employees/edit" element={<ProtectedRoute element={<EmployeeFormCreate />} />} />
+            <Route path="/employees/:employeeId" element={<ProtectedRoute element={<EmployeeDetail />} />} />
+              <Route path="/change-password" element={<ChangePasswordForm />} />
+          </Routes>
+        </Router>
+      </ThemeProvider>
   );
 }
 

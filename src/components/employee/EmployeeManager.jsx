@@ -120,30 +120,9 @@ export default function EmployeeManager() {
         <Box sx={{ p: 4 }}>
             {/* Header với nút quay lại */}
             <Stack direction="row" alignItems="center" spacing={2} mb={3}>
-                <IconButton
-                    onClick={() => navigate('/dashboard')}
-                    sx={{
-                        color: '#1E8449',
-                        '&:hover': {
-                            backgroundColor: 'rgba(30, 132, 73, 0.08)'
-                        }
-                    }}
-                >
-                    <ArrowBack />
-                </IconButton>
                 <Typography variant="h5" component="h1">
                     Quản lý nhân viên
                 </Typography>
-            </Stack>
-
-            {/* Menu */}
-            <Stack direction="row" spacing={2} mb={3}>
-                <Button variant="contained" color="primary">
-                    Quản lý nhân viên
-                </Button>
-                <Button variant="outlined" color="primary">
-                    Đăng thông báo
-                </Button>
             </Stack>
 
             {/* Thanh tìm kiếm + nút thêm */}
