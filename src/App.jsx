@@ -30,7 +30,16 @@ const theme = createTheme({
 // Protected route component để kiểm tra xác thực
 const ProtectedRoute = ({ element }) => {
   const token = authService.getCurrentUser();
-  return token ? element : <Navigate to="/" />;
+  return token ? element : <Navigate to="/login" />;
+};
+
+const LoginRoute = () => {
+  const token = authService.getCurrentUser();
+  if (token) {
+    authService.logout();
+    return <MainLayout />;
+  }
+  return <MainLayout />;
 };
 
 function App() {
@@ -52,7 +61,8 @@ function App() {
       <ThemeProvider theme={theme}>
         <Router>
           <Routes>
-            <Route path="/" element={authenticated ? <Navigate to="/dashboard" /> : <MainLayout />} />
+            <Route path="/" element={authenticated ? <Navigate to="/dashboard" /> : <Navigate to="/login" />} />
+            <Route path="/login" element={<LoginRoute />} />
             <Route path="/dashboard" element={<ProtectedRoute element={<DashboardPage />} />} />
             {/* Thêm các route khác ở đây nếu cần */}
             <Route path="/pigpens" element={<ProtectedRoute element={<PigPenManager />} />} />
