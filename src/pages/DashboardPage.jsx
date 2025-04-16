@@ -20,6 +20,7 @@ import { styled } from '@mui/material/styles';
 import { authService } from '../services/authService';
 import EmployeeManager from "../components/employee/EmployeeManager.jsx";
 import PenManager from "../components/pen/PenManager.jsx";
+import { useNavigate } from 'react-router-dom';
 
 const drawerWidth = 240;
 
@@ -46,6 +47,7 @@ const features = [
 ];
 
 function DashboardPage() {
+    const navigate = useNavigate();
     const [mobileOpen, setMobileOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [anchorEl, setAnchorEl] = useState(null);
@@ -57,13 +59,13 @@ function DashboardPage() {
     useEffect(() => {
         const token = authService.getCurrentUser();
         if (!token) {
-            window.location.href = '/';
+            navigate('/');
         } else {
             setLoading(false);
             const userInfo = authService.getUserInfo();
             if (userInfo) setUser(userInfo);
         }
-    }, []);
+    }, [navigate]);
 
     const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
 
@@ -80,7 +82,7 @@ function DashboardPage() {
     const handleLogoutConfirm = () => {
         setLogoutConfirmOpen(false);
         authService.logout();
-        window.location.href = '/';
+        navigate('/');
     };
 
     const handleMenuClick = (menuId) => setActiveMenu(menuId);
