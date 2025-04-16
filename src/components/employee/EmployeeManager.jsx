@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { employeeService } from "../../services/EmployeeService.js";
+import "../styles/EmployeeManager.css";
 import {
     Button,
     TextField,
@@ -20,17 +21,58 @@ import {
     Typography,
     IconButton,
     Snackbar,
-    Alert
+    Alert,
+    InputAdornment,
+    TablePagination,
+    Tooltip
 } from "@mui/material";
-import { Add, Edit, Delete, Search, ArrowBack } from "@mui/icons-material";
+import {
+    Add,
+    Edit,
+    Delete,
+    Search,
+    ArrowBack,
+    PersonAdd
+} from "@mui/icons-material";
 import EmployeeFormUpdate from "./EmployeeFormUpdate.jsx";
-import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import { useNavigate } from "react-router-dom";
 import EmployeeFormCreate from "./EmployeeFormCreate.jsx";
+import { styled } from '@mui/material/styles';
+
+// Styled components
+const ActionButton = styled(Button)(({ theme }) => ({
+    minWidth: '32px',
+    padding: '6px 12px',
+    boxShadow: 'none',
+    '&:hover': {
+        boxShadow: theme.shadows[2]
+    }
+}));
+
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+    padding: '12px 16px',
+    fontSize: '0.875rem',
+}));
+
+const StyledTableHeaderCell = styled(TableCell)(({ theme }) => ({
+    backgroundColor: theme.palette.primary.main,
+    color: theme.palette.common.white,
+    padding: '14px 16px',
+    fontSize: '0.875rem',
+    fontWeight: 'bold'
+}));
+
+const SearchContainer = styled(Box)(({ theme }) => ({
+    display: 'flex',
+    alignItems: 'center',
+    marginBottom: theme.spacing(3),
+    gap: theme.spacing(2)
+}));
 
 export default function EmployeeManager() {
     const navigate = useNavigate();
     const [employees, setEmployees] = useState([]);
+    const [filteredEmployees, setFilteredEmployees] = useState([]);
     const [searchKeyword, setSearchKeyword] = useState("");
     const [selectedEmployee, setSelectedEmployee] = useState(null);
     const [openCreateForm, setOpenCreateForm] = useState(false);
@@ -44,6 +86,8 @@ export default function EmployeeManager() {
         open: false,
         employeeId: null
     });
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
 
     const handleCloseNotification = () => {
         setNotification({ ...notification, open: false });
@@ -61,32 +105,68 @@ export default function EmployeeManager() {
         fetchEmployees();
     }, []);
 
+    useEffect(() => {
+        if (searchKeyword.trim() === '') {
+            setFilteredEmployees(employees);
+        } else {
+            const filtered = employees.filter(
+                (e) => e.fullName?.toLowerCase().includes(searchKeyword.toLowerCase())
+            );
+            setFilteredEmployees(filtered);
+        }
+    }, [searchKeyword, employees]);
+
     const fetchEmployees = async () => {
         try {
             const res = await employeeService.getAll();
-            setEmployees(res.data);
+            const filteredList = res.data.filter(e => e.role?.toLowerCase() !== "manager");
+            setEmployees(filteredList);
+            setFilteredEmployees(filteredList);
         } catch (err) {
             console.error("Lỗi khi lấy danh sách nhân viên:", err);
             showNotification("Không thể tải danh sách nhân viên", "error");
         }
     };
 
-    const handleSearch = async () => {
-        try {
-            const res = await employeeService.search({ name: searchKeyword });
-            setEmployees(res.data);
-            if (res.data.length === 0) {
-                showNotification("Không tìm thấy nhân viên nào", "info");
-            }
-        } catch (err) {
-            console.error("Lỗi khi tìm kiếm nhân viên:", err);
-            showNotification("Lỗi khi tìm kiếm nhân viên", "error");
+    const handleSearch = () => {
+        if (searchKeyword.trim() === '') {
+            setFilteredEmployees(employees);
+            return;
+        }
+
+        const filtered = employees.filter(
+            (e) => e.fullName?.toLowerCase().includes(searchKeyword.toLowerCase())
+        );
+        setFilteredEmployees(filtered);
+
+        if (filtered.length === 0) {
+            showNotification("Không tìm thấy nhân viên nào", "info");
+        }
+    };
+
+    const handleSearchChange = (e) => {
+        setSearchKeyword(e.target.value);
+    };
+
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter') {
+            handleSearch();
         }
     };
 
     const formatDate = (dateStr) => {
+        if (!dateStr) return "";
         const d = new Date(dateStr);
         return d.toLocaleDateString("vi-VN");
+    };
+
+    const handleChangePage = (event, newPage) => {
+        setPage(newPage);
+    };
+
+    const handleChangeRowsPerPage = (event) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPage(0);
     };
 
     const handleDeleteClick = (id) => {
@@ -116,103 +196,223 @@ export default function EmployeeManager() {
         }
     };
 
-    return (
-        <Box sx={{ p: 4 }}>
-            {/* Header với nút quay lại */}
-            <Stack direction="row" alignItems="center" spacing={2} mb={3}>
-                <Typography variant="h5" component="h1">
-                    Quản lý nhân viên
-                </Typography>
-            </Stack>
+    const paginatedEmployees = filteredEmployees.slice(
+        page * rowsPerPage,
+        page * rowsPerPage + rowsPerPage
+    );
 
-            {/* Thanh tìm kiếm + nút thêm */}
-            <Stack direction="row" spacing={2} alignItems="center" mb={3}>
-                <TextField
-                    label="Tìm theo tên"
-                    variant="outlined"
-                    value={searchKeyword}
-                    onChange={(e) => setSearchKeyword(e.target.value)}
-                    sx={{ width: 300 }}
-                />
-                <Button variant="contained" color="primary" startIcon={<Search />} onClick={handleSearch}>
-                    Tìm kiếm
+    return (
+        <Box sx={{ py: 2 }}>
+            {/* Menu tabs */}
+            <Stack direction="row" spacing={2} mb={3}>
+                <Button
+                    variant="contained"
+                    color="primary"
+                    sx={{
+                        fontWeight: 'bold',
+                        px: 3,
+                        borderRadius: '4px',
+                        textTransform: 'uppercase'
+                    }}
+                >
+                    Quản lý nhân viên
                 </Button>
                 <Button
+                    variant="outlined"
+                    color="primary"
+                    sx={{
+                        fontWeight: 'bold',
+                        borderRadius: '4px',
+                        textTransform: 'uppercase'
+                    }}
+                >
+                    Đăng thông báo
+                </Button>
+            </Stack>
+
+            {/* Search & Add section */}
+            <Paper
+                elevation={1}
+                sx={{
+                    p: 2,
+                    mb: 3,
+                    borderRadius: '8px',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)'
+                    }
+                }}
+                className="search-container"
+            >
+                <Stack
+                    direction={{ xs: 'column', sm: 'row' }}
+                    spacing={2}
+                    alignItems={{ xs: 'stretch', sm: 'center' }}
+                >
+                    <TextField
+                        label="Tìm theo tên"
+                        variant="outlined"
+                        value={searchKeyword}
+                        onChange={handleSearchChange}
+                        onKeyPress={handleKeyPress}
+                        sx={{ flexGrow: 1 }}
+                        size="small"
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <Search color="action" />
+                                </InputAdornment>
+                            ),
+                        }}
+                    />
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        startIcon={<Search />}
+                        onClick={handleSearch}
+                        sx={{
+                            flexShrink: 0,
+                            fontWeight: 'bold',
+                            textTransform: 'uppercase'
+                        }}
+                    >
+                        Tìm kiếm
+                    </Button>
+                </Stack>
+            </Paper>
+
+
+            {/* Counter */}
+            <Typography variant="h6" component="h2" sx={{ mb: 2, fontWeight: 'bold' }}>
+                Tổng số nhân viên: {filteredEmployees.length}
+                <div>
+                    <Button
                     variant="contained"
                     color="success"
                     startIcon={<Add />}
                     onClick={() => setOpenCreateForm(true)}
+                    sx={{
+                        flexShrink: 0,
+                        fontWeight: 'bold',
+                        backgroundColor: '#1E8449',
+                        '&:hover': {
+                            backgroundColor: '#155d32'
+                        },
+                        textTransform: 'uppercase'
+                    }}
                 >
-                    Thêm
+                    Thêm nhân viên
                 </Button>
-            </Stack>
+                </div>
 
-            {/* Bảng danh sách */}
-            <TableContainer component={Paper}>
-                <Table sx={{ minWidth: 650 }} aria-label="employee table">
+            </Typography>
+
+            {/* Employee Table */}
+            <TableContainer
+                component={Paper}
+                sx={{
+                    borderRadius: '8px',
+                    overflow: 'hidden',
+                    boxShadow: 2,
+                    mb: 2
+                }}
+                className="table-container"
+            >
+                <Table sx={{ minWidth: 650 }} aria-label="employee table" className="employee-table">
                     <TableHead>
                         <TableRow>
-                            <TableCell>Mã nhân viên</TableCell>
-                            <TableCell>Họ và tên</TableCell>
-                            <TableCell>Tài khoản</TableCell>
-                            <TableCell>Email</TableCell>
-                            <TableCell>Ngày sinh</TableCell>
-                            <TableCell>Giới tính</TableCell>
-                            <TableCell>CMND</TableCell>
-                            <TableCell>Hành động</TableCell>
+                            <StyledTableHeaderCell>Mã nhân viên</StyledTableHeaderCell>
+                            <StyledTableHeaderCell>Họ và tên</StyledTableHeaderCell>
+                            <StyledTableHeaderCell>Tài khoản</StyledTableHeaderCell>
+                            <StyledTableHeaderCell>Email</StyledTableHeaderCell>
+                            <StyledTableHeaderCell>Ngày sinh</StyledTableHeaderCell>
+                            <StyledTableHeaderCell>Giới tính</StyledTableHeaderCell>
+                            <StyledTableHeaderCell>Số CCCD/CMND</StyledTableHeaderCell>
+                            <StyledTableHeaderCell align="center">Hành động</StyledTableHeaderCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {employees
-                            .filter((e) => e.role?.toLowerCase() !== "manager")
-                            .map((e, index) => (
+                        {paginatedEmployees.length > 0 ? (
+                            paginatedEmployees.map((e, index) => (
                                 <TableRow
                                     key={e.employeeId}
-                                    sx={{ backgroundColor: index % 2 === 0 ? "#f9f9f9" : "#ffffff" }}
+                                    sx={{
+                                        backgroundColor: index % 2 === 0 ? "#f9f9f9" : "#ffffff",
+                                        '&:hover': { backgroundColor: '#f0f7ff' },
+                                        animation: 'fadeIn 0.3s ease forwards'
+                                    }}
                                 >
-                                    <TableCell>{e.employeeId}</TableCell>
-                                    <TableCell>{e.fullName}</TableCell>
-                                    <TableCell>{e.username}</TableCell>
-                                    <TableCell>{e.email}</TableCell>
-                                    <TableCell>{formatDate(e.birthDate)}</TableCell>
-                                    <TableCell>
+                                    <StyledTableCell>{e.employeeId}</StyledTableCell>
+                                    <StyledTableCell sx={{ fontWeight: 'medium' }}>{e.fullName}</StyledTableCell>
+                                    <StyledTableCell>{e.username}</StyledTableCell>
+                                    <StyledTableCell>{e.email}</StyledTableCell>
+                                    <StyledTableCell>{formatDate(e.birthDate)}</StyledTableCell>
+                                    <StyledTableCell>
                                         {e.gender === "MALE"
                                             ? "Nam"
                                             : e.gender === "FEMALE"
                                                 ? "Nữ"
                                                 : "Khác"}
-                                    </TableCell>
-                                    <TableCell>{e.idCardNumber}</TableCell>
-                                    <TableCell>
-                                        <Stack direction="row" spacing={1}>
-                                            <Button
-                                                size="small"
-                                                variant="outlined"
-                                                color="warning"
-                                                startIcon={<Edit />}
-                                                onClick={() => {
-                                                    setSelectedEmployee(e);
-                                                    setOpenUpdateForm(true);
-                                                }}
-                                            >
-                                                Sửa
-                                            </Button>
-                                            <Button
-                                                size="small"
-                                                variant="outlined"
-                                                color="error"
-                                                startIcon={<Delete />}
-                                                onClick={() => handleDeleteClick(e.employeeId)}
-                                            >
-                                                Xoá
-                                            </Button>
+                                    </StyledTableCell>
+                                    <StyledTableCell>{e.idCardNumber}</StyledTableCell>
+                                    <StyledTableCell>
+                                        <Stack direction="row" spacing={1} justifyContent="center">
+                                            <Tooltip title="Sửa thông tin">
+                                                <ActionButton
+                                                    size="small"
+                                                    variant="contained"
+                                                    color="warning"
+                                                    className="action-button"
+                                                    onClick={() => {
+                                                        setSelectedEmployee(e);
+                                                        setOpenUpdateForm(true);
+                                                    }}
+                                                >
+                                                    <Edit fontSize="small" />
+                                                    <Box component="span" sx={{ ml: 0.5, display: { xs: 'none', sm: 'inline' } }}>SỬA</Box>
+                                                </ActionButton>
+                                            </Tooltip>
+                                            <Tooltip title="Xóa nhân viên">
+                                                <ActionButton
+                                                    size="small"
+                                                    variant="contained"
+                                                    color="error"
+                                                    className="action-button"
+                                                    onClick={() => handleDeleteClick(e.employeeId)}
+                                                >
+                                                    <Delete fontSize="small" />
+                                                    <Box component="span" sx={{ ml: 0.5, display: { xs: 'none', sm: 'inline' } }}>XÓA</Box>
+                                                </ActionButton>
+                                            </Tooltip>
                                         </Stack>
-                                    </TableCell>
+                                    </StyledTableCell>
                                 </TableRow>
-                            ))}
+                            ))
+                        ) : (
+                            <TableRow>
+                                <TableCell colSpan={8} align="center" sx={{ py: 3 }}>
+                                    <Typography variant="body1" color="text.secondary">
+                                        Không có dữ liệu nhân viên
+                                    </Typography>
+                                </TableCell>
+                            </TableRow>
+                        )}
                     </TableBody>
                 </Table>
             </TableContainer>
+
+            {/* Pagination */}
+            <TablePagination
+                component="div"
+                count={filteredEmployees.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={handleChangePage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+                rowsPerPageOptions={[10, 25, 50]}
+                labelRowsPerPage="Hiển thị:"
+                labelDisplayedRows={({ from, to, count }) => `${from}-${to} của ${count}`}
+            />
 
             {/* Snackbar for notifications */}
             <Snackbar
@@ -231,21 +431,32 @@ export default function EmployeeManager() {
                 </Alert>
             </Snackbar>
 
-            {/* Dialog form thêm nhân viên - Đã cập nhật để giống dialog update */}
-            <Dialog 
-                open={openCreateForm} 
-                onClose={() => setOpenCreateForm(false)} 
-                maxWidth="md" 
+            {/* Dialog form to add employee */}
+            <Dialog
+                open={openCreateForm}
+                onClose={() => setOpenCreateForm(false)}
+                maxWidth="md"
                 fullWidth
                 PaperProps={{
-                    sx: { maxWidth: '600px' }  // Giới hạn kích thước tối đa
+                    sx: {
+                        maxWidth: '600px',
+                        borderRadius: '8px'
+                    }
                 }}
             >
-                <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <PersonAddIcon />
-                    Thêm nhân viên
+                <DialogTitle
+                    sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        bgcolor: '#f5f5f5',
+                        borderBottom: '1px solid #e0e0e0'
+                    }}
+                >
+                    <PersonAdd color="primary" />
+                    <Typography variant="h6" component="div">Thêm nhân viên</Typography>
                 </DialogTitle>
-                <DialogContent sx={{ p: 0 }}>  {/* Loại bỏ padding mặc định */}
+                <DialogContent sx={{ p: 0 }}>
                     <EmployeeFormCreate
                         onClose={(success) => {
                             setOpenCreateForm(false);
@@ -258,21 +469,32 @@ export default function EmployeeManager() {
                 </DialogContent>
             </Dialog>
 
-            {/* Dialog form cập nhật nhân viên */}
-            <Dialog 
-                open={openUpdateForm} 
-                onClose={() => setOpenUpdateForm(false)} 
-                maxWidth="md" 
+            {/* Dialog form to update employee */}
+            <Dialog
+                open={openUpdateForm}
+                onClose={() => setOpenUpdateForm(false)}
+                maxWidth="md"
                 fullWidth
                 PaperProps={{
-                    sx: { maxWidth: '600px' }  // Giới hạn kích thước tối đa
+                    sx: {
+                        maxWidth: '600px',
+                        borderRadius: '8px'
+                    }
                 }}
             >
-                <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <PersonAddIcon />
-                    Cập nhật nhân viên
+                <DialogTitle
+                    sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        bgcolor: '#f5f5f5',
+                        borderBottom: '1px solid #e0e0e0'
+                    }}
+                >
+                    <Edit color="primary" />
+                    <Typography variant="h6" component="div">Cập nhật nhân viên</Typography>
                 </DialogTitle>
-                <DialogContent sx={{ p: 0 }}>  {/* Loại bỏ padding mặc định */}
+                <DialogContent sx={{ p: 0 }}>
                     <EmployeeFormUpdate
                         employeeData={selectedEmployee}
                         onClose={(success) => {
@@ -287,23 +509,27 @@ export default function EmployeeManager() {
                 </DialogContent>
             </Dialog>
 
-            {/* Dialog xác nhận xóa */}
+            {/* Dialog to confirm delete */}
             <Dialog
                 open={deleteDialog.open}
                 onClose={handleDeleteCancel}
                 aria-labelledby="alert-dialog-title"
                 aria-describedby="alert-dialog-description"
+                PaperProps={{ sx: { borderRadius: '8px' } }}
             >
-                <DialogTitle id="alert-dialog-title">
+                <DialogTitle
+                    id="alert-dialog-title"
+                    sx={{ borderBottom: '1px solid #e0e0e0' }}
+                >
                     Xác nhận xóa
                 </DialogTitle>
-                <DialogContent>
+                <DialogContent sx={{ mt: 2 }}>
                     <DialogContentText id="alert-dialog-description">
                         Bạn có chắc chắn muốn xóa nhân viên này không?
                     </DialogContentText>
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleDeleteCancel} color="primary">
+                <DialogActions sx={{ px: 3, py: 2 }}>
+                    <Button onClick={handleDeleteCancel} color="primary" variant="outlined">
                         Hủy
                     </Button>
                     <Button onClick={handleDeleteConfirm} color="error" variant="contained" autoFocus>

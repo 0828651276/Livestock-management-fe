@@ -1,74 +1,73 @@
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
+import React, {useState, useEffect} from 'react';
+import {Routes, Route, Navigate} from 'react-router-dom';
+import {createTheme, ThemeProvider} from '@mui/material/styles';
 import MainLayout from './layout/MainLayout';
 import DashboardPage from './pages/DashboardPage';
-import { authService } from './services/authService';
+import {authService} from './services/authService';
 import EmployeeManager from './components/employee/EmployeeManager.jsx';
-import EmployeeFormUpdate from "./components/employee/EmployeeFormUpdate.jsx";
-import EmployeeFormCreate from "./components/employee/EmployeeFormCreate.jsx";
 import EmployeeDetail from "./components/employee/EmployeeDetail.jsx";
-import PenFormCreate from "./components/pen/PenFormCreate.jsx";
-import PenFormUpdate from "./components/pen/PenFormUpdate.jsx";
-import PigPenManager from "./components/pen/PenManager.jsx"; // Thêm import này
-
-import ChangePasswordForm from './components/employee/ChangePasswordForm.jsx'; // Import form đổi mật khẩu
+import PigPenManager from "./components/pen/PenManager.jsx";
+import ChangePasswordForm from './components/employee/ChangePasswordForm.jsx';
+import LoginPage from "./pages/LoginPage.jsx";
+import Home from './pages/Home';
 
 // Tạo theme tùy chỉnh
 const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#1E8449',
+    palette: {
+        primary: {
+            main: '#1E8449',
+        },
+        secondary: {
+            main: '#E75A99',
+        },
     },
-    secondary: {
-      main: '#E75A99',
+    typography: {
+        fontFamily: "'Roboto', 'Helvetica', 'Arial', sans-serif",
     },
-  },
-  typography: {
-    fontFamily: "'Roboto', 'Helvetica', 'Arial', sans-serif",
-  },
 });
 
 // Protected route component để kiểm tra xác thực
-const ProtectedRoute = ({ element }) => {
-  const token = authService.getCurrentUser();
-  return token ? element : <Navigate to="/" />;
+const ProtectedRoute = ({element}) => {
+    const token = authService.getCurrentUser();
+    return token ? element : <Navigate to="/"/>;
 };
 
 function App() {
-  const [loading, setLoading] = useState(true);
-  const [authenticated, setAuthenticated] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [authenticated, setAuthenticated] = useState(false);
 
-  useEffect(() => {
-    // Kiểm tra xem người dùng đã đăng nhập chưa
-    const token = authService.getCurrentUser();
-    setAuthenticated(!!token);
-    setLoading(false);
-  }, []);
+    useEffect(() => {
+        // Kiểm tra xem người dùng đã đăng nhập chưa
+        const token = authService.getCurrentUser();
+        setAuthenticated(!!token);
+        setLoading(false);
+    }, []);
 
-  if (loading) {
-    return <div>Đang tải...</div>;
-  }
+    if (loading) {
+        return <div>Đang tải...</div>;
+    }
 
-  return (
-      <ThemeProvider theme={theme}>
-        <Router>
-          <Routes>
-            <Route path="/" element={authenticated ? <Navigate to="/dashboard" /> : <MainLayout />} />
-            <Route path="/dashboard" element={<ProtectedRoute element={<DashboardPage />} />} />
-            {/* Thêm các route khác ở đây nếu cần */}
-            <Route path="/pigpens" element={<ProtectedRoute element={<PigPenManager />} />} />
-            <Route path="/pigpens/update" element={<ProtectedRoute element={<PenFormUpdate />} />} />
-            <Route path="/pigpens/edit" element={<ProtectedRoute element={<PenFormCreate />} />} />
-            <Route path="/employees" element={<ProtectedRoute element={<EmployeeManager />} />} />
-            <Route path="/employees/update" element={<ProtectedRoute element={<EmployeeFormUpdate />} />} />
-            <Route path="/employees/edit" element={<ProtectedRoute element={<EmployeeFormCreate />} />} />
-            <Route path="/employees/:employeeId" element={<ProtectedRoute element={<EmployeeDetail />} />} />
-              <Route path="/change-password" element={<ChangePasswordForm />} />
-          </Routes>
-        </Router>
-      </ThemeProvider>
-  );
+    return (
+        <>
+            <ThemeProvider theme={theme}>
+                <Routes>
+
+                    <Route element={<MainLayout/>}>
+                        <Route path="/login" element={<LoginPage/>}/>
+                    </Route>
+                    <Route index element={authenticated ? <Navigate to="/dashboard"/> : <MainLayout/>}/>
+                    <Route path="/dashboard/*" element={<ProtectedRoute element={<DashboardPage/>}/>}>
+                        <Route path="" element={<Home/>}/>
+                        <Route path="employees" element={<EmployeeManager/>}/>
+                        <Route path="employees/detail" element={<EmployeeDetail/>}/>
+                        <Route path="pigpens" element={<PigPenManager/>}/>
+                        <Route path="change-password" element={<ChangePasswordForm/>}/>
+                    </Route>
+
+                </Routes>
+            </ThemeProvider>
+        </>
+    );
 }
 
 export default App;
