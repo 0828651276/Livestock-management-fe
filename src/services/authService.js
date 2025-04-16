@@ -2,14 +2,14 @@
 const API_URL = 'http://localhost:8080/api'; // Exact URL used in Postman
 
 export const authService = {
-  login: async (username, password) => {
+  login: async (username, password, employeeId) => {
     try {
       const response = await fetch(`${API_URL}/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, password, employeeId }),
       });
 
       if (!response.ok) {
@@ -24,6 +24,9 @@ export const authService = {
         localStorage.setItem('token', data.token);
         // Lưu thêm tên đăng nhập để hiển thị
         localStorage.setItem('username', username);
+        // Lưu mã nhân viên
+        localStorage.setItem('employeeId', data.employeeId); // Lưu mã nhân viên
+
         return data;
       }
     } catch (error) {
@@ -35,6 +38,7 @@ export const authService = {
   logout: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('username');
+    localStorage.removeItem('employeeId')
   },
 
   getCurrentUser: () => {

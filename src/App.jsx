@@ -9,6 +9,8 @@ import EmployeeManager from './components/employee/EmployeeManager.jsx';
 import EmployeeFormUpdate from "./components/employee/EmployeeFormUpdate.jsx";
 import EmployeeFormCreate from "./components/employee/EmployeeFormCreate.jsx";
 import EmployeeDetail from "./components/employee/EmployeeDetail.jsx";
+import ChangePasswordForm from './components/employee/ChangePasswordForm.jsx'; // Import form đổi mật khẩu
+
 // Tạo theme tùy chỉnh
 const theme = createTheme({
   palette: {
@@ -57,6 +59,7 @@ function App() {
           <Route path="/employees/update" element={<EmployeeFormUpdate />} />
           <Route path="/employees/edit" element={<EmployeeFormCreate />} />
           <Route path="/employees/:employeeId" element={<EmployeeDetail />} />
+          <Route path="/change-password" element={<ChangePasswordForm />} />
 
         </Routes>
       </Router>

@@ -1,6 +1,6 @@
 // src/pages/EmployeeDetail.jsx
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { employeeService } from "../../services/employeeService";
 import {
     Avatar,
@@ -17,7 +17,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import EditIcon from "@mui/icons-material/Edit";
 
 const EmployeeDetail = () => {
-    const { employeeId } = useParams();
+    const employeeId = localStorage.getItem('employeeId'); // Lấy mã nhân viên từ localStorage
     const navigate = useNavigate();
     const [employee, setEmployee] = useState(null);
     const [loading, setLoading] = useState(true);
