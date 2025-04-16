@@ -1,7 +1,7 @@
 // src/pages/EmployeeDetail.jsx
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { employeeService } from "../../services/employeeService";
+import { employeeService } from "../../services/EmployeeService.js";
 import {
     Avatar,
     Box,
