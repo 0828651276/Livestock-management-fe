@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import {
-  Box,
-  TextField,
-  Button,
-  MenuItem,
-  CircularProgress,
+    Box,
+    TextField,
+    Button,
+    MenuItem,
+    CircularProgress,
   DialogActions,
   Typography,
   Avatar,
@@ -15,23 +15,23 @@ import {
 import { employeeService } from "../../services/EmployeeService.js";
 
 const initialState = {
-  fullName: "",
-  username: "",
+    fullName: "",
+    username: "",
   password: "", // Added password field
-  email: "",
-  birthDate: "",
-  gender: "MALE",
-  idCardNumber: "",
+    email: "",
+    birthDate: "",
+    gender: "MALE",
+    idCardNumber: "",
   imagePath: "",
 };
 
 const EmployeeForm = ({ onClose, employeeData, isUpdateMode = false }) => {
-  const [employee, setEmployee] = useState(initialState);
+    const [employee, setEmployee] = useState(initialState);
   const [avatar, setAvatar] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
-  const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
+    useEffect(() => {
     if (employeeData && isUpdateMode) {
       setEmployee({ ...employeeData });
       // If there's an avatar URL, display the old image
@@ -43,10 +43,10 @@ const EmployeeForm = ({ onClose, employeeData, isUpdateMode = false }) => {
     }
   }, [employeeData, isUpdateMode]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setEmployee((prev) => ({ ...prev, [name]: value }));
-  };
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setEmployee((prev) => ({ ...prev, [name]: value }));
+    };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -56,9 +56,9 @@ const EmployeeForm = ({ onClose, employeeData, isUpdateMode = false }) => {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
 
     try {
       if (isUpdateMode) {
@@ -74,7 +74,7 @@ const EmployeeForm = ({ onClose, employeeData, isUpdateMode = false }) => {
         }
 
         await employeeService.update(employee.employeeId, formData);
-      } else {
+            } else {
         const formData = new FormData();
         formData.append(
           "employee",
@@ -89,18 +89,18 @@ const EmployeeForm = ({ onClose, employeeData, isUpdateMode = false }) => {
         await employeeService.create(formData);
       }
       onClose(true);
-    } catch (error) {
+        } catch (error) {
       console.error(
         isUpdateMode ? "Lỗi khi lưu nhân viên:" : "Lỗi khi thêm nhân viên:",
         error
       );
       onClose(false);
-    } finally {
-      setLoading(false);
-    }
-  };
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  return (
+    return (
     <Box component="form" onSubmit={handleSubmit} sx={{ p: 2 }}>
       <Grid container spacing={3}>
         {/* Left side - Avatar and Login Information */}
@@ -143,7 +143,7 @@ const EmployeeForm = ({ onClose, employeeData, isUpdateMode = false }) => {
                 margin="normal"
                 required
               />
-              <TextField
+            <TextField
                 fullWidth
                 label="Mật khẩu"
                 type="password"
@@ -186,16 +186,16 @@ const EmployeeForm = ({ onClose, employeeData, isUpdateMode = false }) => {
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField
+            <TextField
                   fullWidth
-                  label="Ngày sinh"
-                  type="date"
-                  name="birthDate"
-                  value={employee.birthDate}
-                  onChange={handleChange}
-                  InputLabelProps={{ shrink: true }}
-                  required
-                />
+                label="Ngày sinh"
+                type="date"
+                name="birthDate"
+                value={employee.birthDate}
+                onChange={handleChange}
+                InputLabelProps={{ shrink: true }}
+                required
+            />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField
@@ -206,10 +206,10 @@ const EmployeeForm = ({ onClose, employeeData, isUpdateMode = false }) => {
                   value={employee.gender}
                   onChange={handleChange}
                 >
-                  <MenuItem value="MALE">Nam</MenuItem>
-                  <MenuItem value="FEMALE">Nữ</MenuItem>
-                  <MenuItem value="OTHER">Khác</MenuItem>
-                </TextField>
+                <MenuItem value="MALE">Nam</MenuItem>
+                <MenuItem value="FEMALE">Nữ</MenuItem>
+                <MenuItem value="OTHER">Khác</MenuItem>
+            </TextField>
               </Grid>
               <Grid item xs={12}>
                 <TextField
@@ -236,7 +236,7 @@ const EmployeeForm = ({ onClose, employeeData, isUpdateMode = false }) => {
           sx={{ color: "#d81b60" }}
         >
           HỦY
-        </Button>
+                </Button>
         <Button 
           type="submit" 
           variant="contained" 
@@ -253,10 +253,10 @@ const EmployeeForm = ({ onClose, employeeData, isUpdateMode = false }) => {
           ) : (
             "THÊM MỚI"
           )}
-        </Button>
-      </DialogActions>
-    </Box>
-  );
+                </Button>
+            </DialogActions>
+        </Box>
+    );
 };
 
 export default EmployeeForm;
