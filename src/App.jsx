@@ -1,7 +1,6 @@
 import React, {useState, useEffect} from 'react';
 import {Routes, Route, Navigate} from 'react-router-dom';
 import {createTheme, ThemeProvider} from '@mui/material/styles';
-import MainLayout from './layout/MainLayout';
 import DashboardPage from './pages/DashboardPage';
 import {authService} from './services/authService';
 import EmployeeManager from './components/employee/EmployeeManager.jsx';
@@ -52,10 +51,8 @@ function App() {
             <ThemeProvider theme={theme}>
                 <Routes>
 
-                    <Route element={<MainLayout/>}>
-                        <Route path="/login" element={<LoginPage/>}/>
-                    </Route>
-                    <Route index element={authenticated ? <Navigate to="/dashboard"/> : <MainLayout/>}/>
+                    <Route path="/login" element={<LoginPage/>}/>
+                    <Route path="/logout" element={<LoginPage/>}/>
                     <Route path="/dashboard/*" element={<ProtectedRoute element={<DashboardPage/>}/>}>
                         <Route path="" element={<Home/>}/>
                         <Route path="employees" element={<EmployeeManager/>}/>

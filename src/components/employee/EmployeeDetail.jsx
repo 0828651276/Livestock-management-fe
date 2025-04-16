@@ -51,15 +51,6 @@ const EmployeeDetail = () => {
 
     return (
         <Box sx={{ maxWidth: 900, mx: "auto", mt: 4 }}>
-            <Button
-                variant="outlined"
-                startIcon={<ArrowBackIcon />}
-                onClick={() => navigate(-1)}
-                sx={{ mb: 2 }}
-            >
-                Quay lại
-            </Button>
-
             <Card sx={{ borderRadius: 3, boxShadow: 3 }}>
                 <CardContent>
                     <Grid container spacing={4}>
@@ -112,8 +103,15 @@ const EmployeeDetail = () => {
                         </Grid>
                     </Grid>
 
-                    {/* Nút chỉnh sửa */}
-                    <Box sx={{ textAlign: "right", mt: 3 }}>
+                    <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 3 }}>
+                        <Button
+                            variant="outlined"
+                            startIcon={<ArrowBackIcon />}
+                            onClick={() => navigate('/dashboard')} // Hoặc navigate(-1) nếu cần
+                        >
+                            Quay lại
+                        </Button>
+
                         <Button
                             variant="contained"
                             startIcon={<EditIcon />}

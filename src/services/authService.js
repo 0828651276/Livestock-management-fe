@@ -25,8 +25,7 @@ export const authService = {
         // Lưu thêm tên đăng nhập để hiển thị
         localStorage.setItem('username', username);
         // Lưu mã nhân viên
-        localStorage.setItem('employeeId', data.employeeId); // Lưu mã nhân viên
-
+        localStorage.setItem('employeeId', data.employeeId);
         return data;
       }
     } catch (error) {
@@ -39,6 +38,7 @@ export const authService = {
     localStorage.removeItem('token');
     localStorage.removeItem('username');
     localStorage.removeItem('employeeId')
+    localStorage.setItem('loggedOut', 'true');
   },
 
   getCurrentUser: () => {

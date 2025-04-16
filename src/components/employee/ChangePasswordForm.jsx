@@ -10,9 +10,11 @@ import {
     InputAdornment
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom'; // ✅ Thêm dòng này
 import { employeeService } from '../../services/employeeService';
 
 const ChangePasswordForm = () => {
+    const navigate = useNavigate(); // ✅ Sử dụng navigate
     const employeeId = localStorage.getItem('employeeId');
 
     const [oldPassword, setOldPassword] = useState('');
@@ -61,10 +63,7 @@ const ChangePasswordForm = () => {
     };
 
     const handleReset = () => {
-        setOldPassword('');
-        setNewPassword('');
-        setConfirmPassword('');
-        setMessage({ type: '', text: '' });
+        navigate('/dashboard'); // ✅ Điều hướng về trang dashboard
     };
 
     const renderPasswordField = (label, value, setValue, show, setShow, autoComplete) => (

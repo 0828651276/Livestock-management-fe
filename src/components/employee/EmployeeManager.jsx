@@ -35,7 +35,6 @@ import {
     PersonAdd
 } from "@mui/icons-material";
 import EmployeeFormUpdate from "./EmployeeFormUpdate.jsx";
-import { useNavigate } from "react-router-dom";
 import EmployeeFormCreate from "./EmployeeFormCreate.jsx";
 import { styled } from '@mui/material/styles';
 
@@ -49,7 +48,7 @@ const ActionButton = styled(Button)(({ theme }) => ({
     }
 }));
 
-const StyledTableCell = styled(TableCell)(({ theme }) => ({
+const StyledTableCell = styled(TableCell)(() => ({
     padding: '12px 16px',
     fontSize: '0.875rem',
 }));
@@ -70,7 +69,6 @@ const SearchContainer = styled(Box)(({ theme }) => ({
 }));
 
 export default function EmployeeManager() {
-    const navigate = useNavigate();
     const [employees, setEmployees] = useState([]);
     const [filteredEmployees, setFilteredEmployees] = useState([]);
     const [searchKeyword, setSearchKeyword] = useState("");
@@ -128,19 +126,12 @@ export default function EmployeeManager() {
         }
     };
 
-    const handleSearch = () => {
-        if (searchKeyword.trim() === '') {
-            setFilteredEmployees(employees);
-            return;
-        }
-
-        const filtered = employees.filter(
-            (e) => e.fullName?.toLowerCase().includes(searchKeyword.toLowerCase())
-        );
-        setFilteredEmployees(filtered);
-
-        if (filtered.length === 0) {
-            showNotification("Không tìm thấy nhân viên nào", "info");
+    const handleSearch = async () => {
+        try {
+            const res = await employeeService.search({ name: searchKeyword , id: searchKeyword});
+            setEmployees(res.data);
+        } catch (err) {
+            console.error("Lỗi khi tìm kiếm nhân viên:", err);
         }
     };
 
@@ -203,31 +194,9 @@ export default function EmployeeManager() {
 
     return (
         <Box sx={{ py: 2 }}>
-            {/* Menu tabs */}
+
             <Stack direction="row" spacing={2} mb={3}>
-                <Button
-                    variant="contained"
-                    color="primary"
-                    sx={{
-                        fontWeight: 'bold',
-                        px: 3,
-                        borderRadius: '4px',
-                        textTransform: 'uppercase'
-                    }}
-                >
-                    Quản lý nhân viên
-                </Button>
-                <Button
-                    variant="outlined"
-                    color="primary"
-                    sx={{
-                        fontWeight: 'bold',
-                        borderRadius: '4px',
-                        textTransform: 'uppercase'
-                    }}
-                >
-                    Đăng thông báo
-                </Button>
+                <h1>Quản lý nhân viên</h1>
             </Stack>
 
             {/* Search & Add section */}
@@ -304,7 +273,6 @@ export default function EmployeeManager() {
                     Thêm nhân viên
                 </Button>
                 </div>
-
             </Typography>
 
             {/* Employee Table */}

@@ -11,7 +11,6 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import { authService } from '../../services/authService';
 import { useNavigate } from 'react-router-dom';
 
-
 const TopMenu = ({ drawerWidth, handleDrawerToggle, user }) => {
     const [anchorEl, setAnchorEl] = useState(null);
     const navigate = useNavigate();
@@ -28,7 +27,11 @@ const TopMenu = ({ drawerWidth, handleDrawerToggle, user }) => {
     const handleLogoutConfirm = () => {
         setLogoutConfirmOpen(false);
         authService.logout();
-        window.location.href = '/';
+        // Xóa thông tin đăng nhập khỏi localStorage hoặc cookie (nếu có)
+        localStorage.removeItem('user');  // Hoặc tùy chỉnh theo cách lưu trữ của bạn
+
+        // Chuyển hướng về trang đăng nhập sau khi đăng xuất
+        navigate('/logout');
     };
 
     return (
