@@ -1,0 +1,92 @@
+/* PenManager styles */
+
+.search-container {
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.search-container:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.action-button {
+    transition: all 0.2s ease;
+}
+
+.action-button:hover {
+    transform: translateY(-2px);
+}
+
+/* Table styles */
+.pen-table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.pen-table th {
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+}
+
+.pen-table tr:hover {
+    background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Custom scrollbar for tables */
+.table-container::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+}
+
+.table-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+    background: #1E8449;
+    border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+    background: #166e3a;
+}
+
+/* Filter button styles */
+.filter-button {
+    position: relative;
+    overflow: hidden;
+}
+
+.filter-button::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+}
+
+.filter-button:hover::after {
+    transform: translateX(0);
+}
+
+/* Animation for rows when filtering */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.pen-table tbody tr {
+    animation: fadeIn 0.3s ease forwards;
+}
