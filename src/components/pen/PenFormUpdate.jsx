@@ -10,6 +10,7 @@ import {
     FormControl,
     InputLabel,
     Select,
+    FormHelperText,
 } from "@mui/material";
 import { pigPenService } from "../../services/pigPenService";
 import { employeeService } from "../../services/employeeService";
@@ -26,6 +27,12 @@ const PigPenFormUpdate = ({ onClose, pigPenData }) => {
     const [pigPen, setPigPen] = useState(initialState);
     const [loading, setLoading] = useState(false);
     const [employees, setEmployees] = useState([]);
+    const [errors, setErrors] = useState({
+        name: "",
+        createdDate: "",
+        closedDate: "",
+        quantity: ""
+    });
 
     useEffect(() => {
         fetchEmployees();
@@ -53,6 +60,11 @@ const PigPenFormUpdate = ({ onClose, pigPenData }) => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setPigPen((prev) => ({ ...prev, [name]: value }));
+
+        // Clear error when user types
+        if (errors[name]) {
+            setErrors((prev) => ({ ...prev, [name]: "" }));
+        }
     };
 
     const handleEmployeeChange = (e) => {
@@ -72,13 +84,63 @@ const PigPenFormUpdate = ({ onClose, pigPenData }) => {
         }));
     };
 
+    const validateForm = () => {
+        let isValid = true;
+        const newErrors = { ...errors };
+
+        // Validate name
+        if (!pigPen.name.trim()) {
+            newErrors.name = "Tên chuồng không được để trống";
+            isValid = false;
+        }
+
+        // Validate createdDate
+        if (!pigPen.createdDate) {
+            newErrors.createdDate = "Ngày tạo không được để trống";
+            isValid = false;
+        } else {
+            const currentDate = new Date();
+            currentDate.setHours(0, 0, 0, 0);
+            const createdDate = new Date(pigPen.createdDate);
+
+            if (createdDate > currentDate) {
+                newErrors.createdDate = "Ngày tạo không thể là ngày trong tương lai";
+                isValid = false;
+            }
+        }
+
+        // Validate closedDate if provided
+        if (pigPen.closedDate) {
+            const createdDate = new Date(pigPen.createdDate);
+            const closedDate = new Date(pigPen.closedDate);
+
+            if (closedDate < createdDate) {
+                newErrors.closedDate = "Ngày đóng phải sau ngày tạo";
+                isValid = false;
+            }
+        }
+
+        // Validate quantity
+        if (pigPen.quantity < 0) {
+            newErrors.quantity = "Số lượng không thể là số âm";
+            isValid = false;
+        }
+
+        setErrors(newErrors);
+        return isValid;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        if (!validateForm()) {
+            return;
+        }
+
         setLoading(true);
 
         try {
             await pigPenService.updatePigPen(pigPen.penId, pigPen);
-
             onClose(true);
         } catch (error) {
             console.error("Lỗi khi cập nhật chuồng nuôi:", error);
@@ -111,6 +173,8 @@ const PigPenFormUpdate = ({ onClose, pigPenData }) => {
                     value={pigPen.name}
                     onChange={handleChange}
                     required
+                    error={!!errors.name}
+                    helperText={errors.name}
                     sx={{ "& .MuiInputBase-input": { py: 1.5 } }}
                 />
 
@@ -143,6 +207,8 @@ const PigPenFormUpdate = ({ onClose, pigPenData }) => {
                     onChange={handleChange}
                     InputLabelProps={{ shrink: true }}
                     required
+                    error={!!errors.createdDate}
+                    helperText={errors.createdDate}
                     sx={{ "& .MuiInputBase-input": { py: 1.5 } }}
                 />
 
@@ -153,8 +219,9 @@ const PigPenFormUpdate = ({ onClose, pigPenData }) => {
                     value={pigPen.closedDate}
                     onChange={handleChange}
                     InputLabelProps={{ shrink: true }}
+                    error={!!errors.closedDate}
+                    helperText={errors.closedDate || "Để trống nếu chuồng vẫn đang hoạt động"}
                     sx={{ "& .MuiInputBase-input": { py: 1.5 } }}
-                    helperText="Để trống nếu chuồng vẫn đang hoạt động"
                 />
 
                 <TextField
@@ -164,6 +231,8 @@ const PigPenFormUpdate = ({ onClose, pigPenData }) => {
                     value={pigPen.quantity}
                     onChange={handleChange}
                     required
+                    error={!!errors.quantity}
+                    helperText={errors.quantity}
                     InputProps={{ inputProps: { min: 0 } }}
                     sx={{ "& .MuiInputBase-input": { py: 1.5 } }}
                 />
