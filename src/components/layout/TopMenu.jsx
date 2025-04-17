@@ -1,5 +1,5 @@
 // components/layout/TopMenu.jsx
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
     AppBar, Toolbar, IconButton, Typography, Box,
     Menu, MenuItem, Divider, Dialog, DialogTitle,
@@ -8,14 +8,16 @@ import {
 import MenuIcon from '@mui/icons-material/Menu';
 import PersonIcon from '@mui/icons-material/Person';
 import LogoutIcon from '@mui/icons-material/Logout';
-import { authService } from '../../services/authService';
-import { useNavigate } from 'react-router-dom';
+import {authService} from '../../services/authService';
+import Avatar from '@mui/material/Avatar';
+import {useNavigate} from 'react-router-dom';
 
-const TopMenu = ({ drawerWidth, handleDrawerToggle, user }) => {
+const TopMenu = ({drawerWidth, handleDrawerToggle, user}) => {
     const [anchorEl, setAnchorEl] = useState(null);
     const navigate = useNavigate();
     const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
     const open = Boolean(anchorEl);
+    const [employees, setEmployees] = useState([]);
 
     const handleUserMenuOpen = (e) => setAnchorEl(e.currentTarget);
     const handleUserMenuClose = () => setAnchorEl(null);
@@ -31,25 +33,33 @@ const TopMenu = ({ drawerWidth, handleDrawerToggle, user }) => {
         localStorage.removeItem('user');  // Hoặc tùy chỉnh theo cách lưu trữ của bạn
 
         // Chuyển hướng về trang đăng nhập sau khi đăng xuất
-        navigate('/logout');
+        navigate('/login');
     };
 
     return (
         <AppBar position="fixed" sx={{
-            width: { sm: `calc(100% - ${drawerWidth}px)` },
-            ml: { sm: `${drawerWidth}px` },
+            width: {sm: `calc(100% - ${drawerWidth}px)`},
+            ml: {sm: `${drawerWidth}px`},
             backgroundColor: 'white',
             color: '#333'
         }}>
             <Toolbar>
-                <IconButton onClick={handleDrawerToggle} sx={{ display: { sm: 'none' }, mr: 2 }}>
-                    <MenuIcon />
+                <IconButton onClick={handleDrawerToggle} sx={{display: {sm: 'none'}, mr: 2}}>
+                    <MenuIcon/>
                 </IconButton>
-                <Typography variant="h6" sx={{ flexGrow: 1 }}>
+                <Typography variant="h6" sx={{flexGrow: 1}}>
                     Livestock - Pig Farm Management System
                 </Typography>
                 <Box onClick={handleUserMenuOpen} sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                    <IconButton><PersonIcon /></IconButton>
+                    <IconButton>
+                        <Avatar
+                            src={employees.imagePath
+                                ? `http://localhost:8080/${employees.imagePath}`
+                                : ''}
+                            alt="Avatar"
+                            sx={{ width: 30, height: 30 }}
+                        />
+                    </IconButton>
                     <Typography sx={{ ml: 1 }}>{user?.username || 'User'}</Typography>
                 </Box>
                 <Menu anchorEl={anchorEl} open={open} onClose={handleUserMenuClose}>
@@ -59,10 +69,10 @@ const TopMenu = ({ drawerWidth, handleDrawerToggle, user }) => {
                     <MenuItem onClick={() => navigate('/dashboard/change-password')}>
                         Đổi mật khẩu
                     </MenuItem>
-                    <Divider />
+                    <Divider/>
                     <MenuItem onClick={handleLogoutConfirmOpen}>
-                        <LogoutIcon fontSize="small" />
-                        <Typography sx={{ ml: 1 }}>Đăng xuất</Typography>
+                        <LogoutIcon fontSize="small"/>
+                        <Typography sx={{ml: 1}}>Đăng xuất</Typography>
                     </MenuItem>
                 </Menu>
                 <Dialog open={logoutConfirmOpen} onClose={handleLogoutConfirmClose}>
