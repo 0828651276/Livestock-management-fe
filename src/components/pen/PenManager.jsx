@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { pigPenService } from "../../services/pigPenService";
+import React, {useEffect, useState} from "react";
+import {pigPenService} from "../../services/pigPenService";
 import "../styles/PenManager.css";
 import {
     Button,
@@ -39,12 +39,12 @@ import {
 } from "@mui/icons-material";
 import PigPenFormUpdate from "./PenFormUpdate.jsx";
 import AddHomeWorkIcon from "@mui/icons-material/AddHomeWork";
-import { useNavigate } from "react-router-dom";
+import {useNavigate} from "react-router-dom";
 import PigPenFormCreate from "./PenFormCreate.jsx";
-import { styled } from '@mui/material/styles';
+import {styled} from '@mui/material/styles';
 
 // Styled components
-const ActionButton = styled(Button)(({ theme }) => ({
+const ActionButton = styled(Button)(({theme}) => ({
     minWidth: '32px',
     padding: '6px 12px',
     boxShadow: 'none',
@@ -53,12 +53,12 @@ const ActionButton = styled(Button)(({ theme }) => ({
     }
 }));
 
-const StyledTableCell = styled(TableCell)(({ theme }) => ({
+const StyledTableCell = styled(TableCell)(() => ({
     padding: '12px 16px',
     fontSize: '0.875rem',
 }));
 
-const StyledTableHeaderCell = styled(TableCell)(({ theme }) => ({
+const StyledTableHeaderCell = styled(TableCell)(({theme}) => ({
     backgroundColor: theme.palette.primary.main,
     color: theme.palette.common.white,
     padding: '14px 16px',
@@ -66,7 +66,7 @@ const StyledTableHeaderCell = styled(TableCell)(({ theme }) => ({
     fontWeight: 'bold'
 }));
 
-const SearchContainer = styled(Paper)(({ theme }) => ({
+const SearchContainer = styled(Paper)(({theme}) => ({
     padding: theme.spacing(2),
     marginBottom: theme.spacing(3),
     boxShadow: theme.shadows[1],
@@ -79,7 +79,7 @@ export default function PenManager() {
     const [filteredPigPens, setFilteredPigPens] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [showDateFilter, setShowDateFilter] = useState(false);
-    const [dateRange, setDateRange] = useState({ startDate: '', endDate: '' });
+    const [dateRange, setDateRange] = useState({startDate: '', endDate: ''});
     const [selectedPigPen, setSelectedPigPen] = useState(null);
     const [openCreateForm, setOpenCreateForm] = useState(false);
     const [openUpdateForm, setOpenUpdateForm] = useState(false);
@@ -98,7 +98,7 @@ export default function PenManager() {
     const [searchLoading, setSearchLoading] = useState(false);
 
     const handleCloseNotification = () => {
-        setNotification({ ...notification, open: false });
+        setNotification({...notification, open: false});
     };
 
     const showNotification = (message, severity = 'success') => {
@@ -181,20 +181,20 @@ export default function PenManager() {
     };
 
     const handleDateRangeChange = (e) => {
-        const { name, value } = e.target;
-        setDateRange(prev => ({ ...prev, [name]: value }));
+        const {name, value} = e.target;
+        setDateRange(prev => ({...prev, [name]: value}));
     };
 
     const handleToggleDateFilter = () => {
         setShowDateFilter(!showDateFilter);
         if (showDateFilter) {
-            setDateRange({ startDate: '', endDate: '' });
+            setDateRange({startDate: '', endDate: ''});
         }
     };
 
     const handleResetFilters = () => {
         setSearchTerm('');
-        setDateRange({ startDate: '', endDate: '' });
+        setDateRange({startDate: '', endDate: ''});
         fetchPigPens();
     };
 
@@ -214,11 +214,11 @@ export default function PenManager() {
     };
 
     const handleDeleteClick = (id) => {
-        setDeleteDialog({ open: true, penId: id });
+        setDeleteDialog({open: true, penId: id});
     };
 
     const handleDeleteCancel = () => {
-        setDeleteDialog({ open: false, penId: null });
+        setDeleteDialog({open: false, penId: null});
     };
 
     const handleDeleteConfirm = async () => {
@@ -241,41 +241,10 @@ export default function PenManager() {
     );
 
     return (
-        <Box sx={{ py: 2 }}>
+        <Box sx={{py: 2}}>
             {/* Action buttons */}
-            <Stack
-                direction={{ xs: 'column', sm: 'row' }}
-                spacing={2}
-                mb={3}
-                sx={{ '& > button': { fontWeight: 'bold' } }}
-            >
-                <Button
-                    variant="contained"
-                    color="primary"
-                    sx={{
-                        px: 3,
-                        borderRadius: '4px',
-                        textTransform: 'uppercase'
-                    }}
-                >
-                    QUẢN LÝ VẬT NUÔI
-                </Button>
-                <Button
-                    variant="contained"
-                    color="primary"
-                    startIcon={<Add />}
-                    onClick={() => setOpenCreateForm(true)}
-                    sx={{
-                        borderRadius: '4px',
-                        textTransform: 'uppercase',
-                        backgroundColor: '#1E8449',
-                        '&:hover': {
-                            backgroundColor: '#155d32'
-                        }
-                    }}
-                >
-                    THÊM CHUỒNG
-                </Button>
+            <Stack direction="row" spacing={2} mb={3}>
+                <h1>Quản lý vật nuôi</h1>
             </Stack>
 
             {/* Search and filter container */}
@@ -292,10 +261,10 @@ export default function PenManager() {
                             InputProps={{
                                 startAdornment: (
                                     <InputAdornment position="start">
-                                        <Search color="action" />
+                                        <Search color="action"/>
                                     </InputAdornment>
                                 ),
-                                sx: { borderRadius: 1 }
+                                sx: {borderRadius: 1}
                             }}
                             size="small"
                         />
@@ -305,19 +274,19 @@ export default function PenManager() {
                             fullWidth
                             variant="contained"
                             color="primary"
-                            startIcon={searchLoading ? <CircularProgress size={20} color="inherit" /> : <Search />}
+                            startIcon={searchLoading ? <CircularProgress size={20} color="inherit"/> : <Search/>}
                             onClick={handleSearch}
                             disabled={searchLoading}
-                            sx={{ height: '40px' }}
+                            sx={{height: '40px'}}
                         >
                             Tìm kiếm
                         </Button>
                     </Grid>
-                    <Grid item xs={6} md={5} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                    <Grid item xs={6} md={5} sx={{display: 'flex', justifyContent: 'flex-end', gap: 1}}>
                         <Tooltip title={showDateFilter ? "Ẩn bộ lọc ngày" : "Lọc theo ngày tạo"}>
                             <Button
                                 variant="outlined"
-                                startIcon={showDateFilter ? <FilterAltOff /> : <FilterAlt />}
+                                startIcon={showDateFilter ? <FilterAltOff/> : <FilterAlt/>}
                                 onClick={handleToggleDateFilter}
                                 size="small"
                                 color="primary"
@@ -332,7 +301,7 @@ export default function PenManager() {
                                 color="error"
                                 onClick={handleResetFilters}
                                 size="small"
-                                startIcon={<Refresh />}
+                                startIcon={<Refresh/>}
                             >
                                 Xóa bộ lọc
                             </Button>
@@ -349,7 +318,7 @@ export default function PenManager() {
                                     type="date"
                                     value={dateRange.startDate}
                                     onChange={handleDateRangeChange}
-                                    InputLabelProps={{ shrink: true }}
+                                    InputLabelProps={{shrink: true}}
                                     size="small"
                                 />
                             </Grid>
@@ -361,7 +330,7 @@ export default function PenManager() {
                                     type="date"
                                     value={dateRange.endDate}
                                     onChange={handleDateRangeChange}
-                                    InputLabelProps={{ shrink: true }}
+                                    InputLabelProps={{shrink: true}}
                                     size="small"
                                 />
                             </Grid>
@@ -371,12 +340,32 @@ export default function PenManager() {
             </SearchContainer>
 
             {/* Counter */}
-            <Typography variant="h6" component="h2" sx={{ mb: 2, fontWeight: 'bold' }}>
+            <Typography variant="h6" component="h2" sx={{mb: 2, fontWeight: 'bold'}}>
                 Tổng số chuồng: {filteredPigPens.length}
+                <div>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        startIcon={<Add/>}
+                        onClick={() => setOpenCreateForm(true)}
+                        sx={{
+                            borderRadius: '4px',
+                            textTransform: 'uppercase',
+                            backgroundColor: '#1E8449',
+                            '&:hover': {
+                                backgroundColor: '#155d32'
+                            }
+                        }}
+                    >
+                        Thêm chuồng nuôi
+                    </Button>
+                </div>
             </Typography>
 
             {/* Table with loading state */}
-            <TableContainer component={Paper} sx={{ borderRadius: '8px', overflow: 'hidden', boxShadow: 2, position: 'relative' }} className="table-container">
+            <TableContainer component={Paper}
+                            sx={{borderRadius: '8px', overflow: 'hidden', boxShadow: 2, position: 'relative'}}
+                            className="table-container">
                 {loading && (
                     <Box sx={{
                         position: 'absolute',
@@ -390,10 +379,10 @@ export default function PenManager() {
                         backgroundColor: 'rgba(255, 255, 255, 0.7)',
                         zIndex: 1
                     }}>
-                        <CircularProgress />
+                        <CircularProgress/>
                     </Box>
                 )}
-                <Table sx={{ minWidth: 650 }} aria-label="pigpen table" className="pen-table">
+                <Table sx={{minWidth: 650}} aria-label="pigpen table" className="pen-table">
                     <TableHead>
                         <TableRow>
                             <StyledTableHeaderCell>Tên chuồng</StyledTableHeaderCell>
@@ -411,10 +400,10 @@ export default function PenManager() {
                                     key={pen.penId}
                                     sx={{
                                         backgroundColor: index % 2 === 0 ? "#f9f9f9" : "#ffffff",
-                                        '&:hover': { backgroundColor: '#f0f7ff' }
+                                        '&:hover': {backgroundColor: '#f0f7ff'}
                                     }}
                                 >
-                                    <StyledTableCell sx={{ fontWeight: 'medium' }}>{pen.name}</StyledTableCell>
+                                    <StyledTableCell sx={{fontWeight: 'medium'}}>{pen.name}</StyledTableCell>
                                     <StyledTableCell>{pen.caretaker?.fullName || "Chưa phân công"}</StyledTableCell>
                                     <StyledTableCell>{formatDate(pen.createdDate)}</StyledTableCell>
                                     <StyledTableCell>{formatDate(pen.closedDate) || "Đang hoạt động"}</StyledTableCell>
@@ -432,8 +421,9 @@ export default function PenManager() {
                                                     }}
                                                     className="action-button"
                                                 >
-                                                    <Edit fontSize="small" />
-                                                    <Box component="span" sx={{ ml: 0.5, display: { xs: 'none', sm: 'inline' } }}>SỬA</Box>
+                                                    <Edit fontSize="small"/>
+                                                    <Box component="span"
+                                                         sx={{ml: 0.5, display: {xs: 'none', sm: 'inline'}}}>SỬA</Box>
                                                 </ActionButton>
                                             </Tooltip>
                                             <Tooltip title="Xóa">
@@ -444,8 +434,9 @@ export default function PenManager() {
                                                     onClick={() => handleDeleteClick(pen.penId)}
                                                     className="action-button"
                                                 >
-                                                    <Delete fontSize="small" />
-                                                    <Box component="span" sx={{ ml: 0.5, display: { xs: 'none', sm: 'inline' } }}>XÓA</Box>
+                                                    <Delete fontSize="small"/>
+                                                    <Box component="span"
+                                                         sx={{ml: 0.5, display: {xs: 'none', sm: 'inline'}}}>XÓA</Box>
                                                 </ActionButton>
                                             </Tooltip>
                                         </Stack>
@@ -454,7 +445,7 @@ export default function PenManager() {
                             ))
                         ) : !loading && (
                             <TableRow>
-                                <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
+                                <TableCell colSpan={6} align="center" sx={{py: 3}}>
                                     <Typography variant="body1" color="text.secondary">
                                         Không có dữ liệu
                                     </Typography>
@@ -475,7 +466,7 @@ export default function PenManager() {
                 onRowsPerPageChange={handleChangeRowsPerPage}
                 rowsPerPageOptions={[10, 25, 50]}
                 labelRowsPerPage="Hiển thị:"
-                labelDisplayedRows={({ from, to, count }) => `${from}-${to} của ${count}`}
+                labelDisplayedRows={({from, to, count}) => `${from}-${to} của ${count}`}
             />
 
             {/* Notification */}
@@ -483,13 +474,13 @@ export default function PenManager() {
                 open={notification.open}
                 autoHideDuration={3000}
                 onClose={handleCloseNotification}
-                anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+                anchorOrigin={{vertical: 'top', horizontal: 'right'}}
             >
                 <Alert
                     onClose={handleCloseNotification}
                     severity={notification.severity}
                     variant="filled"
-                    sx={{ width: '100%' }}
+                    sx={{width: '100%'}}
                 >
                     {notification.message}
                 </Alert>
@@ -501,13 +492,19 @@ export default function PenManager() {
                 onClose={() => setOpenCreateForm(false)}
                 maxWidth="md"
                 fullWidth
-                PaperProps={{ sx: { maxWidth: '600px', borderRadius: '8px' } }}
+                PaperProps={{sx: {maxWidth: '600px', borderRadius: '8px'}}}
             >
-                <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1, bgcolor: '#f5f5f5', borderBottom: '1px solid #e0e0e0' }}>
-                    <AddHomeWorkIcon color="primary" />
+                <DialogTitle sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    bgcolor: '#f5f5f5',
+                    borderBottom: '1px solid #e0e0e0'
+                }}>
+                    <AddHomeWorkIcon color="primary"/>
                     <Typography variant="h6" component="div">Thêm chuồng nuôi</Typography>
                 </DialogTitle>
-                <DialogContent sx={{ p: 0 }}>
+                <DialogContent sx={{p: 0}}>
                     <PigPenFormCreate
                         onClose={(success) => {
                             setOpenCreateForm(false);
@@ -525,13 +522,19 @@ export default function PenManager() {
                 onClose={() => setOpenUpdateForm(false)}
                 maxWidth="md"
                 fullWidth
-                PaperProps={{ sx: { maxWidth: '600px', borderRadius: '8px' } }}
+                PaperProps={{sx: {maxWidth: '600px', borderRadius: '8px'}}}
             >
-                <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1, bgcolor: '#f5f5f5', borderBottom: '1px solid #e0e0e0' }}>
-                    <AddHomeWorkIcon color="primary" />
+                <DialogTitle sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    bgcolor: '#f5f5f5',
+                    borderBottom: '1px solid #e0e0e0'
+                }}>
+                    <AddHomeWorkIcon color="primary"/>
                     <Typography variant="h6" component="div">Cập nhật chuồng nuôi</Typography>
                 </DialogTitle>
-                <DialogContent sx={{ p: 0 }}>
+                <DialogContent sx={{p: 0}}>
                     <PigPenFormUpdate
                         pigPenData={selectedPigPen}
                         onClose={(success) => {
@@ -551,17 +554,17 @@ export default function PenManager() {
                 onClose={handleDeleteCancel}
                 aria-labelledby="alert-dialog-title"
                 aria-describedby="alert-dialog-description"
-                PaperProps={{ sx: { borderRadius: '8px' } }}
+                PaperProps={{sx: {borderRadius: '8px'}}}
             >
-                <DialogTitle id="alert-dialog-title" sx={{ borderBottom: '1px solid #e0e0e0' }}>
+                <DialogTitle id="alert-dialog-title" sx={{borderBottom: '1px solid #e0e0e0'}}>
                     Xác nhận xóa
                 </DialogTitle>
-                <DialogContent sx={{ mt: 2 }}>
+                <DialogContent sx={{mt: 2}}>
                     <DialogContentText id="alert-dialog-description">
                         Bạn có chắc chắn muốn xóa chuồng nuôi này không?
                     </DialogContentText>
                 </DialogContent>
-                <DialogActions sx={{ px: 3, py: 2 }}>
+                <DialogActions sx={{px: 3, py: 2}}>
                     <Button onClick={handleDeleteCancel} color="primary" variant="outlined">
                         Hủy
                     </Button>

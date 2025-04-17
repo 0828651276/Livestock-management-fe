@@ -1,7 +1,7 @@
 // src/pages/EmployeeDetail.jsx
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { employeeService } from "../../services/EmployeeService.js";
+import { useNavigate } from "react-router-dom";
+import { employeeService } from "../../services/employeeService";
 import {
     Avatar,
     Box,
@@ -17,7 +17,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import EditIcon from "@mui/icons-material/Edit";
 
 const EmployeeDetail = () => {
-    const { employeeId } = useParams();
+    const employeeId = localStorage.getItem('employeeId'); // Lấy mã nhân viên từ localStorage
     const navigate = useNavigate();
     const [employee, setEmployee] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -51,15 +51,6 @@ const EmployeeDetail = () => {
 
     return (
         <Box sx={{ maxWidth: 900, mx: "auto", mt: 4 }}>
-            <Button
-                variant="outlined"
-                startIcon={<ArrowBackIcon />}
-                onClick={() => navigate(-1)}
-                sx={{ mb: 2 }}
-            >
-                Quay lại
-            </Button>
-
             <Card sx={{ borderRadius: 3, boxShadow: 3 }}>
                 <CardContent>
                     <Grid container spacing={4}>
@@ -112,8 +103,15 @@ const EmployeeDetail = () => {
                         </Grid>
                     </Grid>
 
-                    {/* Nút chỉnh sửa */}
-                    <Box sx={{ textAlign: "right", mt: 3 }}>
+                    <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 3 }}>
+                        <Button
+                            variant="outlined"
+                            startIcon={<ArrowBackIcon />}
+                            onClick={() => navigate('/dashboard')} // Hoặc navigate(-1) nếu cần
+                        >
+                            Quay lại
+                        </Button>
+
                         <Button
                             variant="contained"
                             startIcon={<EditIcon />}

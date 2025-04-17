@@ -60,4 +60,16 @@ export const employeeService = {
             headers: {Authorization: `Bearer ${token}`},
         });
     },
+
+    changePassword: async (employeeId, oldPassword, newPassword) => {
+        const token = authService.getCurrentUser();
+        return axios.post(`${API_URL}/${employeeId}/change-password`, null, {
+            headers: { Authorization: `Bearer ${token}` },
+            params: {
+                oldPassword,
+                newPassword,
+            },
+        });
+    }
+
 };
