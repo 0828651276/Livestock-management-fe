@@ -11,29 +11,64 @@ import {
     CircularProgress,
     Grid,
     Typography,
-    Divider,
+    Divider, Tooltip, Dialog, DialogTitle, DialogContent, Snackbar, Alert,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import EditIcon from "@mui/icons-material/Edit";
+import {Edit} from "@mui/icons-material";
+import EmployeeFormUpdate from "./EmployeeFormUpdate.jsx";
+
+// ... các import như cũ ...
+import { styled } from "@mui/material/styles";
 
 const EmployeeDetail = () => {
-    const employeeId = localStorage.getItem('employeeId'); // Lấy mã nhân viên từ localStorage
+    const employeeId = localStorage.getItem('employeeId');
     const navigate = useNavigate();
     const [employee, setEmployee] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [selectedEmployee, setSelectedEmployee] = useState(null);
+    const [openUpdateForm, setOpenUpdateForm] = useState(false);
+    const [notification, setNotification] = useState({
+        open: false,
+        message: '',
+        severity: 'success'
+    });
+
+    const showNotification = (message, severity = 'success') => {
+        setNotification({
+            open: true,
+            message,
+            severity
+        });
+    };
+
+    const handleCloseNotification = () => {
+        setNotification({ ...notification, open: false });
+    };
+
+    // Styled button
+    const ActionButton = styled(Button)(({ theme }) => ({
+        minWidth: '32px',
+        padding: '6px 12px',
+        boxShadow: 'none',
+        '&:hover': {
+            boxShadow: theme.shadows[2]
+        }
+    }));
+
+    // Đưa fetchEmployee ra ngoài useEffect
+    const fetchEmployee = async () => {
+        try {
+            const res = await employeeService.getById(employeeId);
+            setEmployee(res.data);
+        } catch (error) {
+            console.error("Lỗi khi lấy thông tin nhân viên:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchEmployee = async () => {
-            try {
-                const res = await employeeService.getById(employeeId);
-                setEmployee(res.data);
-            } catch (error) {
-                console.error("Lỗi khi lấy thông tin nhân viên:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchEmployee();
     }, [employeeId]);
 
@@ -54,7 +89,6 @@ const EmployeeDetail = () => {
             <Card sx={{ borderRadius: 3, boxShadow: 3 }}>
                 <CardContent>
                     <Grid container spacing={4}>
-                        {/* Avatar bên trái */}
                         <Grid item xs={12} sm={4} sx={{ textAlign: "center" }}>
                             <Avatar
                                 src={
@@ -71,7 +105,6 @@ const EmployeeDetail = () => {
                             </Typography>
                         </Grid>
 
-                        {/* Thông tin bên phải */}
                         <Grid item xs={12} sm={8}>
                             <Box>
                                 <Typography variant="h6" gutterBottom>
@@ -84,12 +117,14 @@ const EmployeeDetail = () => {
                                     { label: "Username", value: employee.username },
                                     { label: "Email", value: employee.email },
                                     { label: "Ngày sinh", value: employee.birthDate },
-                                    { label: "Giới tính",
+                                    {
+                                        label: "Giới tính",
                                         value: employee.gender === "MALE"
                                             ? "Nam"
                                             : employee.gender === "FEMALE"
                                                 ? "Nữ"
-                                                : "Khác"},
+                                                : "Khác"
+                                    },
                                     { label: "CMND/CCCD", value: employee.idCardNumber },
                                 ].map((item, index) => (
                                     <Box key={index} sx={{ mb: 1.5 }}>
@@ -107,7 +142,7 @@ const EmployeeDetail = () => {
                         <Button
                             variant="outlined"
                             startIcon={<ArrowBackIcon />}
-                            onClick={() => navigate('/dashboard')} // Hoặc navigate(-1) nếu cần
+                            onClick={() => navigate('/dashboard')}
                         >
                             Quay lại
                         </Button>
@@ -115,13 +150,73 @@ const EmployeeDetail = () => {
                         <Button
                             variant="contained"
                             startIcon={<EditIcon />}
-                            onClick={() => navigate(`/employees/update/${employee.employeeId}`)}
+                            onClick={() => {
+                                setSelectedEmployee(employee);
+                                setOpenUpdateForm(true);
+                            }}
                         >
                             Chỉnh sửa
                         </Button>
                     </Box>
                 </CardContent>
             </Card>
+
+            <Dialog
+                open={openUpdateForm}
+                onClose={() => setOpenUpdateForm(false)}
+                maxWidth="md"
+                fullWidth
+                PaperProps={{
+                    sx: {
+                        maxWidth: '600px',
+                        borderRadius: '8px'
+                    }
+                }}
+            >
+                <DialogTitle
+                    sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        bgcolor: '#f5f5f5',
+                        borderBottom: '1px solid #e0e0e0'
+                    }}
+                >
+                    <Edit color="primary" />
+                    <Typography variant="h6">Cập nhật nhân viên</Typography>
+                </DialogTitle>
+                <DialogContent sx={{ p: 0 }}>
+                    <EmployeeFormUpdate
+                        employeeData={selectedEmployee}
+                        onClose={(success) => {
+                            setOpenUpdateForm(false);
+                            setSelectedEmployee(null);
+                            if (success) {
+                                showNotification("Cập nhật nhân viên thành công");
+                                fetchEmployee();
+                            }
+                        }}
+                    />
+                </DialogContent>
+            </Dialog>
+
+            {/* Snackbar for notifications */}
+            <Snackbar
+                open={notification.open}
+                autoHideDuration={3000}
+                onClose={handleCloseNotification}
+                anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+            >
+                <Alert
+                    onClose={handleCloseNotification}
+                    severity={notification.severity}
+                    variant="filled"
+                    sx={{ width: '100%' }}
+                >
+                    {notification.message}
+                </Alert>
+            </Snackbar>
+
         </Box>
     );
 };
