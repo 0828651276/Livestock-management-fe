@@ -17,7 +17,6 @@ const Sidebar = ({drawerWidth, activeMenu, setActiveMenu}) => {
     const [openSystemMenu, setOpenSystemMenu] = useState(false);
     const [openInfoMenu, setOpenInfoMenu] = useState(false);
 
-
     const handleMenuClick = (menu) => {
         setActiveMenu(menu);
         navigate(`/dashboard/${menu}`);
@@ -30,6 +29,15 @@ const Sidebar = ({drawerWidth, activeMenu, setActiveMenu}) => {
     const toggleInfoMenu = () => {
         setOpenInfoMenu((prev) => !prev);
     };
+
+    // Style chung cho tất cả các menu item
+    const menuItemStyle = {
+        cursor: 'pointer',
+        '&:hover': {
+            backgroundColor: '#333',
+        }
+    };
+
     return (
         <>
             <Drawer variant="permanent" open
@@ -45,13 +53,16 @@ const Sidebar = ({drawerWidth, activeMenu, setActiveMenu}) => {
                     </Toolbar>
                     <List>
                         <ListItem onClick={() => navigate(`/dashboard`)}
-                                  sx={{backgroundColor: activeMenu === 'dashboard' ? '#333' : 'transparent'}}>
+                                sx={{
+                                    ...menuItemStyle,
+                                    backgroundColor: activeMenu === 'dashboard' ? '#333' : 'transparent'
+                                }}>
                             <ListItemIcon sx={{color: activeMenu === 'dashboard' ? '#FF5722' : 'white'}}>
                                 <HouseIcon/>
                             </ListItemIcon>
                             <ListItemText primary="Dashboard"/>
                         </ListItem>
-                        <ListItem onClick={toggleSystemMenu} sx={{backgroundColor: '#222'}}>
+                        <ListItem onClick={toggleSystemMenu} sx={{...menuItemStyle, backgroundColor: '#222'}}>
                             <ListItemIcon sx={{color: 'white'}}>
                                 <SettingsIcon/>
                             </ListItemIcon>
@@ -60,16 +71,16 @@ const Sidebar = ({drawerWidth, activeMenu, setActiveMenu}) => {
                         </ListItem>
                         <Collapse in={openSystemMenu} timeout="auto" unmountOnExit>
                             <List component="ul" disablePadding>
-                                <ListItem button sx={{pl: 4}} onClick={() => handleMenuClick('employees')}>
+                                <ListItem button sx={{...menuItemStyle, pl: 4}} onClick={() => handleMenuClick('employees')}>
                                     <ListItemText primary="Quản lý nhân viên"/>
                                 </ListItem>
-                                <ListItem button sx={{pl: 4}} onClick={() => handleMenuClick('notifications')}>
+                                <ListItem button sx={{...menuItemStyle, pl: 4}} onClick={() => handleMenuClick('notifications')}>
                                     <ListItemText primary="Đăng thông báo"/>
                                 </ListItem>
                             </List>
                         </Collapse>
 
-                        <ListItem onClick={toggleInfoMenu} sx={{backgroundColor: '#222'}}>
+                        <ListItem onClick={toggleInfoMenu} sx={{...menuItemStyle, backgroundColor: '#222'}}>
                             <ListItemIcon sx={{color: 'white'}}>
                                 <PetsIcon/>
                             </ListItemIcon>
@@ -78,18 +89,16 @@ const Sidebar = ({drawerWidth, activeMenu, setActiveMenu}) => {
                         </ListItem>
                         <Collapse in={openInfoMenu} timeout="auto" unmountOnExit>
                             <List component="ul" disablePadding>
-                                <ListItem button sx={{pl: 4}} onClick={() => handleMenuClick('pigpens')}>
+                                <ListItem button sx={{...menuItemStyle, pl: 4}} onClick={() => handleMenuClick('pigpens')}>
                                     <ListItemText primary="Quản lý chuồng nuôi"/>
                                 </ListItem>
-                                <ListItem button sx={{pl: 4}} onClick={() => handleMenuClick('animals')}>
+                                <ListItem button sx={{...menuItemStyle, pl: 4}} onClick={() => handleMenuClick('animals')}>
                                     <ListItemText primary="Quản lý cá thể vật nuôi"/>
                                 </ListItem>
                             </List>
                         </Collapse>
-
                     </List>
                 </div>
-
             </Drawer>
         </>
     );
