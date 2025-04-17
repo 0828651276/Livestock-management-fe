@@ -19,6 +19,8 @@ const TopMenu = ({drawerWidth, handleDrawerToggle, user}) => {
     const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
     const open = Boolean(anchorEl);
     const [profile, setProfile] = useState();
+    const [lastUpdate, setLastUpdate] = useState(Date.now());
+
     const fetchEmployee = async () => {
         try {
             const employeeId = localStorage.getItem('employeeId') || undefined;
@@ -33,6 +35,18 @@ const TopMenu = ({drawerWidth, handleDrawerToggle, user}) => {
 
     useEffect(() => {
         fetchEmployee();
+    }, [lastUpdate]);
+
+    useEffect(() => {
+        const handleProfileUpdate = () => {
+            setLastUpdate(Date.now());
+        };
+
+        window.addEventListener('profile-updated', handleProfileUpdate);
+
+        return () => {
+            window.removeEventListener('profile-updated', handleProfileUpdate);
+        };
     }, []);
 
     const handleUserMenuOpen = (e) => setAnchorEl(e.currentTarget);
@@ -45,10 +59,7 @@ const TopMenu = ({drawerWidth, handleDrawerToggle, user}) => {
     const handleLogoutConfirm = () => {
         setLogoutConfirmOpen(false);
         authService.logout();
-        // Xóa thông tin đăng nhập khỏi localStorage hoặc cookie (nếu có)
-        localStorage.removeItem('user');  // Hoặc tùy chỉnh theo cách lưu trữ của bạn
-
-        // Chuyển hướng về trang đăng nhập sau khi đăng xuất
+        localStorage.removeItem('user');
         navigate('/login');
     };
 
@@ -70,7 +81,7 @@ const TopMenu = ({drawerWidth, handleDrawerToggle, user}) => {
                     <IconButton>
                         <Avatar
                             src={profile && profile.imagePath
-                                ? `http://localhost:8080/${profile.imagePath}`
+                                ? `http://localhost:8080/${profile.imagePath}?t=${lastUpdate}`
                                 : ''}
                             alt="Avatar"
                             sx={{ width: 30, height: 30 }}

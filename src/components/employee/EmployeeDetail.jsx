@@ -57,6 +57,15 @@ const EmployeeDetail = () => {
         fetchEmployee();
     }, [employeeId]);
 
+    const handleUpdateSuccess = () => {
+        setOpenUpdateForm(false);
+        setSelectedEmployee(null);
+        showNotification("Cập nhật nhân viên thành công");
+        fetchEmployee();
+        // Emit sự kiện để thông báo TopMenu cập nhật avatar
+        window.dispatchEvent(new Event('profile-updated'));
+    };
+
     if (loading) {
         return (
             <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
@@ -168,17 +177,19 @@ const EmployeeDetail = () => {
             >
                 <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1, bgcolor: '#f5f5f5', borderBottom: '1px solid #e0e0e0' }}>
                     <Edit color="primary" />
-                    <Typography variant="h6">Cập nhật nhân viên</Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        Cập nhật nhân viên
+                    </Box>
                 </DialogTitle>
                 <DialogContent sx={{ p: 0 }}>
                     <EmployeeFormUpdate
                         employeeData={selectedEmployee}
                         onClose={(success) => {
-                            setOpenUpdateForm(false);
-                            setSelectedEmployee(null);
                             if (success) {
-                                showNotification("Cập nhật nhân viên thành công");
-                                fetchEmployee();
+                                handleUpdateSuccess();
+                            } else {
+                                setOpenUpdateForm(false);
+                                setSelectedEmployee(null);
                             }
                         }}
                     />
