@@ -244,7 +244,7 @@ export default function PenManager() {
         <Box sx={{py: 2}}>
             {/* Action buttons */}
             <Stack direction="row" spacing={2} mb={3}>
-                <h1>Quản lý vật nuôi</h1>
+                <h1>Quản lý chuồng nuôi</h1>
             </Stack>
 
             {/* Search and filter container */}
