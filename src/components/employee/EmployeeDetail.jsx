@@ -11,7 +11,7 @@ import {
     CircularProgress,
     Grid,
     Typography,
-    Divider, Tooltip, Dialog, DialogTitle, DialogContent,
+    Divider, Tooltip, Dialog, DialogTitle, DialogContent, Snackbar, Alert,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import EditIcon from "@mui/icons-material/Edit";
@@ -40,6 +40,10 @@ const EmployeeDetail = () => {
             message,
             severity
         });
+    };
+
+    const handleCloseNotification = () => {
+        setNotification({ ...notification, open: false });
     };
 
     // Styled button
@@ -195,6 +199,24 @@ const EmployeeDetail = () => {
                     />
                 </DialogContent>
             </Dialog>
+
+            {/* Snackbar for notifications */}
+            <Snackbar
+                open={notification.open}
+                autoHideDuration={3000}
+                onClose={handleCloseNotification}
+                anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+            >
+                <Alert
+                    onClose={handleCloseNotification}
+                    severity={notification.severity}
+                    variant="filled"
+                    sx={{ width: '100%' }}
+                >
+                    {notification.message}
+                </Alert>
+            </Snackbar>
+
         </Box>
     );
 };
