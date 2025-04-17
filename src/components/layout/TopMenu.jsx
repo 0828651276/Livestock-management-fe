@@ -1,5 +1,5 @@
 // components/layout/TopMenu.jsx
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
     AppBar, Toolbar, IconButton, Typography, Box,
     Menu, MenuItem, Divider, Dialog, DialogTitle,
@@ -11,13 +11,29 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import {authService} from '../../services/authService';
 import Avatar from '@mui/material/Avatar';
 import {useNavigate} from 'react-router-dom';
+import {employeeService} from "../../services/EmployeeService.js";
 
 const TopMenu = ({drawerWidth, handleDrawerToggle, user}) => {
     const [anchorEl, setAnchorEl] = useState(null);
     const navigate = useNavigate();
     const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
     const open = Boolean(anchorEl);
-    const [employees, setEmployees] = useState([]);
+    const [profile, setProfile] = useState();
+    const fetchEmployee = async () => {
+        try {
+            const employeeId = localStorage.getItem('employeeId') || undefined;
+            if (employeeId) {
+                const res = await employeeService.getById(employeeId);
+                setProfile(res.data);
+            }
+        } catch (error) {
+            console.error("Lỗi khi lấy thông tin nhân viên:", error);
+        }
+    };
+
+    useEffect(() => {
+        fetchEmployee();
+    }, []);
 
     const handleUserMenuOpen = (e) => setAnchorEl(e.currentTarget);
     const handleUserMenuClose = () => setAnchorEl(null);
@@ -53,8 +69,8 @@ const TopMenu = ({drawerWidth, handleDrawerToggle, user}) => {
                 <Box onClick={handleUserMenuOpen} sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                     <IconButton>
                         <Avatar
-                            src={employees.imagePath
-                                ? `http://localhost:8080/${employees.imagePath}`
+                            src={profile && profile.imagePath
+                                ? `http://localhost:8080/${profile.imagePath}`
                                 : ''}
                             alt="Avatar"
                             sx={{ width: 30, height: 30 }}

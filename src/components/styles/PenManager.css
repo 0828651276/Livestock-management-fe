@@ -90,3 +90,74 @@
 .pen-table tbody tr {
     animation: fadeIn 0.3s ease forwards;
 }
+
+/* Form validation styles */
+.error-text {
+    color: #d32f2f;
+    font-size: 0.75rem;
+    margin-top: 3px;
+    margin-left: 14px;
+    font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+    letter-spacing: 0.03333em;
+}
+
+.MuiFormHelperText-root.Mui-error {
+    animation: errorShake 0.3s ease-in-out;
+}
+
+@keyframes errorShake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-5px);
+    }
+    75% {
+        transform: translateX(5px);
+    }
+}
+
+/* Style for form fields with validation */
+.MuiTextField-root.with-validation .MuiOutlinedInput-root.Mui-error {
+    transition: all 0.2s ease;
+}
+
+.MuiTextField-root.with-validation .MuiOutlinedInput-root.Mui-error:hover {
+    box-shadow: 0 0 0 2px rgba(211, 47, 47, 0.2);
+}
+
+/* Additional style for valid fields */
+.MuiTextField-root.with-validation .MuiOutlinedInput-root.valid {
+    border-color: #4caf50;
+}
+
+/* Error icon style */
+.error-icon {
+    color: #d32f2f;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Form submission error message */
+.form-submission-error {
+    background-color: rgba(211, 47, 47, 0.1);
+    border-left: 4px solid #d32f2f;
+    padding: 10px 16px;
+    margin-bottom: 16px;
+    border-radius: 4px;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Custom style for required field indicator */
+.required-field-label::after {
+    content: " *";
+    color: #d32f2f;
+}
