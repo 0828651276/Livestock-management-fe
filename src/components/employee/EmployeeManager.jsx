@@ -145,11 +145,10 @@ export default function EmployeeManager() {
         }
     };
 
-    const formatDate = (dateStr) => {
-        if (!dateStr) return "";
-        const d = new Date(dateStr);
-        return d.toLocaleDateString("vi-VN");
-    };
+    const formatDate = (dateStr) => dateStr ? new Date(dateStr)
+        .toLocaleDateString("vi-VN", {
+            day: '2-digit', month: '2-digit', year: 'numeric'
+        }) : "";
 
     const handleChangePage = (event, newPage) => {
         setPage(newPage);

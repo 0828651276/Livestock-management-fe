@@ -1,4 +1,3 @@
-// src/pages/EmployeeDetail.jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { employeeService } from "../../services/employeeService";
@@ -15,11 +14,8 @@ import {
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import EditIcon from "@mui/icons-material/Edit";
-import {Edit} from "@mui/icons-material";
+import { Edit } from "@mui/icons-material";
 import EmployeeFormUpdate from "./EmployeeFormUpdate.jsx";
-
-// ... các import như cũ ...
-import { styled } from "@mui/material/styles";
 
 const EmployeeDetail = () => {
     const employeeId = localStorage.getItem('employeeId');
@@ -46,17 +42,6 @@ const EmployeeDetail = () => {
         setNotification({ ...notification, open: false });
     };
 
-    // Styled button
-    const ActionButton = styled(Button)(({ theme }) => ({
-        minWidth: '32px',
-        padding: '6px 12px',
-        boxShadow: 'none',
-        '&:hover': {
-            boxShadow: theme.shadows[2]
-        }
-    }));
-
-    // Đưa fetchEmployee ra ngoài useEffect
     const fetchEmployee = async () => {
         try {
             const res = await employeeService.getById(employeeId);
@@ -86,63 +71,69 @@ const EmployeeDetail = () => {
 
     return (
         <Box sx={{ maxWidth: 900, mx: "auto", mt: 4 }}>
-            <Card sx={{ borderRadius: 3, boxShadow: 3 }}>
+            <Card sx={{ borderRadius: 3, boxShadow: 3, bgcolor: "#f9f9f9" }}>
                 <CardContent>
                     <Grid container spacing={4}>
+                        {/* Avatar and basic info */}
                         <Grid item xs={12} sm={4} sx={{ textAlign: "center" }}>
                             <Avatar
-                                src={
-                                    employee.imagePath
-                                        ? `http://localhost:8080/${employee.imagePath}`
-                                        : ""
-                                }
+                                src={employee.imagePath ? `http://localhost:8080/${employee.imagePath}` : ""}
                                 alt={employee.fullName}
-                                sx={{ width: 160, height: 160, mx: "auto", mb: 2 }}
+                                sx={{ width: 160, height: 160, mx: "auto", mb: 2, borderRadius: "50%" }}
                             />
-                            <Typography variant="h6">{employee.fullName}</Typography>
+                            <Typography variant="h6" fontWeight="bold">{employee.fullName}</Typography>
                             <Typography variant="body2" color="text.secondary">
                                 {employee.role === "MANAGER" ? "Quản lý" : "Nhân viên"}
                             </Typography>
                         </Grid>
 
+                        {/* Employee details */}
                         <Grid item xs={12} sm={8}>
-                            <Box>
-                                <Typography variant="h6" gutterBottom>
-                                    Thông tin chi tiết
-                                </Typography>
-                                <Divider sx={{ mb: 2 }} />
+                            <Typography variant="h6" sx={{ fontWeight: "bold" }} gutterBottom>
+                                Thông tin chi tiết
+                            </Typography>
+                            <Divider sx={{ mb: 2 }} />
 
-                                {[
-                                    { label: "Mã nhân viên", value: employee.employeeId },
-                                    { label: "Username", value: employee.username },
-                                    { label: "Email", value: employee.email },
-                                    { label: "Ngày sinh", value: employee.birthDate },
-                                    {
-                                        label: "Giới tính",
-                                        value: employee.gender === "MALE"
-                                            ? "Nam"
-                                            : employee.gender === "FEMALE"
-                                                ? "Nữ"
-                                                : "Khác"
-                                    },
-                                    { label: "CMND/CCCD", value: employee.idCardNumber },
-                                ].map((item, index) => (
-                                    <Box key={index} sx={{ mb: 1.5 }}>
-                                        <Typography variant="subtitle2" color="text.secondary">
-                                            {item.label}
-                                        </Typography>
-                                        <Typography>{item.value}</Typography>
-                                    </Box>
-                                ))}
-                            </Box>
+                            {[
+                                { label: "Mã nhân viên", value: employee.employeeId },
+                                { label: "Username", value: employee.username },
+                                { label: "Email", value: employee.email },
+                                { label: "Ngày sinh", value: new Date(employee.birthDate).toLocaleDateString('vi-VN', {
+                                        day: '2-digit', month: '2-digit', year: 'numeric'
+                                    }) },
+                                {
+                                    label: "Giới tính",
+                                    value: employee.gender === "MALE"
+                                        ? "Nam"
+                                        : employee.gender === "FEMALE"
+                                            ? "Nữ"
+                                            : "Khác"
+                                },
+                                { label: "Số CMND/CCCD", value: employee.idCardNumber },
+                            ].map((item, index) => (
+                                <Box key={index} sx={{ mb: 1.5 }}>
+                                    <Grid container spacing={2}>
+                                        <Grid item xs={4}>
+                                            <Typography variant="subtitle2" color="text.secondary" sx={{ fontWeight: "bold" }}>
+                                                {item.label}:
+                                            </Typography>
+                                        </Grid>
+                                        <Grid item xs={8}>
+                                            <Typography>{item.value}</Typography>
+                                        </Grid>
+                                    </Grid>
+                                </Box>
+                            ))}
                         </Grid>
                     </Grid>
 
+                    {/* Action buttons */}
                     <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 3 }}>
                         <Button
                             variant="outlined"
                             startIcon={<ArrowBackIcon />}
                             onClick={() => navigate('/dashboard')}
+                            sx={{ padding: "6px 16px", textTransform: "none", fontWeight: "bold" }}
                         >
                             Quay lại
                         </Button>
@@ -154,6 +145,7 @@ const EmployeeDetail = () => {
                                 setSelectedEmployee(employee);
                                 setOpenUpdateForm(true);
                             }}
+                            sx={{ padding: "6px 16px", textTransform: "none", fontWeight: "bold" }}
                         >
                             Chỉnh sửa
                         </Button>
@@ -161,6 +153,7 @@ const EmployeeDetail = () => {
                 </CardContent>
             </Card>
 
+            {/* Update Form Dialog */}
             <Dialog
                 open={openUpdateForm}
                 onClose={() => setOpenUpdateForm(false)}
@@ -169,19 +162,11 @@ const EmployeeDetail = () => {
                 PaperProps={{
                     sx: {
                         maxWidth: '600px',
-                        borderRadius: '8px'
+                        borderRadius: '8px',
                     }
                 }}
             >
-                <DialogTitle
-                    sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        bgcolor: '#f5f5f5',
-                        borderBottom: '1px solid #e0e0e0'
-                    }}
-                >
+                <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1, bgcolor: '#f5f5f5', borderBottom: '1px solid #e0e0e0' }}>
                     <Edit color="primary" />
                     <Typography variant="h6">Cập nhật nhân viên</Typography>
                 </DialogTitle>
@@ -216,7 +201,6 @@ const EmployeeDetail = () => {
                     {notification.message}
                 </Alert>
             </Snackbar>
-
         </Box>
     );
 };

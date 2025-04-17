@@ -27,6 +27,7 @@ const EmployeeFormCreate = ({ onClose }) => {
     const [avatar, setAvatar] = useState(null);
     const [previewUrl, setPreviewUrl] = useState("");
     const [loading, setLoading] = useState(false);
+    const [errors, setErrors] = useState({});
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -41,14 +42,66 @@ const EmployeeFormCreate = ({ onClose }) => {
         }
     };
 
+    const validate = () => {
+        const newErrors = {};
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const idCardRegex = /^\d{9,12}$/;
+
+        if (!employee.fullName.trim()) {
+            newErrors.fullName = "Họ tên không được để trống.";
+        }
+
+        if (!employee.username.trim()) {
+            newErrors.username = "Tên đăng nhập không được để trống.";
+        }
+
+        if (!employee.email.trim()) {
+            newErrors.email = "Email không được để trống.";
+        } else if (!emailRegex.test(employee.email)) {
+            newErrors.email = "Email không hợp lệ.";
+        }
+
+        if (!employee.birthDate) {
+            newErrors.birthDate = "Vui lòng chọn ngày sinh.";
+        }
+
+        if (!employee.idCardNumber.trim()) {
+            newErrors.idCardNumber = "CCCD không được để trống.";
+        } else if (!idCardRegex.test(employee.idCardNumber)) {
+            newErrors.idCardNumber = "CCCD phải từ 9-12 chữ số.";
+        }
+
+        return newErrors;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        const validationErrors = validate();
+        if (Object.keys(validationErrors).length > 0) {
+            setErrors(validationErrors);
+            return; // ❗Không submit nếu có lỗi
+        }
+
+        setErrors({});
         setLoading(true);
         try {
             const formData = new FormData();
-            formData.append("employee", new Blob([JSON.stringify(employee)], {
-                type: "application/json",
-            }));
+            const trimmedEmployee = {
+                ...employee,
+                fullName: employee.fullName.trim(),
+                username: employee.username.trim(),
+                email: employee.email.trim(),
+                idCardNumber: employee.idCardNumber.trim(),
+            };
+
+            formData.append(
+                "employee",
+                new Blob([JSON.stringify(trimmedEmployee)], {
+                    type: "application/json",
+                })
+            );
+
             if (avatar) {
                 formData.append("avatar", avatar);
             }
@@ -69,13 +122,12 @@ const EmployeeFormCreate = ({ onClose }) => {
             onSubmit={handleSubmit}
             sx={{
                 display: "flex",
-                flexDirection: { xs: "column", md: "column" },
+                flexDirection: "column",
                 gap: 2,
                 p: 4,
                 minHeight: "600px",
             }}
         >
-            {/* Avatar nhỏ hơn */}
             <Box
                 sx={{
                     textAlign: "center",
@@ -129,6 +181,8 @@ const EmployeeFormCreate = ({ onClose }) => {
                     value={employee.fullName}
                     onChange={handleChange}
                     required
+                    error={!!errors.fullName}
+                    helperText={errors.fullName}
                     sx={{ "& .MuiInputBase-input": { py: 1.5 } }}
                 />
                 <TextField
@@ -138,6 +192,8 @@ const EmployeeFormCreate = ({ onClose }) => {
                     value={employee.email}
                     onChange={handleChange}
                     required
+                    error={!!errors.email}
+                    helperText={errors.email}
                     sx={{ "& .MuiInputBase-input": { py: 1.5 } }}
                 />
                 <TextField
@@ -148,6 +204,8 @@ const EmployeeFormCreate = ({ onClose }) => {
                     onChange={handleChange}
                     InputLabelProps={{ shrink: true }}
                     required
+                    error={!!errors.birthDate}
+                    helperText={errors.birthDate}
                     sx={{ "& .MuiInputBase-input": { py: 1.5 } }}
                 />
                 <Box sx={{ display: "flex", flexDirection: "row", gap: 3 }}>
@@ -157,8 +215,8 @@ const EmployeeFormCreate = ({ onClose }) => {
                         name="gender"
                         value={employee.gender}
                         onChange={handleChange}
-                        sx={{ "& .MuiInputBase-input": { py: 1.5 } }}
                         fullWidth
+                        sx={{ "& .MuiInputBase-input": { py: 1.5 } }}
                     >
                         <MenuItem value="MALE">Nam</MenuItem>
                         <MenuItem value="FEMALE">Nữ</MenuItem>
@@ -170,8 +228,10 @@ const EmployeeFormCreate = ({ onClose }) => {
                         value={employee.idCardNumber}
                         onChange={handleChange}
                         required
-                        sx={{ "& .MuiInputBase-input": { py: 1.5 } }}
                         fullWidth
+                        error={!!errors.idCardNumber}
+                        helperText={errors.idCardNumber}
+                        sx={{ "& .MuiInputBase-input": { py: 1.5 } }}
                     />
                 </Box>
             </Box>
@@ -187,9 +247,11 @@ const EmployeeFormCreate = ({ onClose }) => {
                     value={employee.username}
                     onChange={handleChange}
                     required
-                    sx={{ 
+                    error={!!errors.username}
+                    helperText={errors.username}
+                    sx={{
                         "& .MuiInputBase-input": { py: 1.5 },
-                        width: '50%'  // Đặt độ rộng bằng một nửa container
+                        width: '50%',
                     }}
                 />
             </Box>
