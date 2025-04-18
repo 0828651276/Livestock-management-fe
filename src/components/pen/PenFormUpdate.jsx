@@ -25,7 +25,8 @@ const initialState = {
     caretakers: [],
     createdDate: "",
     closedDate: "",
-    quantity: 0
+    quantity: 0,
+    status: "ACTIVE"
 };
 
 const ITEM_HEIGHT = 48;
@@ -47,7 +48,8 @@ const PigPenFormUpdate = ({ onClose, pigPenData }) => {
         name: "",
         createdDate: "",
         closedDate: "",
-        quantity: ""
+        quantity: "",
+        status: ""
     });
     const [serverError, setServerError] = useState("");
     const [userRole, setUserRole] = useState('');
@@ -63,10 +65,32 @@ const PigPenFormUpdate = ({ onClose, pigPenData }) => {
 
     useEffect(() => {
         if (pigPenData) {
-            // Nếu API trả về một caretaker object, chuyển đổi thành mảng
-            const caretakers = pigPenData.caretaker
-                ? [pigPenData.caretaker]
-                : pigPenData.caretakers || [];
+            // Xử lý người chăm sóc
+            let caretakers = [];
+            if (pigPenData.caretaker) {
+                // Nếu có caretaker object
+                caretakers = [{
+                    employeeId: pigPenData.caretaker.employeeId,
+                    fullName: pigPenData.caretaker.fullName
+                }];
+            } else if (pigPenData.caretakers && Array.isArray(pigPenData.caretakers)) {
+                // Nếu có mảng caretakers
+                caretakers = pigPenData.caretakers.map(caretaker => ({
+                    employeeId: caretaker.employeeId,
+                    fullName: caretaker.fullName
+                }));
+            }
+
+            // Nếu là employee, chỉ hiển thị thông tin của mình
+            if (userRole === 'EMPLOYEE') {
+                const currentEmployee = employees.find(emp => emp.employeeId === employeeId);
+                if (currentEmployee) {
+                    caretakers = [{
+                        employeeId: currentEmployee.employeeId,
+                        fullName: currentEmployee.fullName
+                    }];
+                }
+            }
 
             setPigPen({
                 ...pigPenData,
@@ -75,7 +99,7 @@ const PigPenFormUpdate = ({ onClose, pigPenData }) => {
                 closedDate: pigPenData.closedDate ? new Date(pigPenData.closedDate).toISOString().split('T')[0] : "",
             });
         }
-    }, [pigPenData]);
+    }, [pigPenData, userRole, employeeId, employees]);
 
     const fetchEmployees = async () => {
         try {
@@ -100,11 +124,15 @@ const PigPenFormUpdate = ({ onClose, pigPenData }) => {
 
     const handleCaretakersChange = (event) => {
         const { value } = event.target;
-
+        
         // Chuyển đổi giá trị ID thành đối tượng nhân viên đầy đủ
-        const selectedEmployees = value.map(id =>
-            employees.find(emp => emp.employeeId === id)
-        ).filter(Boolean); // Lọc ra những giá trị null hoặc undefined
+        const selectedEmployees = value.map(id => {
+            const employee = employees.find(emp => emp.employeeId === id);
+            return {
+                employeeId: employee.employeeId,
+                fullName: employee.fullName
+            };
+        });
 
         setPigPen(prev => ({
             ...prev,
@@ -114,30 +142,31 @@ const PigPenFormUpdate = ({ onClose, pigPenData }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setServerError("");
-
-        // Validate form
-        const { isValid, errors: validationErrors } = validatePigPenForm(pigPen);
-        if (!isValid) {
-            setErrors(validationErrors);
-            return;
-        }
-
-        setLoading(true);
-
         try {
-            // Nếu là nhân viên, giữ nguyên người chăm sóc hiện tại
-            if (userRole !== 'MANAGER') {
-                const currentCaretakers = pigPenData.caretakers || [];
-                pigPen.caretakers = currentCaretakers;
+            // Chuẩn bị dữ liệu gửi đi với đầy đủ thông tin người chăm sóc
+            const submitData = {
+                ...pigPen,
+                caretakers: pigPen.caretakers.map(caretaker => ({
+                    ...caretaker,
+                    employeeId: caretaker.employeeId,
+                    fullName: caretaker.fullName
+                })),
+                // Đảm bảo có caretaker nếu có caretakers
+                caretaker: pigPen.caretakers.length > 0 ? pigPen.caretakers[0] : null
+            };
+
+            // Nếu là employee, chỉ cho phép cập nhật số lượng và trạng thái
+            if (userRole === 'EMPLOYEE') {
+                submitData.name = pigPenData.name; // Giữ nguyên tên
+                submitData.caretakers = pigPenData.caretakers; // Giữ nguyên người chăm sóc
+                submitData.caretaker = pigPenData.caretaker; // Giữ nguyên người chăm sóc chính
             }
 
-            await pigPenService.updatePigPen(pigPen.penId, pigPen);
+            await pigPenService.updatePigPen(pigPen.penId, submitData);
             onClose(true);
         } catch (error) {
             console.error("Lỗi khi cập nhật chuồng nuôi:", error);
-            setServerError(error.response?.data || "Đã xảy ra lỗi khi cập nhật chuồng nuôi. Vui lòng thử lại.");
-            setLoading(false);
+            setServerError("Có lỗi xảy ra khi cập nhật chuồng nuôi");
         }
     };
 
@@ -190,8 +219,7 @@ const PigPenFormUpdate = ({ onClose, pigPenData }) => {
                             renderValue={(selected) => (
                                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                                     {selected.map((value) => {
-                                        const employee = employees.find(emp => emp.employeeId === value) ||
-                                            pigPen.caretakers.find(c => c.employeeId === value);
+                                        const employee = employees.find(emp => emp.employeeId === value);
                                         return (
                                             <Chip
                                                 key={value}
@@ -259,6 +287,24 @@ const PigPenFormUpdate = ({ onClose, pigPenData }) => {
                     sx={{ "& .MuiInputBase-input": { py: 1.5 } }}
                     className={errors.quantity ? "field-error" : ""}
                 />
+
+                <Box sx={{ mb: 2 }}>
+                    <FormControl fullWidth>
+                        <InputLabel>Trạng thái</InputLabel>
+                        <Select
+                            name="status"
+                            value={pigPen.status}
+                            onChange={handleChange}
+                            label="Trạng thái"
+                        >
+                            <MenuItem value="ACTIVE">Đang hoạt động</MenuItem>
+                            <MenuItem value="CLOSED">Đã đóng</MenuItem>
+                        </Select>
+                        {errors.status && (
+                            <FormHelperText error>{errors.status}</FormHelperText>
+                        )}
+                    </FormControl>
+                </Box>
             </Box>
 
             <Box sx={{ mt: 2 }}>

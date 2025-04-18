@@ -25,7 +25,8 @@ const initialState = {
     caretakers: [],
     createdDate: new Date().toISOString().split('T')[0],
     closedDate: "",
-    quantity: 0
+    quantity: 0,
+    status: "ACTIVE"
 };
 
 const ITEM_HEIGHT = 48;
@@ -47,7 +48,8 @@ const PigPenFormCreate = ({ onClose }) => {
         name: "",
         createdDate: "",
         closedDate: "",
-        quantity: ""
+        quantity: "",
+        status: ""
     });
     const [serverError, setServerError] = useState("");
     const [userRole, setUserRole] = useState('');
@@ -262,6 +264,24 @@ const PigPenFormCreate = ({ onClose }) => {
                     sx={{ "& .MuiInputBase-input": { py: 1.5 } }}
                     className={errors.quantity ? "field-error" : ""}
                 />
+
+                <Box sx={{ mb: 2 }}>
+                    <FormControl fullWidth>
+                        <InputLabel>Trạng thái</InputLabel>
+                        <Select
+                            name="status"
+                            value={pigPen.status}
+                            onChange={handleChange}
+                            label="Trạng thái"
+                        >
+                            <MenuItem value="ACTIVE">Đang hoạt động</MenuItem>
+                            <MenuItem value="CLOSED">Đã đóng</MenuItem>
+                        </Select>
+                        {errors.status && (
+                            <FormHelperText error>{errors.status}</FormHelperText>
+                        )}
+                    </FormControl>
+                </Box>
             </Box>
 
             <Box sx={{ mt: 2 }}>
