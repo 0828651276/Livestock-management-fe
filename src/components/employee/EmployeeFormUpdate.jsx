@@ -9,11 +9,9 @@ import {
     Typography,
     Avatar,
     IconButton,
-    Alert,
 } from "@mui/material";
 import { employeeService } from "../../services/EmployeeService.js";
 import PhotoCamera from "@mui/icons-material/PhotoCamera";
-import {validateEmployeeForm} from "../../utils/validateUtils.js";
 
 const initialState = {
     imagePath: "",
@@ -32,7 +30,6 @@ const EmployeeFormUpdate = ({ onClose, employeeData }) => {
     const [previewUrl, setPreviewUrl] = useState("");
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
-    const [serverError, setServerError] = useState("");
 
     useEffect(() => {
         if (employeeData) {
@@ -46,11 +43,6 @@ const EmployeeFormUpdate = ({ onClose, employeeData }) => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setEmployee((prev) => ({ ...prev, [name]: value }));
-
-        // Clear error when user types
-        if (errors[name]) {
-            setErrors((prev) => ({ ...prev, [name]: "" }));
-        }
     };
 
     const handleFileChange = (e) => {
@@ -61,17 +53,44 @@ const EmployeeFormUpdate = ({ onClose, employeeData }) => {
         }
     };
 
+    const validate = () => {
+        const newErrors = {};
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const idCardRegex = /^\d{9,12}$/;
+
+        if (!employee.fullName.trim()) {
+            newErrors.fullName = "Họ tên không được để trống.";
+        }
+
+        if (!employee.email.trim()) {
+            newErrors.email = "Email không được để trống.";
+        } else if (!emailRegex.test(employee.email)) {
+            newErrors.email = "Email không hợp lệ.";
+        }
+
+        if (!employee.birthDate) {
+            newErrors.birthDate = "Vui lòng chọn ngày sinh.";
+        }
+
+        if (!employee.idCardNumber.trim()) {
+            newErrors.idCardNumber = "CCCD không được để trống.";
+        } else if (!idCardRegex.test(employee.idCardNumber)) {
+            newErrors.idCardNumber = "CCCD phải từ 9-12 chữ số.";
+        }
+
+        return newErrors;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setServerError("");
 
-        // Validate form using our utility
-        const { isValid, errors: validationErrors } = validateEmployeeForm(employee);
-        if (!isValid) {
+        const validationErrors = validate();
+        if (Object.keys(validationErrors).length > 0) {
             setErrors(validationErrors);
             return;
         }
 
+        setErrors({});
         setLoading(true);
 
         try {
@@ -94,29 +113,13 @@ const EmployeeFormUpdate = ({ onClose, employeeData }) => {
             }
 
             await employeeService.update(employee.employeeId, formData);
-
-            // Dispatch event to notify any listeners (like TopMenu) that profile was updated
-            window.dispatchEvent(new Event('profile-updated'));
-
             onClose(true);
         } catch (error) {
             console.error("Lỗi khi lưu nhân viên:", error);
-            setServerError(error.response?.data?.message || "Đã xảy ra lỗi khi cập nhật nhân viên");
-            setLoading(false);
+            onClose(false);
         } finally {
             setLoading(false);
         }
-    };
-
-    // Calculate max date for birthdate (18 years ago from today)
-    const calculateMaxDate = () => {
-        const today = new Date();
-        const eighteenYearsAgo = new Date(
-            today.getFullYear() - 18,
-            today.getMonth(),
-            today.getDate()
-        );
-        return eighteenYearsAgo.toISOString().split('T')[0];
     };
 
     return (
@@ -130,14 +133,7 @@ const EmployeeFormUpdate = ({ onClose, employeeData }) => {
                 p: 4,
                 minHeight: "600px",
             }}
-            className="employee-form"
         >
-            {serverError && (
-                <Alert severity="error" sx={{ mb: 2 }}>
-                    {serverError}
-                </Alert>
-            )}
-
             <Box
                 sx={{
                     textAlign: "center",
@@ -194,7 +190,6 @@ const EmployeeFormUpdate = ({ onClose, employeeData }) => {
                     error={!!errors.fullName}
                     helperText={errors.fullName}
                     sx={{ "& .MuiInputBase-input": { py: 1.5 } }}
-                    className={errors.fullName ? "field-error" : ""}
                 />
                 <TextField
                     label="Email"
@@ -206,7 +201,6 @@ const EmployeeFormUpdate = ({ onClose, employeeData }) => {
                     error={!!errors.email}
                     helperText={errors.email}
                     sx={{ "& .MuiInputBase-input": { py: 1.5 } }}
-                    className={errors.email ? "field-error" : ""}
                 />
                 <TextField
                     label="Ngày sinh"
@@ -217,10 +211,8 @@ const EmployeeFormUpdate = ({ onClose, employeeData }) => {
                     InputLabelProps={{ shrink: true }}
                     required
                     error={!!errors.birthDate}
-                    helperText={errors.birthDate || "Nhân viên phải đủ 18 tuổi trở lên"}
+                    helperText={errors.birthDate}
                     sx={{ "& .MuiInputBase-input": { py: 1.5 } }}
-                    className={errors.birthDate ? "field-error" : ""}
-                    inputProps={{ max: calculateMaxDate() }}
                 />
                 <Box sx={{ display: "flex", flexDirection: "row", gap: 3 }}>
                     <TextField
@@ -237,16 +229,15 @@ const EmployeeFormUpdate = ({ onClose, employeeData }) => {
                         <MenuItem value="OTHER">Khác</MenuItem>
                     </TextField>
                     <TextField
-                        label="Số CCCD/CMND"
+                        label="Số CCCD"
                         name="idCardNumber"
                         value={employee.idCardNumber}
                         onChange={handleChange}
                         required
                         error={!!errors.idCardNumber}
-                        helperText={errors.idCardNumber || "Chấp nhận CMND 9 số hoặc CCCD 12 số"}
+                        helperText={errors.idCardNumber}
                         fullWidth
                         sx={{ "& .MuiInputBase-input": { py: 1.5 } }}
-                        className={errors.idCardNumber ? "field-error" : ""}
                     />
                 </Box>
             </Box>

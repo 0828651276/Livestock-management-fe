@@ -28,7 +28,23 @@ const theme = createTheme({
 // Protected route component để kiểm tra xác thực
 const ProtectedRoute = ({element}) => {
     const token = authService.getCurrentUser();
-    return token ? element : <Navigate to="/"/>;
+    return token ? element : <Navigate to="/login"/>;
+};
+
+// Role-based Protected Route để kiểm tra quyền
+const RoleBasedRoute = ({element, requiredRole}) => {
+    const token = authService.getCurrentUser();
+    const userRole = localStorage.getItem('role');
+    
+    if (!token) {
+        return <Navigate to="/login"/>;
+    }
+    
+    if (requiredRole && userRole !== requiredRole) {
+        return <Navigate to="/dashboard"/>;
+    }
+    
+    return element;
 };
 
 function App() {
@@ -50,16 +66,21 @@ function App() {
         <>
             <ThemeProvider theme={theme}>
                 <Routes>
-
+                    <Route path="/" element={<Navigate to="/login" />} />
                     <Route path="/login" element={<LoginPage/>}/>
+                    
                     <Route path="/dashboard/*" element={<ProtectedRoute element={<DashboardPage/>}/>}>
                         <Route path="" element={<Home/>}/>
-                        <Route path="employees" element={<EmployeeManager/>}/>
-                        <Route path="employees/detail" element={<EmployeeDetail/>}/>
+                        
+                        {/* Routes chỉ cho MANAGER */}
+                        <Route path="employees" element={<RoleBasedRoute element={<EmployeeManager/>} requiredRole="MANAGER"/>}/>
+                        
+                        {/* Routes cho tất cả người dùng */}
                         <Route path="pigpens" element={<PigPenManager/>}/>
                         <Route path="change-password" element={<ChangePasswordForm/>}/>
-                    </Route>
+                        <Route path="employees/detail" element={<RoleBasedRoute element={<EmployeeDetail/>} />}/>
 
+                    </Route>
                 </Routes>
             </ThemeProvider>
         </>
