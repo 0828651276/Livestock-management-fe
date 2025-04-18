@@ -51,33 +51,35 @@ function LoginPage() {
         setShowPassword((prev) => !prev);
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError('');
-        setLoading(true);
+// Trong hàm handleSubmit của LoginPage.jsx
+const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
 
-        try {
-            const { username, password } = credentials;
+    try {
+        const { username, password } = credentials;
 
-            if (!username || !password) {
-                setError('Vui lòng nhập đầy đủ thông tin đăng nhập');
-                setLoading(false);
-                return;
-            }
-
-            await authService.login(username, password);
-            setSuccess(true);
-
-            setTimeout(() => {
-                navigate("/dashboard");
-            }, 1000);
-
-        } catch (error) {
-            setError('Tên đăng nhập hoặc mật khẩu không đúng');
-            console.error('Login submission error:', error);
+        if (!username || !password) {
+            setError('Vui lòng nhập đầy đủ thông tin đăng nhập');
             setLoading(false);
+            return;
         }
-    };
+
+        // Login sẽ tự động lưu role vào localStorage
+        await authService.login(username, password);
+        setSuccess(true);
+
+        setTimeout(() => {
+            navigate("/dashboard");
+        }, 1000);
+
+    } catch (error) {
+        setError('Tên đăng nhập hoặc mật khẩu không đúng');
+        console.error('Login submission error:', error);
+        setLoading(false);
+    }
+};
 
     const handleCloseSnackbar = () => {
         setSuccess(false);

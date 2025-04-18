@@ -11,11 +11,16 @@ import {useNavigate} from "react-router-dom";
 import {Collapse} from '@mui/material';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
+// Sửa đường dẫn import để phù hợp với cấu trúc dự án
+import { authService } from '../../services/authService';
 
 const Sidebar = ({drawerWidth, activeMenu, setActiveMenu}) => {
     const navigate = useNavigate();
     const [openSystemMenu, setOpenSystemMenu] = useState(false);
     const [openInfoMenu, setOpenInfoMenu] = useState(false);
+    
+    // Thay đổi cách lấy role
+    const userRole = localStorage.getItem('role');
 
     const handleMenuClick = (menu) => {
         setActiveMenu(menu);
@@ -62,23 +67,36 @@ const Sidebar = ({drawerWidth, activeMenu, setActiveMenu}) => {
                             </ListItemIcon>
                             <ListItemText primary="Dashboard"/>
                         </ListItem>
-                        <ListItem onClick={toggleSystemMenu} sx={{...menuItemStyle, backgroundColor: '#222'}}>
-                            <ListItemIcon sx={{color: 'white'}}>
-                                <SettingsIcon/>
-                            </ListItemIcon>
-                            <ListItemText primary="Quản lý hệ thống"/>
-                            {openSystemMenu ? <ExpandLess/> : <ExpandMore/>}
-                        </ListItem>
-                        <Collapse in={openSystemMenu} timeout="auto" unmountOnExit>
-                            <List component="ul" disablePadding>
-                                <ListItem button sx={{...menuItemStyle, pl: 4}} onClick={() => handleMenuClick('employees')}>
-                                    <ListItemText primary="Quản lý nhân viên"/>
+                        
+                        {/* Chỉ hiển thị menu Quản lý hệ thống cho MANAGER */}
+                        {userRole === 'MANAGER' && (
+                            <>
+                                <ListItem onClick={toggleSystemMenu} sx={{...menuItemStyle, backgroundColor: '#222'}}>
+                                    <ListItemIcon sx={{color: 'white'}}>
+                                        <SettingsIcon/>
+                                    </ListItemIcon>
+                                    <ListItemText primary="Quản lý hệ thống"/>
+                                    {openSystemMenu ? <ExpandLess/> : <ExpandMore/>}
                                 </ListItem>
-                                <ListItem button sx={{...menuItemStyle, pl: 4}} onClick={() => handleMenuClick('notifications')}>
-                                    <ListItemText primary="Đăng thông báo"/>
-                                </ListItem>
-                            </List>
-                        </Collapse>
+                                <Collapse in={openSystemMenu} timeout="auto" unmountOnExit>
+                                    <List component="ul" disablePadding>
+                                        {/* Sửa lỗi thuộc tính button */}
+                                        <ListItem 
+                                            onClick={() => handleMenuClick('employees')}
+                                            sx={{...menuItemStyle, pl: 4}}
+                                        >
+                                            <ListItemText primary="Quản lý nhân viên"/>
+                                        </ListItem>
+                                        <ListItem 
+                                            onClick={() => handleMenuClick('notifications')}
+                                            sx={{...menuItemStyle, pl: 4}}
+                                        >
+                                            <ListItemText primary="Đăng thông báo"/>
+                                        </ListItem>
+                                    </List>
+                                </Collapse>
+                            </>
+                        )}
 
                         <ListItem onClick={toggleInfoMenu} sx={{...menuItemStyle, backgroundColor: '#222'}}>
                             <ListItemIcon sx={{color: 'white'}}>
@@ -89,10 +107,17 @@ const Sidebar = ({drawerWidth, activeMenu, setActiveMenu}) => {
                         </ListItem>
                         <Collapse in={openInfoMenu} timeout="auto" unmountOnExit>
                             <List component="ul" disablePadding>
-                                <ListItem button sx={{...menuItemStyle, pl: 4}} onClick={() => handleMenuClick('pigpens')}>
+                                {/* Sửa lỗi thuộc tính button */}
+                                <ListItem 
+                                    onClick={() => handleMenuClick('pigpens')}
+                                    sx={{...menuItemStyle, pl: 4}}
+                                >
                                     <ListItemText primary="Quản lý chuồng nuôi"/>
                                 </ListItem>
-                                <ListItem button sx={{...menuItemStyle, pl: 4}} onClick={() => handleMenuClick('animals')}>
+                                <ListItem 
+                                    onClick={() => handleMenuClick('animals')}
+                                    sx={{...menuItemStyle, pl: 4}}
+                                >
                                     <ListItemText primary="Quản lý cá thể vật nuôi"/>
                                 </ListItem>
                             </List>

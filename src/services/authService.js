@@ -26,6 +26,8 @@ export const authService = {
         localStorage.setItem('username', username);
         // Lưu mã nhân viên
         localStorage.setItem('employeeId', data.employeeId);
+        // Lưu thông tin role
+        localStorage.setItem('role', data.role);
         return data;
       }
     } catch (error) {
@@ -37,7 +39,8 @@ export const authService = {
   logout: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('username');
-    localStorage.removeItem('employeeId')
+    localStorage.removeItem('employeeId');
+    localStorage.removeItem('role');
     localStorage.setItem('loggedOut', 'true');
   },
 
@@ -49,14 +52,19 @@ export const authService = {
   getUserInfo: () => {
     try {
       const username = localStorage.getItem('username');
+      const role = localStorage.getItem('role');
       if (username) {
-        return { username };
+        return { username, role };
       }
-      return { username: 'User' };
+      return { username: 'User', role: null };
     } catch (error) {
       console.error('Error getting user info:', error);
-      return { username: 'User' };
+      return { username: 'User', role: null };
     }
+  },
+
+  getRole: () => {
+    return localStorage.getItem('role');
   },
 
   // Helper method to get auth header for API calls
