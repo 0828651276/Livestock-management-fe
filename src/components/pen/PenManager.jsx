@@ -26,7 +26,8 @@ import {
     Grid,
     TablePagination,
     Tooltip,
-    CircularProgress
+    CircularProgress,
+    Chip
 } from "@mui/material";
 import {
     Add,
@@ -134,8 +135,15 @@ export default function PenManager() {
             else {
                 res = await pigPenService.findByCaretakerId(id);
             }
-            setPigPens(res);
-            setFilteredPigPens(res);
+
+            // Xử lý dữ liệu người chăm sóc
+            const processedPens = res.map(pen => ({
+                ...pen,
+                caretakers: pen.caretakers || (pen.caretaker ? [pen.caretaker] : [])
+            }));
+
+            setPigPens(processedPens);
+            setFilteredPigPens(processedPens);
         } catch (err) {
             console.error("Lỗi khi lấy danh sách chuồng nuôi:", err);
             showNotification("Không thể tải danh sách chuồng nuôi", "error");
@@ -429,6 +437,7 @@ export default function PenManager() {
                             <StyledTableHeaderCell>Ngày tạo</StyledTableHeaderCell>
                             <StyledTableHeaderCell>Ngày đóng</StyledTableHeaderCell>
                             <StyledTableHeaderCell>Số lượng</StyledTableHeaderCell>
+                            <StyledTableHeaderCell>Trạng thái</StyledTableHeaderCell>
                             {userRole === 'MANAGER' ? (
                                 <StyledTableHeaderCell align="center">Hành động</StyledTableHeaderCell>
                             ) : (
@@ -450,15 +459,20 @@ export default function PenManager() {
                                     {userRole === 'MANAGER' && (
                                         <StyledTableCell>
                                             <CaretakersList
-                                                caretakers={
-                                                    pen.caretakers || (pen.caretaker ? [pen.caretaker] : [])
-                                                }
+                                                caretakers={pen.caretakers}
                                             />
                                         </StyledTableCell>
                                     )}
                                     <StyledTableCell>{formatDate(pen.createdDate)}</StyledTableCell>
                                     <StyledTableCell>{formatDate(pen.closedDate) || "Đang hoạt động"}</StyledTableCell>
                                     <StyledTableCell>{pen.quantity}</StyledTableCell>
+                                    <StyledTableCell>
+                                        <Chip
+                                            label={pen.status === "ACTIVE" ? "Đang hoạt động" : "Đã đóng"}
+                                            color={pen.status === "ACTIVE" ? "success" : "error"}
+                                            size="small"
+                                        />
+                                    </StyledTableCell>
                                     {userRole === 'MANAGER' ? (
                                         <StyledTableCell align="center">
                                             <Stack direction="row" spacing={1} justifyContent="center">
@@ -496,7 +510,7 @@ export default function PenManager() {
                                     ) : (
                                         <StyledTableCell align="center">
                                             <Stack direction="row" spacing={1} justifyContent="center">
-                                                {pen.caretakers.some(caretaker => caretaker.employeeId === employeeId) && (
+                                                {pen.caretakers?.some(caretaker => caretaker.employeeId === employeeId) && (
                                                     <Tooltip title="Sửa">
                                                         <ActionButton
                                                             size="small"
@@ -521,7 +535,7 @@ export default function PenManager() {
                             ))
                         ) : !loading && (
                             <TableRow>
-                                <TableCell colSpan={userRole === 'MANAGER' ? 6 : 5} align="center" sx={{ py: 3 }}>
+                                <TableCell colSpan={userRole === 'MANAGER' ? 7 : 6} align="center" sx={{ py: 3 }}>
                                     <Typography variant="body1" color="text.secondary">
                                         Không có dữ liệu
                                     </Typography>

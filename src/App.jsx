@@ -59,6 +59,8 @@ function App() {
         setLoading(false);
     }, []);
 
+
+
     if (loading) {
         return <div>Đang tải...</div>;
     }
@@ -80,7 +82,9 @@ function App() {
 
                         {/* Routes cho tất cả người dùng */}
                         <Route path="pigpens" element={<PigPenManager/>}/>
-                        <Route path="animals" element={<div>Quản lý cá thể vật nuôi</div>}/>
+                        {/*<Route path="animals" element={<ProtectedRoute>*/}
+                        {/*    <AnimalManager />*/}
+                        {/*</ProtectedRoute>}/>*/}
                         <Route path="change-password" element={<ChangePasswordForm/>}/>
                         <Route path="employees/detail" element={<EmployeeDetail/>}/>
                     </Route>
