@@ -50,8 +50,14 @@ const PigPenFormCreate = ({ onClose }) => {
         quantity: ""
     });
     const [serverError, setServerError] = useState("");
+    const [userRole, setUserRole] = useState('');
+    const [employeeId, setEmployeeId] = useState('');
 
     useEffect(() => {
+        const role = localStorage.getItem('role');
+        const id = localStorage.getItem('employeeId');
+        setUserRole(role);
+        setEmployeeId(id);
         fetchEmployees();
     }, []);
 
@@ -59,7 +65,22 @@ const PigPenFormCreate = ({ onClose }) => {
         try {
             const res = await employeeService.getAll();
             // Chỉ lấy nhân viên không phải quản lý
-            setEmployees(res.data.filter(emp => emp.role !== "MANAGER"));
+            const filteredEmployees = res.data.filter(emp => emp.role !== "MANAGER");
+            setEmployees(filteredEmployees);
+
+            // Nếu là nhân viên, tự động gán họ làm người chăm sóc
+            if (userRole !== 'MANAGER') {
+                const currentEmployee = filteredEmployees.find(emp => emp.employeeId === employeeId);
+                if (currentEmployee) {
+                    setPigPen(prev => ({
+                        ...prev,
+                        caretakers: [{
+                            employeeId: currentEmployee.employeeId,
+                            fullName: currentEmployee.fullName
+                        }]
+                    }));
+                }
+            }
         } catch (error) {
             console.error("Lỗi khi lấy danh sách nhân viên:", error);
             setServerError("Không thể tải danh sách nhân viên.");
@@ -102,20 +123,24 @@ const PigPenFormCreate = ({ onClose }) => {
         }
 
         setLoading(true);
-
         try {
-            // Chuyển đổi caretakers thành định dạng phù hợp cho API
-            const formattedPigPen = {
-                ...pigPen,
-                // Tùy thuộc vào API backend, có thể cần điều chỉnh định dạng dữ liệu
-                caretakers: pigPen.caretakers.map(ct => ({ employeeId: ct.employeeId }))
-            };
+            // Nếu là nhân viên và chưa có người chăm sóc, tự động gán họ làm người chăm sóc
+            if (userRole !== 'MANAGER' && (!pigPen.caretakers || pigPen.caretakers.length === 0)) {
+                const currentEmployee = employees.find(emp => emp.employeeId === employeeId);
+                if (currentEmployee) {
+                    pigPen.caretakers = [{
+                        employeeId: currentEmployee.employeeId,
+                        fullName: currentEmployee.fullName
+                    }];
+                }
+            }
 
-            await pigPenService.createPigPen(formattedPigPen);
+            await pigPenService.createPigPen(pigPen);
             onClose(true);
         } catch (error) {
-            console.error("Lỗi khi thêm chuồng nuôi:", error);
-            setServerError(error.response?.data || "Đã xảy ra lỗi khi tạo chuồng nuôi. Vui lòng thử lại.");
+            console.error("Lỗi khi tạo chuồng nuôi:", error);
+            setServerError("Không thể tạo chuồng nuôi. Vui lòng thử lại.");
+        } finally {
             setLoading(false);
         }
     };
@@ -157,43 +182,45 @@ const PigPenFormCreate = ({ onClose }) => {
                     fullWidth
                 />
 
-                <FormControl fullWidth sx={{ "& .MuiInputBase-input": { py: 1.5 } }}>
-                    <InputLabel id="caretakers-label">Người chăm sóc</InputLabel>
-                    <Select
-                        labelId="caretakers-label"
-                        multiple
-                        value={pigPen.caretakers.map(ct => ct.employeeId)}
-                        onChange={handleCaretakersChange}
-                        input={<OutlinedInput label="Người chăm sóc" />}
-                        renderValue={(selected) => (
-                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                {selected.map((value) => {
-                                    const employee = employees.find(emp => emp.employeeId === value);
-                                    return (
-                                        <Chip
-                                            key={value}
-                                            label={employee ? employee.fullName : value}
-                                        />
-                                    );
-                                })}
-                            </Box>
-                        )}
-                        MenuProps={MenuProps}
-                    >
-                        <MenuItem disabled value="">
-                            <em>Chọn người chăm sóc</em>
-                        </MenuItem>
-                        {employees.map((employee) => (
-                            <MenuItem
-                                key={employee.employeeId}
-                                value={employee.employeeId}
-                            >
-                                {employee.fullName}
+                {userRole === 'MANAGER' && (
+                    <FormControl fullWidth sx={{ "& .MuiInputBase-input": { py: 1.5 } }}>
+                        <InputLabel id="caretakers-label">Người chăm sóc</InputLabel>
+                        <Select
+                            labelId="caretakers-label"
+                            multiple
+                            value={pigPen.caretakers.map(ct => ct.employeeId)}
+                            onChange={handleCaretakersChange}
+                            input={<OutlinedInput label="Người chăm sóc" />}
+                            renderValue={(selected) => (
+                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                    {selected.map((value) => {
+                                        const employee = employees.find(emp => emp.employeeId === value);
+                                        return (
+                                            <Chip
+                                                key={value}
+                                                label={employee ? employee.fullName : value}
+                                            />
+                                        );
+                                    })}
+                                </Box>
+                            )}
+                            MenuProps={MenuProps}
+                        >
+                            <MenuItem disabled value="">
+                                <em>Chọn người chăm sóc</em>
                             </MenuItem>
-                        ))}
-                    </Select>
-                    <FormHelperText>Có thể chọn nhiều người chăm sóc</FormHelperText>
-                </FormControl>
+                            {employees.map((employee) => (
+                                <MenuItem
+                                    key={employee.employeeId}
+                                    value={employee.employeeId}
+                                >
+                                    {employee.fullName}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                        <FormHelperText>Có thể chọn nhiều người chăm sóc</FormHelperText>
+                    </FormControl>
+                )}
 
                 <TextField
                     label="Ngày tạo"

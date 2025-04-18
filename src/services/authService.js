@@ -14,7 +14,7 @@ export const authService = {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Login failed');
+        throw new Error(errorData.message || 'Đăng nhập thất bại');
       }
 
       const data = await response.json();
@@ -22,17 +22,24 @@ export const authService = {
       // Store token in localStorage for future requests
       if (data.token) {
         localStorage.setItem('token', data.token);
-        // Lưu thêm tên đăng nhập để hiển thị
         localStorage.setItem('username', username);
-        // Lưu mã nhân viên
         localStorage.setItem('employeeId', data.employeeId);
-        // Lưu thông tin role
         localStorage.setItem('role', data.role);
         return data;
+      } else {
+        throw new Error('Không nhận được token từ server');
       }
     } catch (error) {
       console.error('Login error:', error);
-      throw error;
+      if (error.message.includes('Invalid username or password')) {
+        throw new Error('Tên đăng nhập hoặc mật khẩu không đúng');
+      } else if (error.message.includes('Account is locked')) {
+        throw new Error('Tài khoản đã bị khóa');
+      } else if (error.message.includes('Account is disabled')) {
+        throw new Error('Tài khoản đã bị vô hiệu hóa');
+      } else {
+        throw new Error('Đăng nhập thất bại. Vui lòng thử lại sau');
+      }
     }
   },
 

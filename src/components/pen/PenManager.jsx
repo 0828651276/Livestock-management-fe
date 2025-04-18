@@ -379,26 +379,24 @@ export default function PenManager() {
             {/* Counter */}
             <Typography variant="h6" component="h2" sx={{ mb: 2, fontWeight: 'bold' }}>
                 Tổng số chuồng: {filteredPigPens.length}
-                {userRole === 'MANAGER' && (
-                    <div>
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            startIcon={<Add />}
-                            onClick={() => setOpenCreateForm(true)}
-                            sx={{
-                                borderRadius: '4px',
-                                textTransform: 'uppercase',
-                                backgroundColor: '#1E8449',
-                                '&:hover': {
-                                    backgroundColor: '#155d32'
-                                }
-                            }}
-                        >
-                            Thêm chuồng nuôi
-                        </Button>
-                    </div>
-                )}
+                <div>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        startIcon={<Add />}
+                        onClick={() => setOpenCreateForm(true)}
+                        sx={{
+                            borderRadius: '4px',
+                            textTransform: 'uppercase',
+                            backgroundColor: '#1E8449',
+                            '&:hover': {
+                                backgroundColor: '#155d32'
+                            }
+                        }}
+                    >
+                        Thêm chuồng nuôi
+                    </Button>
+                </div>
             </Typography>
 
             {/* Table with loading state */}
@@ -425,11 +423,15 @@ export default function PenManager() {
                     <TableHead>
                         <TableRow>
                             <StyledTableHeaderCell>Tên chuồng</StyledTableHeaderCell>
-                            <StyledTableHeaderCell>Người chăm sóc</StyledTableHeaderCell>
+                            {userRole === 'MANAGER' && (
+                                <StyledTableHeaderCell>Người chăm sóc</StyledTableHeaderCell>
+                            )}
                             <StyledTableHeaderCell>Ngày tạo</StyledTableHeaderCell>
                             <StyledTableHeaderCell>Ngày đóng</StyledTableHeaderCell>
                             <StyledTableHeaderCell>Số lượng</StyledTableHeaderCell>
-                            {userRole === 'MANAGER' && (
+                            {userRole === 'MANAGER' ? (
+                                <StyledTableHeaderCell align="center">Hành động</StyledTableHeaderCell>
+                            ) : (
                                 <StyledTableHeaderCell align="center">Hành động</StyledTableHeaderCell>
                             )}
                         </TableRow>
@@ -445,19 +447,20 @@ export default function PenManager() {
                                     }}
                                 >
                                     <StyledTableCell sx={{ fontWeight: 'medium' }}>{pen.name}</StyledTableCell>
-                                    <StyledTableCell>
-                                        <CaretakersList
-                                            caretakers={
-                                                // Kiểm tra xem dữ liệu là caretaker đơn lẻ hay mảng caretakers
-                                                pen.caretakers || (pen.caretaker ? [pen.caretaker] : [])
-                                            }
-                                        />
-                                    </StyledTableCell>
+                                    {userRole === 'MANAGER' && (
+                                        <StyledTableCell>
+                                            <CaretakersList
+                                                caretakers={
+                                                    pen.caretakers || (pen.caretaker ? [pen.caretaker] : [])
+                                                }
+                                            />
+                                        </StyledTableCell>
+                                    )}
                                     <StyledTableCell>{formatDate(pen.createdDate)}</StyledTableCell>
                                     <StyledTableCell>{formatDate(pen.closedDate) || "Đang hoạt động"}</StyledTableCell>
                                     <StyledTableCell>{pen.quantity}</StyledTableCell>
-                                    {userRole === 'MANAGER' && (
-                                        <StyledTableCell>
+                                    {userRole === 'MANAGER' ? (
+                                        <StyledTableCell align="center">
                                             <Stack direction="row" spacing={1} justifyContent="center">
                                                 <Tooltip title="Sửa">
                                                     <ActionButton
@@ -488,6 +491,29 @@ export default function PenManager() {
                                                              sx={{ ml: 0.5, display: { xs: 'none', sm: 'inline' } }}>XÓA</Box>
                                                     </ActionButton>
                                                 </Tooltip>
+                                            </Stack>
+                                        </StyledTableCell>
+                                    ) : (
+                                        <StyledTableCell align="center">
+                                            <Stack direction="row" spacing={1} justifyContent="center">
+                                                {pen.caretakers.some(caretaker => caretaker.employeeId === employeeId) && (
+                                                    <Tooltip title="Sửa">
+                                                        <ActionButton
+                                                            size="small"
+                                                            variant="contained"
+                                                            color="warning"
+                                                            onClick={() => {
+                                                                setSelectedPigPen(pen);
+                                                                setOpenUpdateForm(true);
+                                                            }}
+                                                            className="action-button"
+                                                        >
+                                                            <Edit fontSize="small" />
+                                                            <Box component="span"
+                                                                 sx={{ ml: 0.5, display: { xs: 'none', sm: 'inline' } }}>SỬA</Box>
+                                                        </ActionButton>
+                                                    </Tooltip>
+                                                )}
                                             </Stack>
                                         </StyledTableCell>
                                     )}
