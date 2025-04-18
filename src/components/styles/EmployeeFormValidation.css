@@ -1,0 +1,114 @@
+/* Employee Form Validation Styles */
+
+.employee-form .field-error input,
+.employee-form .field-error textarea,
+.employee-form .field-error .MuiSelect-select {
+    border-color: #d32f2f;
+    animation: errorShake 0.3s ease-in-out;
+}
+
+@keyframes errorShake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-5px);
+    }
+    75% {
+        transform: translateX(5px);
+    }
+}
+
+/* Error messages */
+.employee-form .MuiFormHelperText-root.Mui-error {
+    font-weight: 500;
+    margin-top: 4px;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Success state for valid inputs */
+.employee-form .field-valid .MuiOutlinedInput-notchedOutline {
+    border-color: #4caf50;
+}
+
+/* Special style for date field with age validation */
+.employee-form input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.employee-form input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+}
+
+/* Style for required fields */
+.employee-form .MuiInputLabel-root.Mui-required:after {
+    content: " *";
+    color: #d32f2f;
+}
+
+/* Animation for error appearing */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Server error alert styling */
+.employee-form .MuiAlert-root {
+    animation: slideIn 0.3s ease-in-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Visual feedback when form is submitting */
+.employee-form .MuiButton-root.Mui-disabled {
+    position: relative;
+    overflow: hidden;
+}
+
+.employee-form .MuiButton-root.Mui-disabled:after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(
+            90deg,
+            transparent 25%,
+            rgba(255, 255, 255, 0.5) 50%,
+            transparent 75%
+    );
+    animation: loadingBar 1.5s infinite linear;
+}
+
+@keyframes loadingBar {
+    from {
+        transform: translateX(-100%);
+    }
+    to {
+        transform: translateX(100%);
+    }
+}
+
+/* Focus style improvements */
+.employee-form .MuiInputBase-root:focus-within {
+    box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+    transition: box-shadow 0.2s ease;
+}
