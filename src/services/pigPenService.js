@@ -151,21 +151,51 @@ export const pigPenService = {
         }
     },
 
-    // Tìm kiếm chuồng nuôi theo ID người chăm sóc
-    findByCaretakerId: async (caretakerId) => {
+    // Tìm kiếm chuồng nuôi theo khoảng thời gian và nhân viên chăm sóc
+    searchByDateRangeAndCaretaker: async (from, to, caretakerId) => {
         try {
             const token = authService.getCurrentUser();
-            const response = await axios.get(`${API_URL}/pigpens/search/caretaker/${caretakerId}`, {
+            // Đầu tiên lấy theo khoảng thời gian
+            const dateResponse = await axios.get(`${API_URL}/pigpens/search/date`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                params: { from, to }
+            });
+
+            // Sau đó lọc theo caretakerId nếu được cung cấp
+            if (caretakerId) {
+                // Lọc các chuồng mà nhân viên này chăm sóc
+                return dateResponse.data.filter(pen =>
+                    (pen.caretaker && pen.caretaker.employeeId === caretakerId) ||
+                    (pen.caretakers && pen.caretakers.some(c => c.employeeId === caretakerId))
+                );
+            }
+
+            return dateResponse.data;
+        } catch (error) {
+            console.error('Lỗi khi tìm kiếm chuồng nuôi theo ngày và người chăm sóc:', error);
+            throw error;
+        }
+    },
+
+    // Tìm kiếm chuồng nuôi theo ID người chăm sóc (API mới)
+    findByCaretakerId: async (employeeId) => {
+        try {
+            const token = authService.getCurrentUser(); // Giữ nguyên nếu bạn lấy token từ đây
+            const response = await axios.get(`${API_URL}/pigpens/my-pens`, {
+                params: { employeeId },
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
             return response.data;
         } catch (error) {
-            console.error(`Lỗi khi tìm kiếm chuồng nuôi theo người chăm sóc #${caretakerId}:`, error);
+            console.error(`Lỗi khi tìm kiếm chuồng nuôi theo người chăm sóc #${employeeId}:`, error);
             throw error;
         }
     },
+
 
     // Tìm kiếm chuồng nuôi theo khoảng số lượng
     searchByQuantityRange: async (min, max) => {
