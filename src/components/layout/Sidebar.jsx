@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
     Drawer, Toolbar, List, ListItem, ListItemIcon, ListItemText
 } from '@mui/material';
@@ -11,16 +11,19 @@ import {useNavigate} from "react-router-dom";
 import {Collapse} from '@mui/material';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
-// Sửa đường dẫn import để phù hợp với cấu trúc dự án
 import { authService } from '../../services/authService';
 
 const Sidebar = ({drawerWidth, activeMenu, setActiveMenu}) => {
     const navigate = useNavigate();
     const [openSystemMenu, setOpenSystemMenu] = useState(false);
     const [openInfoMenu, setOpenInfoMenu] = useState(false);
-    
-    // Thay đổi cách lấy role
-    const userRole = localStorage.getItem('role');
+    const [userRole, setUserRole] = useState('');
+
+    useEffect(() => {
+        // Lấy vai trò từ localStorage khi component được mount
+        const role = localStorage.getItem('role');
+        setUserRole(role);
+    }, []);
 
     const handleMenuClick = (menu) => {
         setActiveMenu(menu);
@@ -58,16 +61,16 @@ const Sidebar = ({drawerWidth, activeMenu, setActiveMenu}) => {
                     </Toolbar>
                     <List>
                         <ListItem onClick={() => navigate(`/dashboard`)}
-                                sx={{
-                                    ...menuItemStyle,
-                                    backgroundColor: activeMenu === 'dashboard' ? '#333' : 'transparent'
-                                }}>
+                                  sx={{
+                                      ...menuItemStyle,
+                                      backgroundColor: activeMenu === 'dashboard' ? '#333' : 'transparent'
+                                  }}>
                             <ListItemIcon sx={{color: activeMenu === 'dashboard' ? '#FF5722' : 'white'}}>
                                 <HouseIcon/>
                             </ListItemIcon>
                             <ListItemText primary="Dashboard"/>
                         </ListItem>
-                        
+
                         {/* Chỉ hiển thị menu Quản lý hệ thống cho MANAGER */}
                         {userRole === 'MANAGER' && (
                             <>
@@ -80,14 +83,13 @@ const Sidebar = ({drawerWidth, activeMenu, setActiveMenu}) => {
                                 </ListItem>
                                 <Collapse in={openSystemMenu} timeout="auto" unmountOnExit>
                                     <List component="ul" disablePadding>
-                                        {/* Sửa lỗi thuộc tính button */}
-                                        <ListItem 
+                                        <ListItem
                                             onClick={() => handleMenuClick('employees')}
                                             sx={{...menuItemStyle, pl: 4}}
                                         >
                                             <ListItemText primary="Quản lý nhân viên"/>
                                         </ListItem>
-                                        <ListItem 
+                                        <ListItem
                                             onClick={() => handleMenuClick('notifications')}
                                             sx={{...menuItemStyle, pl: 4}}
                                         >
@@ -107,14 +109,13 @@ const Sidebar = ({drawerWidth, activeMenu, setActiveMenu}) => {
                         </ListItem>
                         <Collapse in={openInfoMenu} timeout="auto" unmountOnExit>
                             <List component="ul" disablePadding>
-                                {/* Sửa lỗi thuộc tính button */}
-                                <ListItem 
+                                <ListItem
                                     onClick={() => handleMenuClick('pigpens')}
                                     sx={{...menuItemStyle, pl: 4}}
                                 >
                                     <ListItemText primary="Quản lý chuồng nuôi"/>
                                 </ListItem>
-                                <ListItem 
+                                <ListItem
                                     onClick={() => handleMenuClick('animals')}
                                     sx={{...menuItemStyle, pl: 4}}
                                 >

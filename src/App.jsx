@@ -9,6 +9,7 @@ import PigPenManager from "./components/pen/PenManager.jsx";
 import ChangePasswordForm from './components/employee/ChangePasswordForm.jsx';
 import LoginPage from "./pages/LoginPage.jsx";
 import Home from './pages/Home';
+import UnauthorizedPage from './pages/UnauthorizedPage';
 
 // Tạo theme tùy chỉnh
 const theme = createTheme({
@@ -35,15 +36,15 @@ const ProtectedRoute = ({element}) => {
 const RoleBasedRoute = ({element, requiredRole}) => {
     const token = authService.getCurrentUser();
     const userRole = localStorage.getItem('role');
-    
+
     if (!token) {
         return <Navigate to="/login"/>;
     }
-    
+
     if (requiredRole && userRole !== requiredRole) {
-        return <Navigate to="/dashboard"/>;
+        return <Navigate to="/unauthorized"/>;
     }
-    
+
     return element;
 };
 
@@ -68,18 +69,20 @@ function App() {
                 <Routes>
                     <Route path="/" element={<Navigate to="/login" />} />
                     <Route path="/login" element={<LoginPage/>}/>
-                    
+                    <Route path="/unauthorized" element={<UnauthorizedPage/>}/>
+
                     <Route path="/dashboard/*" element={<ProtectedRoute element={<DashboardPage/>}/>}>
                         <Route path="" element={<Home/>}/>
-                        
+
                         {/* Routes chỉ cho MANAGER */}
                         <Route path="employees" element={<RoleBasedRoute element={<EmployeeManager/>} requiredRole="MANAGER"/>}/>
-                        
+                        <Route path="notifications" element={<RoleBasedRoute element={<div>Quản lý thông báo</div>} requiredRole="MANAGER"/>}/>
+
                         {/* Routes cho tất cả người dùng */}
                         <Route path="pigpens" element={<PigPenManager/>}/>
+                        <Route path="animals" element={<div>Quản lý cá thể vật nuôi</div>}/>
                         <Route path="change-password" element={<ChangePasswordForm/>}/>
-                        <Route path="employees/detail" element={<RoleBasedRoute element={<EmployeeDetail/>} />}/>
-
+                        <Route path="employees/detail" element={<EmployeeDetail/>}/>
                     </Route>
                 </Routes>
             </ThemeProvider>

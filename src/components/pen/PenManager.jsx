@@ -97,6 +97,8 @@ export default function PenManager() {
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [loading, setLoading] = useState(false);
     const [searchLoading, setSearchLoading] = useState(false);
+    const [userRole, setUserRole] = useState('');
+    const [employeeId, setEmployeeId] = useState('');
 
     const handleCloseNotification = () => {
         setNotification({ ...notification, open: false });
@@ -111,13 +113,27 @@ export default function PenManager() {
     };
 
     useEffect(() => {
-        fetchPigPens();
+        const role = localStorage.getItem('role');
+        const id = localStorage.getItem('employeeId');
+        setUserRole(role);
+        setEmployeeId(id);
+
+        // Gọi hàm fetch dữ liệu
+        fetchPigPens(role, id);
     }, []);
 
-    const fetchPigPens = async () => {
+    const fetchPigPens = async (role, id) => {
         setLoading(true);
         try {
-            const res = await pigPenService.getAllPigPens();
+            let res;
+            // Nếu là MANAGER, lấy tất cả chuồng
+            if (role === 'MANAGER') {
+                res = await pigPenService.getAllPigPens();
+            }
+            // Nếu là STAFF, chỉ lấy chuồng mà nhân viên đó chăm sóc
+            else {
+                res = await pigPenService.findByCaretakerId(id);
+            }
             setPigPens(res);
             setFilteredPigPens(res);
         } catch (err) {
@@ -133,10 +149,21 @@ export default function PenManager() {
         try {
             // Nếu có lọc theo ngày
             if (dateRange.startDate || dateRange.endDate) {
-                const res = await pigPenService.searchByDateRange(
-                    dateRange.startDate,
-                    dateRange.endDate
-                );
+                // Dựa trên vai trò để quyết định tìm tất cả hay chỉ tìm theo caretaker
+                let res;
+                if (userRole === 'MANAGER') {
+                    res = await pigPenService.searchByDateRange(
+                        dateRange.startDate,
+                        dateRange.endDate
+                    );
+                } else {
+                    // Đối với nhân viên, tìm theo date nhưng vẫn chỉ trong phạm vi chuồng họ chăm sóc
+                    res = await pigPenService.searchByDateRangeAndCaretaker(
+                        dateRange.startDate,
+                        dateRange.endDate,
+                        employeeId
+                    );
+                }
 
                 // Lọc thêm theo tên nếu có
                 let filteredResults = res;
@@ -153,7 +180,16 @@ export default function PenManager() {
             }
             // Tìm theo tên
             else if (searchTerm) {
-                const res = await pigPenService.searchByName(searchTerm);
+                let res;
+                if (userRole === 'MANAGER') {
+                    res = await pigPenService.searchByName(searchTerm);
+                } else {
+                    // Tìm theo tên trong phạm vi chuồng nhân viên chăm sóc
+                    const allPens = await pigPenService.findByCaretakerId(employeeId);
+                    res = allPens.filter(pen =>
+                        pen.name.toLowerCase().includes(searchTerm.toLowerCase())
+                    );
+                }
                 setFilteredPigPens(res);
                 if (res.length === 0) {
                     showNotification("Không tìm thấy kết quả phù hợp", "info");
@@ -161,7 +197,7 @@ export default function PenManager() {
             }
             // Không có tiêu chí tìm kiếm
             else {
-                fetchPigPens();
+                fetchPigPens(userRole, employeeId);
             }
         } catch (error) {
             console.error("Lỗi khi tìm kiếm:", error);
@@ -196,7 +232,7 @@ export default function PenManager() {
     const handleResetFilters = () => {
         setSearchTerm('');
         setDateRange({ startDate: '', endDate: '' });
-        fetchPigPens();
+        fetchPigPens(userRole, employeeId);
     };
 
     const formatDate = (dateStr) => {
@@ -343,24 +379,26 @@ export default function PenManager() {
             {/* Counter */}
             <Typography variant="h6" component="h2" sx={{ mb: 2, fontWeight: 'bold' }}>
                 Tổng số chuồng: {filteredPigPens.length}
-                <div>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        startIcon={<Add />}
-                        onClick={() => setOpenCreateForm(true)}
-                        sx={{
-                            borderRadius: '4px',
-                            textTransform: 'uppercase',
-                            backgroundColor: '#1E8449',
-                            '&:hover': {
-                                backgroundColor: '#155d32'
-                            }
-                        }}
-                    >
-                        Thêm chuồng nuôi
-                    </Button>
-                </div>
+                {userRole === 'MANAGER' && (
+                    <div>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            startIcon={<Add />}
+                            onClick={() => setOpenCreateForm(true)}
+                            sx={{
+                                borderRadius: '4px',
+                                textTransform: 'uppercase',
+                                backgroundColor: '#1E8449',
+                                '&:hover': {
+                                    backgroundColor: '#155d32'
+                                }
+                            }}
+                        >
+                            Thêm chuồng nuôi
+                        </Button>
+                    </div>
+                )}
             </Typography>
 
             {/* Table with loading state */}
@@ -391,7 +429,9 @@ export default function PenManager() {
                             <StyledTableHeaderCell>Ngày tạo</StyledTableHeaderCell>
                             <StyledTableHeaderCell>Ngày đóng</StyledTableHeaderCell>
                             <StyledTableHeaderCell>Số lượng</StyledTableHeaderCell>
-                            <StyledTableHeaderCell align="center">Hành động</StyledTableHeaderCell>
+                            {userRole === 'MANAGER' && (
+                                <StyledTableHeaderCell align="center">Hành động</StyledTableHeaderCell>
+                            )}
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -416,44 +456,46 @@ export default function PenManager() {
                                     <StyledTableCell>{formatDate(pen.createdDate)}</StyledTableCell>
                                     <StyledTableCell>{formatDate(pen.closedDate) || "Đang hoạt động"}</StyledTableCell>
                                     <StyledTableCell>{pen.quantity}</StyledTableCell>
-                                    <StyledTableCell>
-                                        <Stack direction="row" spacing={1} justifyContent="center">
-                                            <Tooltip title="Sửa">
-                                                <ActionButton
-                                                    size="small"
-                                                    variant="contained"
-                                                    color="warning"
-                                                    onClick={() => {
-                                                        setSelectedPigPen(pen);
-                                                        setOpenUpdateForm(true);
-                                                    }}
-                                                    className="action-button"
-                                                >
-                                                    <Edit fontSize="small" />
-                                                    <Box component="span"
-                                                         sx={{ ml: 0.5, display: { xs: 'none', sm: 'inline' } }}>SỬA</Box>
-                                                </ActionButton>
-                                            </Tooltip>
-                                            <Tooltip title="Xóa">
-                                                <ActionButton
-                                                    size="small"
-                                                    variant="contained"
-                                                    color="error"
-                                                    onClick={() => handleDeleteClick(pen.penId)}
-                                                    className="action-button"
-                                                >
-                                                    <Delete fontSize="small" />
-                                                    <Box component="span"
-                                                         sx={{ ml: 0.5, display: { xs: 'none', sm: 'inline' } }}>XÓA</Box>
-                                                </ActionButton>
-                                            </Tooltip>
-                                        </Stack>
-                                    </StyledTableCell>
+                                    {userRole === 'MANAGER' && (
+                                        <StyledTableCell>
+                                            <Stack direction="row" spacing={1} justifyContent="center">
+                                                <Tooltip title="Sửa">
+                                                    <ActionButton
+                                                        size="small"
+                                                        variant="contained"
+                                                        color="warning"
+                                                        onClick={() => {
+                                                            setSelectedPigPen(pen);
+                                                            setOpenUpdateForm(true);
+                                                        }}
+                                                        className="action-button"
+                                                    >
+                                                        <Edit fontSize="small" />
+                                                        <Box component="span"
+                                                             sx={{ ml: 0.5, display: { xs: 'none', sm: 'inline' } }}>SỬA</Box>
+                                                    </ActionButton>
+                                                </Tooltip>
+                                                <Tooltip title="Xóa">
+                                                    <ActionButton
+                                                        size="small"
+                                                        variant="contained"
+                                                        color="error"
+                                                        onClick={() => handleDeleteClick(pen.penId)}
+                                                        className="action-button"
+                                                    >
+                                                        <Delete fontSize="small" />
+                                                        <Box component="span"
+                                                             sx={{ ml: 0.5, display: { xs: 'none', sm: 'inline' } }}>XÓA</Box>
+                                                    </ActionButton>
+                                                </Tooltip>
+                                            </Stack>
+                                        </StyledTableCell>
+                                    )}
                                 </TableRow>
                             ))
                         ) : !loading && (
                             <TableRow>
-                                <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
+                                <TableCell colSpan={userRole === 'MANAGER' ? 6 : 5} align="center" sx={{ py: 3 }}>
                                     <Typography variant="body1" color="text.secondary">
                                         Không có dữ liệu
                                     </Typography>
@@ -518,7 +560,7 @@ export default function PenManager() {
                             setOpenCreateForm(false);
                             if (success) {
                                 showNotification("Thêm chuồng nuôi thành công");
-                                fetchPigPens();
+                                fetchPigPens(userRole, employeeId);
                             }
                         }}
                     />
@@ -550,7 +592,7 @@ export default function PenManager() {
                             setSelectedPigPen(null);
                             if (success) {
                                 showNotification("Cập nhật chuồng nuôi thành công");
-                                fetchPigPens();
+                                fetchPigPens(userRole, employeeId);
                             }
                         }}
                     />
