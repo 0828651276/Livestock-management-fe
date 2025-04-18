@@ -40,7 +40,14 @@ export const pigPenService = {
     createPigPen: async (pigPenData) => {
         try {
             const token = authService.getCurrentUser();
-            const response = await axios.post(`${API_URL}/pigpens`, pigPenData, {
+            // Kiểm tra và chuyển đổi định dạng dữ liệu nếu cần
+            const dataToSend = {
+                ...pigPenData,
+                // Đảm bảo backend có thể hiểu cả caretakers là mảng
+                caretakers: pigPenData.caretakers || []
+            };
+
+            const response = await axios.post(`${API_URL}/pigpens`, dataToSend, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -57,7 +64,14 @@ export const pigPenService = {
     updatePigPen: async (id, pigPenData) => {
         try {
             const token = authService.getCurrentUser();
-            const response = await axios.put(`${API_URL}/pigpens/${id}`, pigPenData, {
+            // Kiểm tra và chuyển đổi định dạng dữ liệu nếu cần
+            const dataToSend = {
+                ...pigPenData,
+                // Đảm bảo backend có thể hiểu cả caretakers là mảng
+                caretakers: pigPenData.caretakers || []
+            };
+
+            const response = await axios.put(`${API_URL}/pigpens/${id}`, dataToSend, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'

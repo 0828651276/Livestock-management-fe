@@ -1,0 +1,87 @@
+/* Form validation styles */
+.pen-form .field-error input,
+.pen-form .field-error textarea,
+.pen-form .field-error .MuiSelect-select {
+    animation: errorShake 0.3s ease-in-out;
+}
+
+@keyframes errorShake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-5px);
+    }
+    75% {
+        transform: translateX(5px);
+    }
+}
+
+/* Error messages */
+.MuiFormHelperText-root.Mui-error {
+    font-weight: 500;
+    margin-top: 4px;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Alert styling */
+.form-error-alert {
+    animation: slideDown 0.3s ease-in-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Focus style improvements */
+.pen-form .MuiInputBase-root:focus-within {
+    box-shadow: 0 0 0 2px rgba(30, 132, 73, 0.2);
+    transition: box-shadow 0.2s ease;
+}
+
+/* Success indication after validation */
+.pen-form .field-valid .MuiOutlinedInput-notchedOutline {
+    border-color: #4caf50;
+}
+
+/* Required field indicator */
+.pen-form .MuiInputLabel-root.MuiFormLabel-required:after {
+    content: " *";
+    color: #f44336;
+}
+
+/* Hover effect for form fields */
+.pen-form .MuiTextField-root:hover .MuiOutlinedInput-notchedOutline,
+.pen-form .MuiFormControl-root:hover .MuiOutlinedInput-notchedOutline {
+    border-color: #1E8449;
+}
+
+/* Animation for submit button */
+.pen-form button[type="submit"]:not(:disabled) {
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.pen-form button[type="submit"]:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.pen-form button[type="submit"]:not(:disabled):active {
+    transform: translateY(0);
+}

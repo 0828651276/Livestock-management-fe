@@ -11,16 +11,32 @@ import {
     InputLabel,
     Select,
     FormHelperText,
+    Alert,
+    Chip,
+    OutlinedInput
 } from "@mui/material";
 import { pigPenService } from "../../services/pigPenService";
 import { employeeService } from "../../services/employeeService";
+import "../styles/FormValidation.css";
+import {validatePigPenForm} from "../../utils/validateUtils.js";
 
 const initialState = {
     name: "",
-    caretaker: null,
+    caretakers: [],
     createdDate: new Date().toISOString().split('T')[0],
     closedDate: "",
     quantity: 0
+};
+
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const MenuProps = {
+    PaperProps: {
+        style: {
+            maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+            width: 250,
+        },
+    },
 };
 
 const PigPenFormCreate = ({ onClose }) => {
@@ -33,6 +49,7 @@ const PigPenFormCreate = ({ onClose }) => {
         closedDate: "",
         quantity: ""
     });
+    const [serverError, setServerError] = useState("");
 
     useEffect(() => {
         fetchEmployees();
@@ -41,9 +58,11 @@ const PigPenFormCreate = ({ onClose }) => {
     const fetchEmployees = async () => {
         try {
             const res = await employeeService.getAll();
-            setEmployees(res.data);
+            // Chỉ lấy nhân viên không phải quản lý
+            setEmployees(res.data.filter(emp => emp.role !== "MANAGER"));
         } catch (error) {
             console.error("Lỗi khi lấy danh sách nhân viên:", error);
+            setServerError("Không thể tải danh sách nhân viên.");
         }
     };
 
@@ -57,78 +76,46 @@ const PigPenFormCreate = ({ onClose }) => {
         }
     };
 
-    const handleEmployeeChange = (e) => {
-        const employeeId = e.target.value;
-        const selectedEmployee = employees.find(emp => emp.employeeId === employeeId);
+    const handleCaretakersChange = (event) => {
+        const { value } = event.target;
+
+        // Chuyển đổi giá trị ID thành đối tượng nhân viên đầy đủ
+        const selectedEmployees = value.map(id =>
+            employees.find(emp => emp.employeeId === id)
+        ).filter(Boolean); // Lọc ra những giá trị null hoặc undefined
 
         setPigPen(prev => ({
             ...prev,
-            caretaker: selectedEmployee || null
+            caretakers: selectedEmployees
         }));
-    };
-
-    const validateForm = () => {
-        let isValid = true;
-        const newErrors = { ...errors };
-
-        // Validate name
-        if (!pigPen.name.trim()) {
-            newErrors.name = "Tên chuồng không được để trống";
-            isValid = false;
-        }
-
-        // Validate createdDate
-        if (!pigPen.createdDate) {
-            newErrors.createdDate = "Ngày tạo không được để trống";
-            isValid = false;
-        } else {
-            const currentDate = new Date();
-            currentDate.setHours(0, 0, 0, 0);
-            const createdDate = new Date(pigPen.createdDate);
-
-            if (createdDate > currentDate) {
-                newErrors.createdDate = "Ngày tạo không thể là ngày trong tương lai";
-                isValid = false;
-            }
-        }
-
-        // Validate closedDate if provided
-        if (pigPen.closedDate) {
-            const createdDate = new Date(pigPen.createdDate);
-            const closedDate = new Date(pigPen.closedDate);
-
-            if (closedDate < createdDate) {
-                newErrors.closedDate = "Ngày đóng phải sau ngày tạo";
-                isValid = false;
-            }
-        }
-
-        // Validate quantity
-        if (pigPen.quantity < 0) {
-            newErrors.quantity = "Số lượng không thể là số âm";
-            isValid = false;
-        }
-
-        setErrors(newErrors);
-        return isValid;
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setServerError("");
 
-        if (!validateForm()) {
+        // Validate form
+        const { isValid, errors: validationErrors } = validatePigPenForm(pigPen);
+        if (!isValid) {
+            setErrors(validationErrors);
             return;
         }
 
         setLoading(true);
 
         try {
-            await pigPenService.createPigPen(pigPen);
+            // Chuyển đổi caretakers thành định dạng phù hợp cho API
+            const formattedPigPen = {
+                ...pigPen,
+                // Tùy thuộc vào API backend, có thể cần điều chỉnh định dạng dữ liệu
+                caretakers: pigPen.caretakers.map(ct => ({ employeeId: ct.employeeId }))
+            };
+
+            await pigPenService.createPigPen(formattedPigPen);
             onClose(true);
         } catch (error) {
             console.error("Lỗi khi thêm chuồng nuôi:", error);
-            onClose(false);
-        } finally {
+            setServerError(error.response?.data || "Đã xảy ra lỗi khi tạo chuồng nuôi. Vui lòng thử lại.");
             setLoading(false);
         }
     };
@@ -144,10 +131,17 @@ const PigPenFormCreate = ({ onClose }) => {
                 p: 4,
                 minHeight: "400px",
             }}
+            className="pen-form"
         >
             <Typography variant="h6" sx={{ mb: 1, fontWeight: "bold" }}>
                 THÔNG TIN CHUỒNG NUÔI
             </Typography>
+
+            {serverError && (
+                <Alert severity="error" sx={{ mb: 2 }} className="form-error-alert">
+                    {serverError}
+                </Alert>
+            )}
 
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 <TextField
@@ -159,27 +153,46 @@ const PigPenFormCreate = ({ onClose }) => {
                     error={!!errors.name}
                     helperText={errors.name}
                     sx={{ "& .MuiInputBase-input": { py: 1.5 } }}
+                    className={errors.name ? "field-error" : ""}
+                    fullWidth
                 />
 
                 <FormControl fullWidth sx={{ "& .MuiInputBase-input": { py: 1.5 } }}>
-                    <InputLabel id="caretaker-label">Người chăm sóc</InputLabel>
+                    <InputLabel id="caretakers-label">Người chăm sóc</InputLabel>
                     <Select
-                        labelId="caretaker-label"
-                        value={pigPen.caretaker ? pigPen.caretaker.employeeId : ""}
-                        onChange={handleEmployeeChange}
-                        label="Người chăm sóc"
+                        labelId="caretakers-label"
+                        multiple
+                        value={pigPen.caretakers.map(ct => ct.employeeId)}
+                        onChange={handleCaretakersChange}
+                        input={<OutlinedInput label="Người chăm sóc" />}
+                        renderValue={(selected) => (
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                {selected.map((value) => {
+                                    const employee = employees.find(emp => emp.employeeId === value);
+                                    return (
+                                        <Chip
+                                            key={value}
+                                            label={employee ? employee.fullName : value}
+                                        />
+                                    );
+                                })}
+                            </Box>
+                        )}
+                        MenuProps={MenuProps}
                     >
-                        <MenuItem value="">
-                            <em>Chưa phân công</em>
+                        <MenuItem disabled value="">
+                            <em>Chọn người chăm sóc</em>
                         </MenuItem>
-                        {employees
-                            .filter(emp => emp.role !== "MANAGER")
-                            .map(employee => (
-                                <MenuItem key={employee.employeeId} value={employee.employeeId}>
-                                    {employee.fullName}
-                                </MenuItem>
-                            ))}
+                        {employees.map((employee) => (
+                            <MenuItem
+                                key={employee.employeeId}
+                                value={employee.employeeId}
+                            >
+                                {employee.fullName}
+                            </MenuItem>
+                        ))}
                     </Select>
+                    <FormHelperText>Có thể chọn nhiều người chăm sóc</FormHelperText>
                 </FormControl>
 
                 <TextField
@@ -193,6 +206,7 @@ const PigPenFormCreate = ({ onClose }) => {
                     error={!!errors.createdDate}
                     helperText={errors.createdDate}
                     sx={{ "& .MuiInputBase-input": { py: 1.5 } }}
+                    className={errors.createdDate ? "field-error" : ""}
                 />
 
                 <TextField
@@ -205,6 +219,7 @@ const PigPenFormCreate = ({ onClose }) => {
                     error={!!errors.closedDate}
                     helperText={errors.closedDate || "Để trống nếu chuồng vẫn đang hoạt động"}
                     sx={{ "& .MuiInputBase-input": { py: 1.5 } }}
+                    className={errors.closedDate ? "field-error" : ""}
                 />
 
                 <TextField
@@ -218,6 +233,7 @@ const PigPenFormCreate = ({ onClose }) => {
                     helperText={errors.quantity}
                     InputProps={{ inputProps: { min: 0 } }}
                     sx={{ "& .MuiInputBase-input": { py: 1.5 } }}
+                    className={errors.quantity ? "field-error" : ""}
                 />
             </Box>
 
