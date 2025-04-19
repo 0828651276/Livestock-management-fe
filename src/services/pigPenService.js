@@ -183,10 +183,10 @@ export const pigPenService = {
         }
     },
 
-    // Tìm kiếm chuồng nuôi theo ID người chăm sóc (API mới)
-    findByCaretakerId: async (employeeId) => {
+    // Tìm kiếm chuồng nuôi theo ID người chăm sóc
+    findByEmployeeId: async (employeeId) => {
         try {
-            const token = authService.getCurrentUser(); // Giữ nguyên nếu bạn lấy token từ đây
+            const token = authService.getCurrentUser();
             const response = await axios.get(`${API_URL}/pigpens/my-pens`, {
                 params: { employeeId },
                 headers: {
@@ -199,7 +199,6 @@ export const pigPenService = {
             throw error;
         }
     },
-
 
     // Tìm kiếm chuồng nuôi theo khoảng số lượng
     searchByQuantityRange: async (min, max) => {
@@ -214,6 +213,22 @@ export const pigPenService = {
             return response.data;
         } catch (error) {
             console.error('Lỗi khi tìm kiếm chuồng nuôi theo số lượng:', error);
+            throw error;
+        }
+    },
+
+    // API mới: Xóa nhân viên khỏi chuồng
+    removeCaretakerFromPen: async (penId, employeeId) => {
+        try {
+            const token = authService.getCurrentUser();
+            const response = await axios.delete(`${API_URL}/pigpens/${penId}/caretakers/${employeeId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            return response.data;
+        } catch (error) {
+            console.error(`Lỗi khi xóa nhân viên ${employeeId} khỏi chuồng ${penId}:`, error);
             throw error;
         }
     }
