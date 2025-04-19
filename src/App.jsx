@@ -6,6 +6,7 @@ import {authService} from './services/authService';
 import EmployeeManager from './components/employee/EmployeeManager.jsx';
 import EmployeeDetail from "./components/employee/EmployeeDetail.jsx";
 import PigPenManager from "./components/pen/PenManager.jsx";
+import AnimalManager from "./components/animal/AnimalManager.jsx";
 import ChangePasswordForm from './components/employee/ChangePasswordForm.jsx';
 import LoginPage from "./pages/LoginPage.jsx";
 import Home from './pages/Home';
@@ -82,9 +83,7 @@ function App() {
 
                         {/* Routes cho tất cả người dùng */}
                         <Route path="pigpens" element={<PigPenManager/>}/>
-                        {/*<Route path="animals" element={<ProtectedRoute>*/}
-                        {/*    <AnimalManager />*/}
-                        {/*</ProtectedRoute>}/>*/}
+                        <Route path="animals" element={<AnimalManager/>}/>
                         <Route path="change-password" element={<ChangePasswordForm/>}/>
                         <Route path="employees/detail" element={<EmployeeDetail/>}/>
                     </Route>
