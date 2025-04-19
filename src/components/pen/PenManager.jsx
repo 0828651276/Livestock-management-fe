@@ -36,7 +36,8 @@ import {
     Search,
     FilterAlt,
     FilterAltOff,
-    Refresh
+    Refresh,
+    ExitToApp
 } from "@mui/icons-material";
 import PigPenFormUpdate from "./PenFormUpdate.jsx";
 import AddHomeWorkIcon from "@mui/icons-material/AddHomeWork";
@@ -94,6 +95,11 @@ export default function PenManager() {
         open: false,
         penId: null
     });
+    const [leaveDialog, setLeaveDialog] = useState({
+        open: false,
+        penId: null,
+        penName: ''
+    });
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [loading, setLoading] = useState(false);
@@ -133,7 +139,7 @@ export default function PenManager() {
             }
             // Nếu là STAFF, chỉ lấy chuồng mà nhân viên đó chăm sóc
             else {
-                res = await pigPenService.findByCaretakerId(id);
+                res = await pigPenService.findByEmployeeId(id);
             }
 
             // Xử lý dữ liệu người chăm sóc
@@ -193,7 +199,7 @@ export default function PenManager() {
                     res = await pigPenService.searchByName(searchTerm);
                 } else {
                     // Tìm theo tên trong phạm vi chuồng nhân viên chăm sóc
-                    const allPens = await pigPenService.findByCaretakerId(employeeId);
+                    const allPens = await pigPenService.findByEmployeeId(employeeId);
                     res = allPens.filter(pen =>
                         pen.name.toLowerCase().includes(searchTerm.toLowerCase())
                     );
@@ -277,6 +283,38 @@ export default function PenManager() {
             showNotification("Lỗi khi xóa chuồng nuôi", "error");
         } finally {
             handleDeleteCancel();
+        }
+    };
+
+    // Xử lý rời chuồng
+    const handleLeavePenClick = (penId, penName) => {
+        setLeaveDialog({
+            open: true,
+            penId,
+            penName
+        });
+    };
+
+    const handleLeavePenCancel = () => {
+        setLeaveDialog({
+            open: false,
+            penId: null,
+            penName: ''
+        });
+    };
+
+    const handleLeavePenConfirm = async () => {
+        try {
+            await pigPenService.removeCaretakerFromPen(leaveDialog.penId, employeeId);
+            showNotification(`Đã rời khỏi chuồng ${leaveDialog.penName} thành công`);
+
+            // Cập nhật lại danh sách
+            fetchPigPens(userRole, employeeId);
+        } catch (err) {
+            console.error("Lỗi khi rời khỏi chuồng nuôi:", err);
+            showNotification("Lỗi khi rời khỏi chuồng", "error");
+        } finally {
+            handleLeavePenCancel();
         }
     };
 
@@ -438,11 +476,7 @@ export default function PenManager() {
                             <StyledTableHeaderCell>Ngày đóng</StyledTableHeaderCell>
                             <StyledTableHeaderCell>Số lượng</StyledTableHeaderCell>
                             <StyledTableHeaderCell>Trạng thái</StyledTableHeaderCell>
-                            {userRole === 'MANAGER' ? (
-                                <StyledTableHeaderCell align="center">Hành động</StyledTableHeaderCell>
-                            ) : (
-                                <StyledTableHeaderCell align="center">Hành động</StyledTableHeaderCell>
-                            )}
+                            <StyledTableHeaderCell align="center">Hành động</StyledTableHeaderCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -511,22 +545,37 @@ export default function PenManager() {
                                         <StyledTableCell align="center">
                                             <Stack direction="row" spacing={1} justifyContent="center">
                                                 {pen.caretakers?.some(caretaker => caretaker.employeeId === employeeId) && (
-                                                    <Tooltip title="Sửa">
-                                                        <ActionButton
-                                                            size="small"
-                                                            variant="contained"
-                                                            color="warning"
-                                                            onClick={() => {
-                                                                setSelectedPigPen(pen);
-                                                                setOpenUpdateForm(true);
-                                                            }}
-                                                            className="action-button"
-                                                        >
-                                                            <Edit fontSize="small" />
-                                                            <Box component="span"
-                                                                 sx={{ ml: 0.5, display: { xs: 'none', sm: 'inline' } }}>SỬA</Box>
-                                                        </ActionButton>
-                                                    </Tooltip>
+                                                    <>
+                                                        <Tooltip title="Sửa">
+                                                            <ActionButton
+                                                                size="small"
+                                                                variant="contained"
+                                                                color="warning"
+                                                                onClick={() => {
+                                                                    setSelectedPigPen(pen);
+                                                                    setOpenUpdateForm(true);
+                                                                }}
+                                                                className="action-button"
+                                                            >
+                                                                <Edit fontSize="small" />
+                                                                <Box component="span"
+                                                                     sx={{ ml: 0.5, display: { xs: 'none', sm: 'inline' } }}>SỬA</Box>
+                                                            </ActionButton>
+                                                        </Tooltip>
+                                                        <Tooltip title="Rời chuồng">
+                                                            <ActionButton
+                                                                size="small"
+                                                                variant="contained"
+                                                                color="error"
+                                                                onClick={() => handleLeavePenClick(pen.penId, pen.name)}
+                                                                className="action-button"
+                                                            >
+                                                                <ExitToApp fontSize="small" />
+                                                                <Box component="span"
+                                                                     sx={{ ml: 0.5, display: { xs: 'none', sm: 'inline' } }}>RỜI</Box>
+                                                            </ActionButton>
+                                                        </Tooltip>
+                                                    </>
                                                 )}
                                             </Stack>
                                         </StyledTableCell>
@@ -660,6 +709,35 @@ export default function PenManager() {
                     </Button>
                     <Button onClick={handleDeleteConfirm} color="error" variant="contained" autoFocus>
                         Xóa
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Hộp thoại xác nhận rời chuồng */}
+            <Dialog
+                open={leaveDialog.open}
+                onClose={handleLeavePenCancel}
+                aria-labelledby="leave-dialog-title"
+                aria-describedby="leave-dialog-description"
+                PaperProps={{ sx: { borderRadius: '8px' } }}
+            >
+                <DialogTitle id="leave-dialog-title" sx={{ borderBottom: '1px solid #e0e0e0' }}>
+                    Xác nhận rời chuồng
+                </DialogTitle>
+                <DialogContent sx={{ mt: 2 }}>
+                    <DialogContentText id="leave-dialog-description">
+                        Bạn có chắc chắn muốn rời khỏi chuồng "{leaveDialog.penName}" không?
+                        <Typography variant="body2" color="error" sx={{ mt: 1 }}>
+                            Lưu ý: Bạn sẽ không còn là người chăm sóc của chuồng này nữa!
+                        </Typography>
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions sx={{ px: 3, py: 2 }}>
+                    <Button onClick={handleLeavePenCancel} color="primary" variant="outlined">
+                        Hủy
+                    </Button>
+                    <Button onClick={handleLeavePenConfirm} color="error" variant="contained" autoFocus>
+                        Xác nhận rời
                     </Button>
                 </DialogActions>
             </Dialog>
