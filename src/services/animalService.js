@@ -21,6 +21,22 @@ export const animalService = {
         }
     },
 
+    // Get animals for specific employee
+    getAnimalsByEmployeeId: async (employeeId) => {
+        try {
+            const token = authService.getCurrentUser();
+            const response = await axios.get(`${API_URL}/animals/employee/${employeeId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            return response.data;
+        } catch (error) {
+            console.error(`Error fetching animals for employee #${employeeId}:`, error);
+            throw error;
+        }
+    },
+
     // Get animal by ID
     getAnimal: async (id) => {
         try {
