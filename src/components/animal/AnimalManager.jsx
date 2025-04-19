@@ -112,13 +112,16 @@ export default function AnimalManager() {
     const [loading, setLoading] = useState(false);
     const [searchLoading, setSearchLoading] = useState(false);
     const [userRole, setUserRole] = useState('');
+    const [employeeId, setEmployeeId] = useState('');
     const [pigPens, setPigPens] = useState([]);
 
     // Initialize and fetch data
     useEffect(() => {
         const role = localStorage.getItem('role');
+        const id = localStorage.getItem('employeeId');
         setUserRole(role);
-        fetchAnimals();
+        setEmployeeId(id);
+        fetchAnimals(role, id);
         fetchPigPens();
     }, []);
 
@@ -136,10 +139,41 @@ export default function AnimalManager() {
     };
 
     // Data fetching functions
-    const fetchAnimals = async () => {
+    const fetchAnimals = async (role, id) => {
         setLoading(true);
         try {
-            const data = await animalService.getAllAnimals();
+            let data;
+            // Nếu là MANAGER, lấy tất cả động vật
+            if (role === 'MANAGER') {
+                data = await animalService.getAllAnimals();
+            }
+            // Nếu là EMPLOYEE, chỉ lấy động vật từ chuồng mà họ chăm sóc
+            else {
+                // Đầu tiên lấy các chuồng mà nhân viên này chăm sóc
+                const pens = await pigPenService.findByEmployeeId(id);
+
+                // Nếu không có chuồng nào, trả về mảng rỗng
+                if (!pens || pens.length === 0) {
+                    setAnimals([]);
+                    setFilteredAnimals([]);
+                    setLoading(false);
+                    return;
+                }
+
+                // Lấy tất cả động vật từ các chuồng
+                const penIds = pens.map(pen => pen.penId);
+                const animalList = [];
+
+                // Lấy động vật từ từng chuồng và gộp lại
+                for (const penId of penIds) {
+                    const penAnimals = await animalService.getAnimalsByPenId(penId);
+                    animalList.push(...penAnimals);
+                }
+
+                // Loại bỏ trùng lặp (nếu có)
+                data = [...new Map(animalList.map(item => [item.pigId, item])).values()];
+            }
+
             setAnimals(data);
             setFilteredAnimals(data);
         } catch (err) {
@@ -152,7 +186,18 @@ export default function AnimalManager() {
 
     const fetchPigPens = async () => {
         try {
-            const pens = await pigPenService.getAllPigPens();
+            // Nếu là MANAGER, lấy tất cả chuồng
+            // Nếu là EMPLOYEE, chỉ lấy chuồng mà họ chăm sóc
+            const role = localStorage.getItem('role');
+            const id = localStorage.getItem('employeeId');
+
+            let pens;
+            if (role === 'MANAGER') {
+                pens = await pigPenService.getAllPigPens();
+            } else {
+                pens = await pigPenService.findByEmployeeId(id);
+            }
+
             setPigPens(pens);
         } catch (err) {
             console.error("Error fetching pig pens:", err);
@@ -171,16 +216,45 @@ export default function AnimalManager() {
             if (dateRange.from) params.entryDateFrom = dateRange.from;
             if (dateRange.to) params.entryDateTo = dateRange.to;
 
-            // If no filters, return all animals
-            if (Object.keys(params).length === 0) {
-                setFilteredAnimals(animals);
-            } else {
-                // Otherwise, search with parameters
-                const searchResults = await animalService.searchAnimals(params);
-                setFilteredAnimals(searchResults);
+            // Nếu là EMPLOYEE, thêm giới hạn chỉ tìm trong chuồng mà họ chăm sóc
+            if (userRole !== 'MANAGER') {
+                // Lấy danh sách chuồng do nhân viên chăm sóc
+                const employeePens = await pigPenService.findByEmployeeId(employeeId);
+                const employeePenIds = employeePens.map(pen => pen.penId);
 
+                // Lọc kết quả search theo chuồng của nhân viên
+                let searchResults;
+
+                if (Object.keys(params).length === 0) {
+                    // Nếu không có tham số tìm kiếm, lấy tất cả động vật trong chuồng của nhân viên
+                    searchResults = [];
+                    for (const penId of employeePenIds) {
+                        const penAnimals = await animalService.getAnimalsByPenId(penId);
+                        searchResults.push(...penAnimals);
+                    }
+                } else {
+                    // Nếu có tham số tìm kiếm, tìm với các tham số đó
+                    searchResults = await animalService.searchAnimals(params);
+                    // Lọc chỉ những động vật thuộc chuồng của nhân viên
+                    searchResults = searchResults.filter(animal =>
+                        animal.pigPen && employeePenIds.includes(animal.pigPen.penId)
+                    );
+                }
+
+                setFilteredAnimals(searchResults);
                 if (searchResults.length === 0) {
                     showNotification("No matching animals found", "info");
+                }
+            } else {
+                // Đối với MANAGER, tìm kiếm bình thường
+                if (Object.keys(params).length === 0) {
+                    setFilteredAnimals(animals);
+                } else {
+                    const searchResults = await animalService.searchAnimals(params);
+                    setFilteredAnimals(searchResults);
+                    if (searchResults.length === 0) {
+                        showNotification("No matching animals found", "info");
+                    }
                 }
             }
         } catch (error) {
@@ -596,7 +670,7 @@ export default function AnimalManager() {
                             setOpenCreateForm(false);
                             if (success) {
                                 showNotification("Thêm cá thể thành công");
-                                fetchAnimals();
+                                fetchAnimals(userRole, employeeId);
                             }
                         }}
                     />
@@ -628,7 +702,7 @@ export default function AnimalManager() {
                             setSelectedAnimal(null);
                             if (success) {
                                 showNotification("Cập nhật cá thể thành công");
-                                fetchAnimals();
+                                fetchAnimals(userRole, employeeId);
                             }
                         }}
                     />

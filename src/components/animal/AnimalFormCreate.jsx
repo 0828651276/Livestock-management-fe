@@ -34,14 +34,31 @@ const AnimalFormCreate = ({ onClose }) => {
     const [pigPens, setPigPens] = useState([]);
     const [errors, setErrors] = useState({});
     const [serverError, setServerError] = useState("");
+    const [userRole, setUserRole] = useState('');
+    const [employeeId, setEmployeeId] = useState('');
 
     useEffect(() => {
-        fetchPigPens();
+        // Lấy vai trò và ID nhân viên từ localStorage
+        const role = localStorage.getItem('role');
+        const id = localStorage.getItem('employeeId');
+        setUserRole(role);
+        setEmployeeId(id);
+
+        fetchPigPens(role, id);
     }, []);
 
-    const fetchPigPens = async () => {
+    const fetchPigPens = async (role, id) => {
         try {
-            const pens = await pigPenService.getAllPigPens();
+            let pens;
+            // Nếu là MANAGER, lấy tất cả chuồng active
+            if (role === 'MANAGER') {
+                pens = await pigPenService.getAllPigPens();
+            }
+            // Nếu là EMPLOYEE, chỉ lấy chuồng mà họ chăm sóc
+            else {
+                pens = await pigPenService.findByEmployeeId(id);
+            }
+
             // Filter only active pens
             const activePens = pens.filter(pen => pen.status === "ACTIVE");
             setPigPens(activePens);

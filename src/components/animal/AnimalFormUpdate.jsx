@@ -35,9 +35,18 @@ const AnimalFormUpdate = ({ onClose, animalData }) => {
     const [errors, setErrors] = useState({});
     const [serverError, setServerError] = useState("");
     const [originalPenId, setOriginalPenId] = useState(null);
+    const [userRole, setUserRole] = useState('');
+    const [employeeId, setEmployeeId] = useState('');
 
     useEffect(() => {
-        fetchPigPens();
+        // Lấy vai trò và ID nhân viên từ localStorage
+        const role = localStorage.getItem('role');
+        const id = localStorage.getItem('employeeId');
+        setUserRole(role);
+        setEmployeeId(id);
+
+        fetchPigPens(role, id);
+
         if (animalData) {
             // Format dates for form inputs
             const formattedAnimal = {
@@ -51,10 +60,19 @@ const AnimalFormUpdate = ({ onClose, animalData }) => {
         }
     }, [animalData]);
 
-    const fetchPigPens = async () => {
+    const fetchPigPens = async (role, id) => {
         try {
-            const pens = await pigPenService.getAllPigPens();
-            // Lọc chỉ lấy chuồng đang hoạt động
+            let pens;
+            // Nếu là MANAGER, lấy tất cả chuồng active
+            if (role === 'MANAGER') {
+                pens = await pigPenService.getAllPigPens();
+            }
+            // Nếu là EMPLOYEE, chỉ lấy chuồng mà họ chăm sóc
+            else {
+                pens = await pigPenService.findByEmployeeId(id);
+            }
+
+            // Filter only active pens
             const activePens = pens.filter(pen => pen.status === "ACTIVE");
             setPigPens(activePens);
         } catch (error) {
@@ -96,13 +114,13 @@ const AnimalFormUpdate = ({ onClose, animalData }) => {
                 penId: parseInt(animal.penId)
             };
 
-            console.log("Dữ liệu gửi đi:", JSON.stringify(animalRequestData, null, 2));
-
             await animalService.updateAnimal(animal.pigId, animalRequestData);
             onClose(true);
         } catch (error) {
             console.error("Lỗi khi cập nhật động vật:", error);
             setServerError(error.response?.data?.error || "Không thể cập nhật. Vui lòng thử lại.");
+            setLoading(false);
+        } finally {
             setLoading(false);
         }
     };
@@ -156,6 +174,13 @@ const AnimalFormUpdate = ({ onClose, animalData }) => {
                         <MenuItem value="" disabled>
                             <em>Chọn chuồng nuôi</em>
                         </MenuItem>
+                        {/* Hiển thị chuồng gốc (nếu không còn active) */}
+                        {originalPenId &&
+                            !pigPens.some(pen => pen.penId === originalPenId) && (
+                                <MenuItem key={originalPenId} value={originalPenId}>
+                                    {animalData.pigPen?.name || "Chuồng hiện tại"} (Giữ nguyên)
+                                </MenuItem>
+                            )}
                         {pigPens.map((pen) => (
                             <MenuItem key={pen.penId} value={pen.penId}>
                                 {pen.name} ({pen.quantity} con)
