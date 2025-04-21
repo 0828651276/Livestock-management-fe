@@ -18,7 +18,6 @@ import {
 import { pigPenService } from "../../services/pigPenService";
 import { employeeService } from "../../services/employeeService";
 import "../styles/FormValidation.css";
-import {validatePigPenForm} from "../../utils/validateUtils.js";
 
 const initialState = {
     name: "",
@@ -124,7 +123,7 @@ const PigPenFormUpdate = ({ onClose, pigPenData }) => {
 
     const handleCaretakersChange = (event) => {
         const { value } = event.target;
-        
+
         // Chuyển đổi giá trị ID thành đối tượng nhân viên đầy đủ
         const selectedEmployees = value.map(id => {
             const employee = employees.find(emp => emp.employeeId === id);
@@ -275,7 +274,7 @@ const PigPenFormUpdate = ({ onClose, pigPenData }) => {
                 />
 
                 <TextField
-                    label="Số lượng"
+                    label="Giới hạn nuôi"
                     name="quantity"
                     type="number"
                     value={pigPen.quantity}

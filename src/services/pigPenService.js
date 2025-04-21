@@ -217,6 +217,22 @@ export const pigPenService = {
         }
     },
 
+    getEmptyPens: async () => {
+        try {
+            const token = authService.getCurrentUser();
+            const response = await axios.get(`${API_URL}/animals/empty`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching empty pens:', error);
+            throw error;
+        }
+    },
+
+
     // API mới: Xóa nhân viên khỏi chuồng
     removeCaretakerFromPen: async (penId, employeeId) => {
         try {

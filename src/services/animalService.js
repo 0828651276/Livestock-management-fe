@@ -1,7 +1,5 @@
 import axios from 'axios';
 import { authService } from './authService';
-import { pigPenService } from './pigPenService';
-
 const API_URL = 'http://localhost:8080/api';
 
 export const animalService = {
@@ -17,6 +15,22 @@ export const animalService = {
             return response.data;
         } catch (error) {
             console.error('Error fetching animals:', error);
+            throw error;
+        }
+    },
+
+    // Get empty pens (pens with no animals)
+    getEmptyPens: async () => {
+        try {
+            const token = authService.getCurrentUser();
+            const response = await axios.get(`${API_URL}/animals/empty`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching empty pens:', error);
             throw error;
         }
     },
