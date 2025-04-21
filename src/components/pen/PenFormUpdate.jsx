@@ -274,7 +274,7 @@ const PigPenFormUpdate = ({ onClose, pigPenData }) => {
                 />
 
                 <TextField
-                    label="Giới hạn nuôi"
+                    label="Số lượng"
                     name="quantity"
                     type="number"
                     value={pigPen.quantity}
