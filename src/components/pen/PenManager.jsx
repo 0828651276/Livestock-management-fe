@@ -553,7 +553,7 @@ export default function PenManager() {
                                     <StyledTableCell>{pen.quantity}</StyledTableCell>
                                     <StyledTableCell>
                                         <Chip
-                                            label={pen.status === "ACTIVE" ? "Đang hoạt độngF" : "Đã đóng"}
+                                            label={pen.status === "ACTIVE" ? "Đang hoạt động" : "Đã đóng"}
                                             color={pen.status === "ACTIVE" ? "success" : "error"}
                                             size="small"
                                         />

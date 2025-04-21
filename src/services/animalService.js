@@ -168,6 +168,21 @@ export const animalService = {
         }
     },
 
+    getExportedAnimals: async () => {
+        try {
+            const token = authService.getCurrentUser();
+            const response = await axios.get(`${API_URL}/animals/exported`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching exported animals:', error);
+            throw error;
+        }
+    },
+
     // Get animals by pen ID
     getAnimalsByPenId: async (penId) => {
         try {

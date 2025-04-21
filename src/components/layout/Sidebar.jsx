@@ -7,6 +7,7 @@ import HouseIcon from '@mui/icons-material/House';
 import PetsIcon from '@mui/icons-material/Pets';
 import PeopleIcon from '@mui/icons-material/People';
 import SettingsIcon from '@mui/icons-material/Settings';
+import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import {useNavigate} from "react-router-dom";
 import {Collapse} from '@mui/material';
 import ExpandLess from '@mui/icons-material/ExpandLess';
@@ -120,6 +121,16 @@ const Sidebar = ({drawerWidth, activeMenu, setActiveMenu}) => {
                                     sx={{...menuItemStyle, pl: 4}}
                                 >
                                     <ListItemText primary="Quản lý cá thể vật nuôi"/>
+                                </ListItem>
+                                {/* Thêm menu item cho danh sách xuất chuồng */}
+                                <ListItem
+                                    onClick={() => handleMenuClick('exported-animals')}
+                                    sx={{...menuItemStyle, pl: 4}}
+                                >
+                                    <ListItemIcon sx={{color: 'white', minWidth: '30px'}}>
+                                        <LocalShippingIcon fontSize="small" />
+                                    </ListItemIcon>
+                                    <ListItemText primary="Danh sách xuất chuồng"/>
                                 </ListItem>
                             </List>
                         </Collapse>
