@@ -11,6 +11,9 @@ import ChangePasswordForm from './components/employee/ChangePasswordForm.jsx';
 import LoginPage from "./pages/LoginPage.jsx";
 import Home from './pages/Home';
 import UnauthorizedPage from './pages/UnauthorizedPage';
+import FeedInventoryTable from "./components/feed/FeedInventoryTable.jsx";
+import ExportFeedForm from "./components/feed/ExportFeedForm.jsx";
+import ImportFeedForm from "./components/feed/ImportFeedForm.jsx";
 
 // Tạo theme tùy chỉnh
 const theme = createTheme({
@@ -86,6 +89,7 @@ function App() {
                         <Route path="animals" element={<AnimalManager/>}/>
                         <Route path="change-password" element={<ChangePasswordForm/>}/>
                         <Route path="employees/detail" element={<EmployeeDetail/>}/>
+                        <Route path="feedwarehouse" element={<FeedInventoryTable/>}/>
                     </Route>
                 </Routes>
             </ThemeProvider>

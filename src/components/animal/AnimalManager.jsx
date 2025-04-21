@@ -80,11 +80,11 @@ const SearchContainer = styled(Paper)(({ theme }) => ({
 
 // Status mapping for display
 const statusMapping = {
-    'ACTIVE': { label: 'Đang nuôi', color: 'success', class: 'status-active' },
-    'SOLD': { label: 'Đã bán', color: 'info', class: 'status-sold' },
-    'DEAD': { label: 'Đã chết', color: 'error', class: 'status-dead' },
-    'TRANSFERRED': { label: 'Đã chuyển', color: 'warning', class: 'status-transferred' }
+    ACTIVE: { label: 'Khỏe mạnh', color: 'success', class: 'status-active' },
+    SICK: { label: 'Bị bệnh', color: 'warning', class: 'status-sick' },
+    UNVACCINATED: { label: 'Chưa tiêm phòng', color: 'error', class: 'status-unvaccinated' }
 };
+
 
 export default function AnimalManager() {
     // State variables
@@ -436,10 +436,9 @@ export default function AnimalManager() {
                                         onChange={handleFilterStatusChange}
                                     >
                                         <MenuItem value="">Tất cả</MenuItem>
-                                        <MenuItem value="ACTIVE">Đang nuôi</MenuItem>
-                                        <MenuItem value="SOLD">Đã bán</MenuItem>
-                                        <MenuItem value="DEAD">Đã chết</MenuItem>
-                                        <MenuItem value="TRANSFERRED">Đã chuyển</MenuItem>
+                                        <MenuItem value="ACTIVE">Khỏe mạnh</MenuItem>
+                                        <MenuItem value="SICK">Bị bệnh</MenuItem>
+                                        <MenuItem value="UNVACCINATED">Chưa tiêm phòng</MenuItem>
                                     </Select>
                                 </FormControl>
                             </Grid>
@@ -536,13 +535,15 @@ export default function AnimalManager() {
                 <Table sx={{ minWidth: 650 }} aria-label="animals table" className="animal-table">
                     <TableHead>
                         <TableRow>
+                            <StyledTableHeaderCell>ID</StyledTableHeaderCell>
                             <StyledTableHeaderCell>Tên</StyledTableHeaderCell>
                             <StyledTableHeaderCell>Chuồng nuôi</StyledTableHeaderCell>
                             <StyledTableHeaderCell>Ngày nhập</StyledTableHeaderCell>
                             <StyledTableHeaderCell>Ngày xuất</StyledTableHeaderCell>
-                            <StyledTableHeaderCell>Cân nặng (kg)</StyledTableHeaderCell>
+                            <StyledTableHeaderCell>Cân nặng</StyledTableHeaderCell>
+                            <StyledTableHeaderCell>Số lượng</StyledTableHeaderCell>
                             <StyledTableHeaderCell>Trạng thái</StyledTableHeaderCell>
-                            <StyledTableHeaderCell align="center">Hành động</StyledTableHeaderCell>
+                            <StyledTableHeaderCell>Thao tác</StyledTableHeaderCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -555,11 +556,13 @@ export default function AnimalManager() {
                                         '&:hover': { backgroundColor: '#f0f7ff' }
                                     }}
                                 >
-                                    <StyledTableCell sx={{ fontWeight: 'medium' }}>{animal.name}</StyledTableCell>
+                                    <StyledTableCell>{animal.pigId}</StyledTableCell>
+                                    <StyledTableCell>{animal.name}</StyledTableCell>
                                     <StyledTableCell>{animal.pigPen ? animal.pigPen.name : "—"}</StyledTableCell>
                                     <StyledTableCell>{formatDate(animal.entryDate)}</StyledTableCell>
                                     <StyledTableCell>{formatDate(animal.exitDate) || "—"}</StyledTableCell>
                                     <StyledTableCell>{animal.weight ? animal.weight.toFixed(1) : "—"}</StyledTableCell>
+                                    <StyledTableCell>{animal.quantity || "—"}</StyledTableCell>
                                     <StyledTableCell>
                                         <Box
                                             component="span"

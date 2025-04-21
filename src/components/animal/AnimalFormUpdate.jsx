@@ -25,7 +25,8 @@ const initialState = {
     exitDate: "",
     status: "ACTIVE",
     weight: "",
-    penId: ""
+    penId: "",
+    quantity: 1
 };
 
 const AnimalFormUpdate = ({ onClose, animalData }) => {
@@ -53,7 +54,8 @@ const AnimalFormUpdate = ({ onClose, animalData }) => {
                 ...animalData,
                 entryDate: animalData.entryDate ? new Date(animalData.entryDate).toISOString().split('T')[0] : "",
                 exitDate: animalData.exitDate ? new Date(animalData.exitDate).toISOString().split('T')[0] : "",
-                penId: animalData.pigPen?.penId || ""
+                penId: animalData.pigPen?.penId || "",
+                quantity: animalData.quantity || 1 // Đảm bảo quantity có giá trị mặc định
             };
             setAnimal(formattedAnimal);
             setOriginalPenId(animalData.pigPen?.penId);
@@ -111,13 +113,22 @@ const AnimalFormUpdate = ({ onClose, animalData }) => {
                 exitDate: animal.exitDate || null,
                 status: animal.status,
                 weight: parseFloat(animal.weight),
-                penId: parseInt(animal.penId)
+                penId: parseInt(animal.penId),
+                quantity: parseInt(animal.quantity) // Thêm trường quantity vào dữ liệu gửi đi
             };
+
+            // Để debug
+            console.log("Gửi dữ liệu cập nhật:", animalRequestData);
 
             await animalService.updateAnimal(animal.pigId, animalRequestData);
             onClose(true);
         } catch (error) {
             console.error("Lỗi khi cập nhật động vật:", error);
+            // Log chi tiết lỗi từ server
+            if (error.response) {
+                console.error("Response data:", error.response.data);
+                console.error("Response status:", error.response.status);
+            }
             setServerError(error.response?.data?.error || "Không thể cập nhật. Vui lòng thử lại.");
             setLoading(false);
         } finally {
@@ -243,13 +254,28 @@ const AnimalFormUpdate = ({ onClose, animalData }) => {
                         label="Trạng thái"
                         onChange={handleChange}
                     >
-                        <MenuItem value="ACTIVE">Đang nuôi</MenuItem>
-                        <MenuItem value="SOLD">Đã bán</MenuItem>
-                        <MenuItem value="DEAD">Đã chết</MenuItem>
-                        <MenuItem value="TRANSFERRED">Đã chuyển</MenuItem>
+                        <MenuItem value="ACTIVE">Khỏe mạnh</MenuItem>
+                        <MenuItem value="SICK">Bị bệnh</MenuItem>
+                        <MenuItem value="UNVACCINATED">Chưa tiêm phòng</MenuItem>
+
                     </Select>
                     {errors.status && <FormHelperText>{errors.status}</FormHelperText>}
                 </FormControl>
+
+                <TextField
+                    label="Số lượng"
+                    name="quantity"
+                    type="number"
+                    value={animal.quantity}
+                    onChange={handleChange}
+                    required
+                    error={!!errors.quantity}
+                    helperText={errors.quantity}
+                    InputProps={{
+                        inputProps: { min: 1 }
+                    }}
+                    fullWidth
+                />
             </Box>
 
             <Box sx={{ mt: 2 }}>
