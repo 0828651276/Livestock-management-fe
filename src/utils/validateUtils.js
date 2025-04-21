@@ -272,13 +272,14 @@ export const validateAnimalForm = (animal) => {
     let isValid = true;
 
     // Validate required fields
-    const requiredFields = ['name', 'entryDate', 'status', 'weight', 'penId'];
+    const requiredFields = ['name', 'entryDate', 'status', 'weight', 'penId', 'quantity'];
     const fieldLabels = {
         name: 'Tên',
         entryDate: 'Ngày nhập',
         status: 'Trạng thái',
         weight: 'Cân nặng',
-        penId: 'Chuồng nuôi'
+        penId: 'Chuồng nuôi',
+        quantity: 'Số lượng'
     };
 
     requiredFields.forEach(field => {
@@ -298,14 +299,22 @@ export const validateAnimalForm = (animal) => {
 
     // Validate entry date is not in the future
     if (animal.entryDate && !validateField(errors, 'entryDate', animal.entryDate, [
-        validateNotFutureDate
+        (value) => {
+            const today = new Date();
+            const entryDate = new Date(value);
+            return entryDate > today ? "Ngày nhập không được là ngày trong tương lai" : "";
+        }
     ])) {
         isValid = false;
     }
 
     // Validate exit date is after entry date if provided
     if (animal.exitDate && animal.entryDate && !validateField(errors, 'exitDate', animal.exitDate, [
-        (value) => validateDateOrder(value, animal.entryDate, "Ngày xuất phải sau ngày nhập")
+        (value) => {
+            const entryDate = new Date(animal.entryDate);
+            const exitDate = new Date(value);
+            return exitDate < entryDate ? "Ngày xuất phải sau ngày nhập" : "";
+        }
     ])) {
         isValid = false;
     }
@@ -318,10 +327,18 @@ export const validateAnimalForm = (animal) => {
         isValid = false;
     }
 
+    // Validate quantity
+    if (animal.quantity !== undefined && !validateField(errors, 'quantity', animal.quantity, [
+        (value) => value < 1 ? "Số lượng phải lớn hơn hoặc bằng 1" : "",
+        (value) => value > 1000 ? "Số lượng không được vượt quá 1000" : ""
+    ])) {
+        isValid = false;
+    }
+
     // Validate status has a valid value
     if (animal.status && !validateField(errors, 'status', animal.status, [
         (value) => {
-            const validStatuses = ['ACTIVE', 'SOLD', 'DEAD', 'TRANSFERRED'];
+            const validStatuses = ['ACTIVE', 'SICK', 'UNVACCINATED'];
             return validStatuses.includes(value) ? "" : "Trạng thái không hợp lệ";
         }
     ])) {

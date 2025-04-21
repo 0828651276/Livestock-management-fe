@@ -252,7 +252,7 @@ const PigPenFormCreate = ({ onClose }) => {
                 />
 
                 <TextField
-                    label="Số lượng"
+                    label="Giới hạn nuôi"
                     name="quantity"
                     type="number"
                     value={pigPen.quantity}

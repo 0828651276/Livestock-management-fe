@@ -1,7 +1,5 @@
 import axios from 'axios';
 import { authService } from './authService';
-import { pigPenService } from './pigPenService';
-
 const API_URL = 'http://localhost:8080/api';
 
 export const animalService = {
