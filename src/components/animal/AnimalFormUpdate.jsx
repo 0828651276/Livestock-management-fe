@@ -257,7 +257,7 @@ const AnimalFormUpdate = ({ onClose, animalData }) => {
                         <MenuItem value="ACTIVE">Khỏe mạnh</MenuItem>
                         <MenuItem value="SICK">Bị bệnh</MenuItem>
                         <MenuItem value="UNVACCINATED">Chưa tiêm phòng</MenuItem>
-
+                        <MenuItem value="EXPORTED">Đã xuất</MenuItem>
                     </Select>
                     {errors.status && <FormHelperText>{errors.status}</FormHelperText>}
                 </FormControl>

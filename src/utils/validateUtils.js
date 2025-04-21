@@ -335,10 +335,9 @@ export const validateAnimalForm = (animal) => {
         isValid = false;
     }
 
-    // Validate status has a valid value
     if (animal.status && !validateField(errors, 'status', animal.status, [
         (value) => {
-            const validStatuses = ['ACTIVE', 'SICK', 'UNVACCINATED'];
+            const validStatuses = ['ACTIVE', 'SICK', 'UNVACCINATED', 'EXPORTED'];
             return validStatuses.includes(value) ? "" : "Trạng thái không hợp lệ";
         }
     ])) {
