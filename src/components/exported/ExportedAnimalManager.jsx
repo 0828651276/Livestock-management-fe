@@ -98,33 +98,26 @@ export default function ExportedAnimalManager() {
         }
     };
 
-    const handleSearch = () => {
+    const handleSearch = async () => {
         setSearchLoading(true);
         try {
-            let filtered = animals;
-            
-            // Lọc theo ID
-            if (searchTerm) {
-                filtered = filtered.filter(animal =>
-                    animal.pigId.toString().includes(searchTerm)
+            let data;
+            if (searchTerm || dateRange.startDate || dateRange.endDate) {
+                // Kiểm tra và format ngày trước khi gửi request
+                const startDate = dateRange.startDate ? new Date(dateRange.startDate) : null;
+                const endDate = dateRange.endDate ? new Date(dateRange.endDate) : null;
+                
+                data = await animalService.searchExportedAnimals(
+                    searchTerm ? parseInt(searchTerm) : null,
+                    startDate ? startDate.toISOString().split('T')[0] : null,
+                    endDate ? endDate.toISOString().split('T')[0] : null
                 );
+            } else {
+                data = await animalService.getExportedAnimals();
             }
+            setFilteredAnimals(data);
 
-            // Lọc theo ngày
-            if (dateRange.startDate && dateRange.endDate) {
-                const start = new Date(dateRange.startDate);
-                const end = new Date(dateRange.endDate);
-                end.setHours(23, 59, 59, 999); // Đặt thời gian cuối ngày
-
-                filtered = filtered.filter(animal => {
-                    const exportDate = new Date(animal.exportDate);
-                    return exportDate >= start && exportDate <= end;
-                });
-            }
-
-            setFilteredAnimals(filtered);
-
-            if (filtered.length === 0) {
+            if (data.length === 0) {
                 showNotification("Không tìm thấy kết quả", "info");
             }
         } catch (error) {
@@ -137,6 +130,10 @@ export default function ExportedAnimalManager() {
 
     const handleSearchChange = (e) => {
         setSearchTerm(e.target.value);
+        // Nếu xóa hết ký tự tìm kiếm, load lại toàn bộ danh sách
+        if (!e.target.value) {
+            fetchExportedAnimals();
+        }
     };
 
     const handleKeyPress = (e) => {
@@ -146,16 +143,15 @@ export default function ExportedAnimalManager() {
     };
 
     const handleDateRangeChange = (e) => {
-        setDateRange({
-            ...dateRange,
-            [e.target.name]: e.target.value
-        });
+        const { name, value } = e.target;
+        setDateRange(prev => ({ ...prev, [name]: value }));
     };
 
     const handleToggleDateFilter = () => {
         setShowDateFilter(!showDateFilter);
-        if (!showDateFilter) {
+        if (showDateFilter) {
             setDateRange({ startDate: '', endDate: '' });
+            fetchExportedAnimals();
         }
     };
 
@@ -163,7 +159,7 @@ export default function ExportedAnimalManager() {
         setSearchTerm('');
         setDateRange({ startDate: '', endDate: '' });
         setShowDateFilter(false);
-        setFilteredAnimals(animals);
+        fetchExportedAnimals();
     };
 
     const handleChangePage = (event, newPage) => {
@@ -280,6 +276,7 @@ export default function ExportedAnimalManager() {
                                         <Search color="action"/>
                                     </InputAdornment>
                                 ),
+                                sx: { borderRadius: 1 }
                             }}
                         />
                     </Grid>
@@ -291,13 +288,13 @@ export default function ExportedAnimalManager() {
                             startIcon={searchLoading ? <CircularProgress size={20} color="inherit"/> : <Search/>}
                             onClick={handleSearch}
                             disabled={searchLoading}
-                            sx={{height: '40px'}}
+                            sx={{ height: '40px' }}
                         >
                             Tìm kiếm
                         </Button>
                     </Grid>
-                    <Grid item xs={6} md={5} sx={{display: 'flex', justifyContent: 'flex-end', gap: 1}}>
-                        <Tooltip title={showDateFilter ? "Ẩn bộ lọc ngày" : "Lọc theo ngày xuất"}>
+                    <Grid item xs={6} md={5} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                        <Tooltip title={showDateFilter ? "Ẩn bộ lọc ngày" : "Lọc theo ngày nhập"}>
                             <Button
                                 variant="outlined"
                                 startIcon={showDateFilter ? <FilterAltOff/> : <FilterAlt/>}
@@ -315,7 +312,7 @@ export default function ExportedAnimalManager() {
                                 color="error"
                                 onClick={handleResetFilters}
                                 size="small"
-                                startIcon={<Refresh/>}
+                                startIcon={<Refresh />}
                             >
                                 Xóa bộ lọc
                             </Button>
@@ -332,7 +329,7 @@ export default function ExportedAnimalManager() {
                                     type="date"
                                     value={dateRange.startDate}
                                     onChange={handleDateRangeChange}
-                                    InputLabelProps={{shrink: true}}
+                                    InputLabelProps={{ shrink: true }}
                                     size="small"
                                 />
                             </Grid>
@@ -344,7 +341,7 @@ export default function ExportedAnimalManager() {
                                     type="date"
                                     value={dateRange.endDate}
                                     onChange={handleDateRangeChange}
-                                    InputLabelProps={{shrink: true}}
+                                    InputLabelProps={{ shrink: true }}
                                     size="small"
                                 />
                             </Grid>
@@ -469,7 +466,14 @@ export default function ExportedAnimalManager() {
                     onClose={handleCloseNotification}
                     severity={notification.severity}
                     variant="filled"
-                    sx={{width: '100%'}}
+                    sx={{
+                        width: '100%',
+                        backgroundColor: '#1E8449',
+                        color: 'white',
+                        '& .MuiAlert-icon': {
+                            color: 'white'
+                        }
+                    }}
                 >
                     {notification.message}
                 </Alert>
