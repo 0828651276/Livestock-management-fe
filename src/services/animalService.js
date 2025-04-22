@@ -197,5 +197,28 @@ export const animalService = {
             console.error(`Error fetching animals for pen #${penId}:`, error);
             throw error;
         }
+    },
+
+    searchExportedAnimals: async (pigId, entryDateFrom, entryDateTo) => {
+        try {
+            const token = authService.getCurrentUser();
+            let url = `${API_URL}/animals/exported/search`;
+            const params = {};
+            
+            if (pigId) params.pigId = pigId;
+            if (entryDateFrom) params.entryDateFrom = entryDateFrom;
+            if (entryDateTo) params.entryDateTo = entryDateTo;
+            
+            const response = await axios.get(url, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                params: params
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Error searching exported animals:', error);
+            throw error;
+        }
     }
 };
