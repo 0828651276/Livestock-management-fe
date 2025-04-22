@@ -10,5 +10,9 @@ export const animalStatus = {
     UNVACCINATED: {
         label: 'Chưa tiêm phòng',
         color: 'red'
+    },
+    EXPORTED: {
+        label: 'Đã xuất',
+        color: 'gray'
     }
-}; 
+};

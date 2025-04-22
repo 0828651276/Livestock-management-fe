@@ -272,7 +272,10 @@ export const validateAnimalForm = (animal) => {
     let isValid = true;
 
     // Validate required fields
-    const requiredFields = ['name', 'entryDate', 'status', 'weight', 'penId', 'quantity'];
+    // Nếu status là EXPORTED thì không bắt buộc penId
+    const requiredFields = animal.status === 'EXPORTED'
+        ? ['name', 'entryDate', 'status', 'weight', 'quantity']
+        : ['name', 'entryDate', 'status', 'weight', 'penId', 'quantity'];
     const fieldLabels = {
         name: 'Tên',
         entryDate: 'Ngày nhập',
@@ -335,10 +338,9 @@ export const validateAnimalForm = (animal) => {
         isValid = false;
     }
 
-    // Validate status has a valid value
     if (animal.status && !validateField(errors, 'status', animal.status, [
         (value) => {
-            const validStatuses = ['ACTIVE', 'SICK', 'UNVACCINATED'];
+            const validStatuses = ['ACTIVE', 'SICK', 'UNVACCINATED', 'EXPORTED'];
             return validStatuses.includes(value) ? "" : "Trạng thái không hợp lệ";
         }
     ])) {
