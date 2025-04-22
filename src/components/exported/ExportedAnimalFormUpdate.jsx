@@ -3,14 +3,9 @@ import {
     Box,
     TextField,
     Button,
-    MenuItem,
     CircularProgress,
     DialogActions,
     Typography,
-    FormControl,
-    InputLabel,
-    Select,
-    FormHelperText,
     Alert,
     InputAdornment
 } from "@mui/material";
@@ -23,30 +18,21 @@ const initialState = {
     name: "",
     entryDate: "",
     exitDate: "",
-    status: "ACTIVE",
+    status: "EXPORTED",
     weight: "",
     penId: "",
     quantity: 1
 };
 
-const AnimalFormUpdate = ({ onClose, animalData }) => {
+const ExportedAnimalFormUpdate = ({ onClose, animalData }) => {
     const [animal, setAnimal] = useState(initialState);
     const [loading, setLoading] = useState(false);
     const [pigPens, setPigPens] = useState([]);
     const [errors, setErrors] = useState({});
     const [serverError, setServerError] = useState("");
-    const [originalPenId, setOriginalPenId] = useState(null);
-    const [userRole, setUserRole] = useState('');
-    const [employeeId, setEmployeeId] = useState('');
 
     useEffect(() => {
-        // Lấy vai trò và ID nhân viên từ localStorage
-        const role = localStorage.getItem('role');
-        const id = localStorage.getItem('employeeId');
-        setUserRole(role);
-        setEmployeeId(id);
-
-        fetchPigPens(role, id);
+        fetchPigPens();
 
         if (animalData) {
             // Format dates for form inputs
@@ -55,31 +41,19 @@ const AnimalFormUpdate = ({ onClose, animalData }) => {
                 entryDate: animalData.entryDate ? new Date(animalData.entryDate).toISOString().split('T')[0] : "",
                 exitDate: animalData.exitDate ? new Date(animalData.exitDate).toISOString().split('T')[0] : "",
                 penId: animalData.pigPen?.penId || "",
-                quantity: animalData.quantity || 1 // Đảm bảo quantity có giá trị mặc định
+                quantity: animalData.quantity || 1
             };
             setAnimal(formattedAnimal);
-            setOriginalPenId(animalData.pigPen?.penId);
         }
     }, [animalData]);
 
-    const fetchPigPens = async (role, id) => {
+    const fetchPigPens = async () => {
         try {
-            let pens;
-            // Nếu là MANAGER, lấy tất cả chuồng active
-            if (role === 'MANAGER') {
-                pens = await pigPenService.getAllPigPens();
-            }
-            // Nếu là EMPLOYEE, chỉ lấy chuồng mà họ chăm sóc
-            else {
-                pens = await pigPenService.findByEmployeeId(id);
-            }
-
-            // Filter only active pens
-            const activePens = pens.filter(pen => pen.status === "ACTIVE");
-            setPigPens(activePens);
+            const pens = await pigPenService.getAllPigPens();
+            setPigPens(pens);
         } catch (error) {
             console.error("Lỗi khi lấy danh sách chuồng:", error);
-            setServerError("Không thể tải dữ liệu chuồng nuôi.");
+            setServerError("Không thể tải danh sách chuồng.");
         }
     };
 
@@ -87,7 +61,7 @@ const AnimalFormUpdate = ({ onClose, animalData }) => {
         const { name, value } = e.target;
         setAnimal((prev) => ({ ...prev, [name]: value }));
 
-        // Xóa lỗi khi người dùng nhập
+        // Clear error when user types
         if (errors[name]) {
             setErrors((prev) => ({ ...prev, [name]: "" }));
         }
@@ -97,7 +71,7 @@ const AnimalFormUpdate = ({ onClose, animalData }) => {
         e.preventDefault();
         setServerError("");
 
-        // Xác thực form
+        // Validate form
         const { isValid, errors: validationErrors } = validateAnimalForm(animal);
         if (!isValid) {
             setErrors(validationErrors);
@@ -106,29 +80,21 @@ const AnimalFormUpdate = ({ onClose, animalData }) => {
 
         setLoading(true);
         try {
-            // Chuẩn bị dữ liệu cần thiết cho API theo đúng định dạng AnimalRequest
+            // Prepare data for API
             const animalRequestData = {
                 name: animal.name,
                 entryDate: animal.entryDate,
                 exitDate: animal.exitDate || null,
-                status: animal.status,
+                status: "EXPORTED", // Force status to EXPORTED
                 weight: parseFloat(animal.weight),
                 penId: parseInt(animal.penId),
-                quantity: parseInt(animal.quantity) // Thêm trường quantity vào dữ liệu gửi đi
+                quantity: parseInt(animal.quantity)
             };
-
-            // Để debug
-            console.log("Gửi dữ liệu cập nhật:", animalRequestData);
 
             await animalService.updateAnimal(animal.pigId, animalRequestData);
             onClose(true);
         } catch (error) {
             console.error("Lỗi khi cập nhật động vật:", error);
-            // Log chi tiết lỗi từ server
-            if (error.response) {
-                console.error("Response data:", error.response.data);
-                console.error("Response status:", error.response.status);
-            }
             setServerError(error.response?.data?.error || "Không thể cập nhật. Vui lòng thử lại.");
             setLoading(false);
         } finally {
@@ -150,7 +116,7 @@ const AnimalFormUpdate = ({ onClose, animalData }) => {
             className="pen-form"
         >
             <Typography variant="h6" sx={{ mb: 1, fontWeight: "bold" }}>
-                CẬP NHẬT THÔNG TIN CON VẬT
+                CẬP NHẬT THÔNG TIN CÁ THỂ ĐÃ XUẤT
             </Typography>
 
             {serverError && (
@@ -173,33 +139,7 @@ const AnimalFormUpdate = ({ onClose, animalData }) => {
                     fullWidth
                 />
 
-                <FormControl fullWidth required error={!!errors.penId}>
-                    <InputLabel id="penId-label">Chuồng nuôi</InputLabel>
-                    <Select
-                        labelId="penId-label"
-                        name="penId"
-                        value={animal.penId}
-                        label="Chuồng nuôi"
-                        onChange={handleChange}
-                    >
-                        <MenuItem value="" disabled>
-                            <em>Chọn chuồng nuôi</em>
-                        </MenuItem>
-                        {/* Hiển thị chuồng gốc (nếu không còn active) */}
-                        {originalPenId &&
-                            !pigPens.some(pen => pen.penId === originalPenId) && (
-                                <MenuItem key={originalPenId} value={originalPenId}>
-                                    {animalData.pigPen?.name || "Chuồng hiện tại"} (Giữ nguyên)
-                                </MenuItem>
-                            )}
-                        {pigPens.map((pen) => (
-                            <MenuItem key={pen.penId} value={pen.penId}>
-                                {pen.name} ({pen.quantity} con)
-                            </MenuItem>
-                        ))}
-                    </Select>
-                    {errors.penId && <FormHelperText>{errors.penId}</FormHelperText>}
-                </FormControl>
+                {/* Đã xoá ô chọn chuồng xuất */}
 
                 <TextField
                     label="Ngày nhập"
@@ -222,8 +162,9 @@ const AnimalFormUpdate = ({ onClose, animalData }) => {
                     value={animal.exitDate}
                     onChange={handleChange}
                     InputLabelProps={{ shrink: true }}
+                    required
                     error={!!errors.exitDate}
-                    helperText={errors.exitDate || "Để trống nếu chưa xuất chuồng"}
+                    helperText={errors.exitDate}
                     sx={{ "& .MuiInputBase-input": { py: 1.5 } }}
                     className={errors.exitDate ? "field-error" : ""}
                 />
@@ -245,23 +186,6 @@ const AnimalFormUpdate = ({ onClose, animalData }) => {
                     className={errors.weight ? "field-error" : ""}
                 />
 
-                <FormControl fullWidth required error={!!errors.status}>
-                    <InputLabel id="status-label">Trạng thái</InputLabel>
-                    <Select
-                        labelId="status-label"
-                        name="status"
-                        value={animal.status}
-                        label="Trạng thái"
-                        onChange={handleChange}
-                    >
-                        <MenuItem value="ACTIVE">Khỏe mạnh</MenuItem>
-                        <MenuItem value="SICK">Bị bệnh</MenuItem>
-                        <MenuItem value="UNVACCINATED">Chưa tiêm phòng</MenuItem>
-                        <MenuItem value="EXPORTED">Đã xuất</MenuItem>
-                    </Select>
-                    {errors.status && <FormHelperText>{errors.status}</FormHelperText>}
-                </FormControl>
-
                 <TextField
                     label="Số lượng"
                     name="quantity"
@@ -272,9 +196,10 @@ const AnimalFormUpdate = ({ onClose, animalData }) => {
                     error={!!errors.quantity}
                     helperText={errors.quantity}
                     InputProps={{
-                        inputProps: { min: 1 }
+                        inputProps: { min: 1, max: 1000 },
                     }}
-                    fullWidth
+                    sx={{ "& .MuiInputBase-input": { py: 1.5 } }}
+                    className={errors.quantity ? "field-error" : ""}
                 />
             </Box>
 
@@ -301,4 +226,4 @@ const AnimalFormUpdate = ({ onClose, animalData }) => {
     );
 };
 
-export default AnimalFormUpdate;
+export default ExportedAnimalFormUpdate;

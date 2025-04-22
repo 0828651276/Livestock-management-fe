@@ -11,6 +11,7 @@ import ChangePasswordForm from './components/employee/ChangePasswordForm.jsx';
 import LoginPage from "./pages/LoginPage.jsx";
 import Home from './pages/Home';
 import UnauthorizedPage from './pages/UnauthorizedPage';
+import ExportedAnimalsManager from "./components/exported/ExportedAnimalManager.jsx";
 
 // Tạo theme tùy chỉnh
 const theme = createTheme({
@@ -84,6 +85,7 @@ function App() {
                         {/* Routes cho tất cả người dùng */}
                         <Route path="pigpens" element={<PigPenManager/>}/>
                         <Route path="animals" element={<AnimalManager/>}/>
+                        <Route path="exported-animals" element={<ExportedAnimalsManager/>}/> {/* Add this line */}
                         <Route path="change-password" element={<ChangePasswordForm/>}/>
                         <Route path="employees/detail" element={<EmployeeDetail/>}/>
                     </Route>

@@ -117,6 +117,24 @@ export const animalService = {
         }
     },
 
+    // Xuất chuồng động vật
+    exportAnimal: async (id) => {
+        try {
+            const token = authService.getCurrentUser();
+
+            // Sử dụng POST đến endpoint xuất chuồng
+            const response = await axios.post(`${API_URL}/animals/${id}/export`, null, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            return response.data;
+        } catch (error) {
+            console.error(`Lỗi khi xuất chuồng động vật #${id}:`, error);
+            throw error;
+        }
+    },
+
     // Search animals by criteria
     searchAnimals: async (params) => {
         try {
@@ -146,6 +164,21 @@ export const animalService = {
             return response.data;
         } catch (error) {
             console.error(`Error fetching animals by status ${status}:`, error);
+            throw error;
+        }
+    },
+
+    getExportedAnimals: async () => {
+        try {
+            const token = authService.getCurrentUser();
+            const response = await axios.get(`${API_URL}/animals/exported`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching exported animals:', error);
             throw error;
         }
     },

@@ -523,7 +523,7 @@ export default function PenManager() {
                             <StyledTableHeaderCell>Đang nuôi</StyledTableHeaderCell>
                             <StyledTableHeaderCell>Ngày tạo</StyledTableHeaderCell>
                             <StyledTableHeaderCell>Ngày đóng</StyledTableHeaderCell>
-                            <StyledTableHeaderCell>Giới hạn nuôi</StyledTableHeaderCell>
+                            <StyledTableHeaderCell>Số lượng</StyledTableHeaderCell>
                             <StyledTableHeaderCell>Trạng thái</StyledTableHeaderCell>
                             <StyledTableHeaderCell align="center">Hành động</StyledTableHeaderCell>
                         </TableRow>
@@ -542,8 +542,7 @@ export default function PenManager() {
                                     {userRole === 'MANAGER' && (
                                         <StyledTableCell>
                                             <CaretakersList
-                                                caretakers={pen.caretakers}
-                                            />
+                                                caretakers={pen.caretakers}/>
                                         </StyledTableCell>
                                     )}
                                     <StyledTableCell>
