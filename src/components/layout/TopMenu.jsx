@@ -6,12 +6,13 @@ import {
     DialogContent, DialogContentText, DialogActions, Button
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
-import PersonIcon from '@mui/icons-material/Person';
 import LogoutIcon from '@mui/icons-material/Logout';
 import {authService} from '../../services/authService';
 import Avatar from '@mui/material/Avatar';
 import {useNavigate} from 'react-router-dom';
 import {employeeService} from "../../services/EmployeeService.js";
+import { notificationService } from '../../services/NotificationService';
+import NotificationDropdown from "../common/NotificationDropdown.jsx";
 
 const TopMenu = ({drawerWidth, handleDrawerToggle, user}) => {
     const [anchorEl, setAnchorEl] = useState(null);
@@ -19,8 +20,9 @@ const TopMenu = ({drawerWidth, handleDrawerToggle, user}) => {
     const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
     const open = Boolean(anchorEl);
     const [profile, setProfile] = useState();
-    const [lastUpdate, setLastUpdate] = useState(Date.now());
+    const [lastUpdate, setLastUpdate] = useState(Date.now);
 
+    const [notifications, setNotifications] = useState([]);
     const fetchEmployee = async () => {
         try {
             const employeeId = localStorage.getItem('employeeId') || undefined;
@@ -47,6 +49,33 @@ const TopMenu = ({drawerWidth, handleDrawerToggle, user}) => {
         return () => {
             window.removeEventListener('profile-updated', handleProfileUpdate);
         };
+    }, []);
+
+    useEffect(() => {
+        async function fetchNotifications() {
+            try {
+                const data = await notificationService.getAll();
+                setNotifications(data);
+            } catch (err) {
+                setNotifications([]);
+            }
+        }
+        fetchNotifications();
+    }, []);
+
+    const reloadNotifications = async () => {
+        try {
+            const data = await notificationService.getAll();
+            setNotifications(data);
+        } catch (err) {
+            setNotifications([]);
+        }
+    };
+
+    useEffect(() => {
+        window.reloadNotifications = reloadNotifications;
+        reloadNotifications();
+        return () => { delete window.reloadNotifications; };
     }, []);
 
     const handleUserMenuOpen = (e) => setAnchorEl(e.currentTarget);
@@ -77,6 +106,8 @@ const TopMenu = ({drawerWidth, handleDrawerToggle, user}) => {
                 <Typography variant="h6" sx={{flexGrow: 1}}>
                     Livestock - Pig Farm Management System
                 </Typography>
+                {/* Nút thông báo */}
+                <NotificationDropdown notifications={notifications} onCreated={reloadNotifications} />
                 <Box onClick={handleUserMenuOpen} sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                     <IconButton>
                         <Avatar
