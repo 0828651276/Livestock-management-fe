@@ -44,4 +44,11 @@ export const notificationService = {
             headers: { Authorization: `Bearer ${token}` },
         });
     },
+
+    markAsRead: async (id) => {
+        const token = authService.getCurrentUser();
+        await axios.patch(`${API_URL}/${id}/read`, {}, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+    },
 };

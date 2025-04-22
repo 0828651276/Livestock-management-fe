@@ -82,10 +82,24 @@ const NotificationDropdown = ({ notifications = [], onCreated }) => {
         }
     };
 
+    // Hàm lấy trạng thái đã đọc, tương thích mọi trường hợp
+    const getIsRead = n => {
+        if (typeof n.isRead === 'boolean') return n.isRead;
+        if (typeof n.read === 'boolean') return n.read;
+        if (typeof n.is_read === 'boolean') return n.is_read;
+        if (typeof n.isRead === 'string') return n.isRead === 'true';
+        if (typeof n.read === 'string') return n.read === 'true';
+        if (typeof n.is_read === 'string') return n.is_read === 'true';
+        return false;
+    };
+
+    // Đếm số lượng thông báo chưa đọc
+    const unreadCount = notifications.filter(n => !getIsRead(n)).length;
+
     return (
         <>
             <IconButton color="inherit" onClick={handleOpen} sx={{ mr: 2 }}>
-                <Badge badgeContent={notifications.length} color="error">
+                <Badge badgeContent={unreadCount} color="error">
                     <NotificationsIcon />
                 </Badge>
             </IconButton>
@@ -117,7 +131,26 @@ const NotificationDropdown = ({ notifications = [], onCreated }) => {
                     <MenuItem disabled>Không có thông báo nào</MenuItem>
                 ) : (
                     notifications.map(notif => (
-                        <MenuItem key={notif.id} sx={{ display: 'block', whiteSpace: 'normal', position: 'relative', py: 1.5 }}>
+                        <MenuItem
+                            key={notif.id}
+                            sx={{
+                                display: 'block',
+                                whiteSpace: 'normal',
+                                position: 'relative',
+                                py: 1.5,
+                                backgroundColor: getIsRead(notif) ? '#fff' : 'rgba(25, 118, 210, 0.08)',
+                                cursor: 'pointer',
+                                '&:hover': {
+                                    backgroundColor: getIsRead(notif) ? '#f5f5f5' : 'rgba(25, 118, 210, 0.15)',
+                                },
+                            }}
+                            onClick={async () => {
+                                if (!getIsRead(notif)) {
+                                    await notificationService.markAsRead(notif.id);
+                                    onCreated && onCreated();
+                                }
+                            }}
+                        >
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                 <Box sx={{ flex: 1 }}>
                                     <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>{notif.content}</Typography>
@@ -127,7 +160,7 @@ const NotificationDropdown = ({ notifications = [], onCreated }) => {
                                 </Box>
                                 {/* Chỉ hiển thị nút 3 chấm (quản lý) nếu là admin */}
                                 {isAdmin && (
-                                    <IconButton size="small" sx={{ ml: 1 }} onClick={e => handleMenuOpen(e, notif.id)}>
+                                    <IconButton size="small" sx={{ ml: 1 }} onClick={e => { e.stopPropagation(); handleMenuOpen(e, notif.id); }}>
                                         <MoreVertIcon />
                                     </IconButton>
                                 )}
