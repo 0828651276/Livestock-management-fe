@@ -24,7 +24,8 @@ import {
     TablePagination,
     Tooltip,
     CircularProgress,
-    Chip
+    Chip,
+    Grid
 } from "@mui/material";
 import {
     Search,
@@ -63,6 +64,8 @@ export default function ExportedAnimalManager() {
     const [searchLoading, setSearchLoading] = useState(false);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
+    const [showDateFilter, setShowDateFilter] = useState(false);
+    const [dateRange, setDateRange] = useState({ startDate: '', endDate: '' });
     const [deleteDialog, setDeleteDialog] = useState({
         open: false,
         animalId: null
@@ -98,9 +101,27 @@ export default function ExportedAnimalManager() {
     const handleSearch = () => {
         setSearchLoading(true);
         try {
-            const filtered = animals.filter(animal =>
-                animal.name.toLowerCase().includes(searchTerm.toLowerCase())
-            );
+            let filtered = animals;
+            
+            // Lọc theo ID
+            if (searchTerm) {
+                filtered = filtered.filter(animal =>
+                    animal.pigId.toString().includes(searchTerm)
+                );
+            }
+
+            // Lọc theo ngày
+            if (dateRange.startDate && dateRange.endDate) {
+                const start = new Date(dateRange.startDate);
+                const end = new Date(dateRange.endDate);
+                end.setHours(23, 59, 59, 999); // Đặt thời gian cuối ngày
+
+                filtered = filtered.filter(animal => {
+                    const exportDate = new Date(animal.exportDate);
+                    return exportDate >= start && exportDate <= end;
+                });
+            }
+
             setFilteredAnimals(filtered);
 
             if (filtered.length === 0) {
@@ -124,8 +145,24 @@ export default function ExportedAnimalManager() {
         }
     };
 
+    const handleDateRangeChange = (e) => {
+        setDateRange({
+            ...dateRange,
+            [e.target.name]: e.target.value
+        });
+    };
+
+    const handleToggleDateFilter = () => {
+        setShowDateFilter(!showDateFilter);
+        if (!showDateFilter) {
+            setDateRange({ startDate: '', endDate: '' });
+        }
+    };
+
     const handleResetFilters = () => {
         setSearchTerm('');
+        setDateRange({ startDate: '', endDate: '' });
+        setShowDateFilter(false);
         setFilteredAnimals(animals);
     };
 
@@ -227,42 +264,93 @@ export default function ExportedAnimalManager() {
                     }
                 }}
             >
-                <Stack
-                    direction={{xs: 'column', sm: 'row'}}
-                    spacing={2}
-                    alignItems={{xs: 'stretch', sm: 'center'}}
-                >
-                    <TextField
-                        label="Tìm theo tên"
-                        variant="outlined"
-                        value={searchTerm}
-                        onChange={handleSearchChange}
-                        onKeyPress={handleKeyPress}
-                        sx={{flexGrow: 1}}
-                        size="small"
-                        InputProps={{
-                            startAdornment: (
-                                <InputAdornment position="start">
-                                    <Search color="action"/>
-                                </InputAdornment>
-                            ),
-                        }}
-                    />
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        startIcon={searchLoading ? <CircularProgress size={20} color="inherit"/> : <Search/>}
-                        onClick={handleSearch}
-                        disabled={searchLoading}
-                        sx={{
-                            flexShrink: 0,
-                            fontWeight: 'bold',
-                            textTransform: 'uppercase'
-                        }}
-                    >
-                        Tìm kiếm
-                    </Button>
-                </Stack>
+                <Grid container spacing={2} alignItems="center">
+                    <Grid item xs={12} md={5}>
+                        <TextField
+                            fullWidth
+                            label="Tìm theo ID"
+                            variant="outlined"
+                            value={searchTerm}
+                            onChange={handleSearchChange}
+                            onKeyPress={handleKeyPress}
+                            size="small"
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <Search color="action"/>
+                                    </InputAdornment>
+                                ),
+                            }}
+                        />
+                    </Grid>
+                    <Grid item xs={6} md={2}>
+                        <Button
+                            fullWidth
+                            variant="contained"
+                            color="primary"
+                            startIcon={searchLoading ? <CircularProgress size={20} color="inherit"/> : <Search/>}
+                            onClick={handleSearch}
+                            disabled={searchLoading}
+                            sx={{height: '40px'}}
+                        >
+                            Tìm kiếm
+                        </Button>
+                    </Grid>
+                    <Grid item xs={6} md={5} sx={{display: 'flex', justifyContent: 'flex-end', gap: 1}}>
+                        <Tooltip title={showDateFilter ? "Ẩn bộ lọc ngày" : "Lọc theo ngày xuất"}>
+                            <Button
+                                variant="outlined"
+                                startIcon={showDateFilter ? <FilterAltOff/> : <FilterAlt/>}
+                                onClick={handleToggleDateFilter}
+                                size="small"
+                                color="primary"
+                                className="filter-button"
+                            >
+                                {showDateFilter ? 'Ẩn bộ lọc' : 'Lọc theo ngày'}
+                            </Button>
+                        </Tooltip>
+                        {(searchTerm || dateRange.startDate || dateRange.endDate) && (
+                            <Button
+                                variant="text"
+                                color="error"
+                                onClick={handleResetFilters}
+                                size="small"
+                                startIcon={<Refresh/>}
+                            >
+                                Xóa bộ lọc
+                            </Button>
+                        )}
+                    </Grid>
+
+                    {showDateFilter && (
+                        <>
+                            <Grid item xs={12} md={6}>
+                                <TextField
+                                    fullWidth
+                                    name="startDate"
+                                    label="Từ ngày"
+                                    type="date"
+                                    value={dateRange.startDate}
+                                    onChange={handleDateRangeChange}
+                                    InputLabelProps={{shrink: true}}
+                                    size="small"
+                                />
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                                <TextField
+                                    fullWidth
+                                    name="endDate"
+                                    label="Đến ngày"
+                                    type="date"
+                                    value={dateRange.endDate}
+                                    onChange={handleDateRangeChange}
+                                    InputLabelProps={{shrink: true}}
+                                    size="small"
+                                />
+                            </Grid>
+                        </>
+                    )}
+                </Grid>
             </Paper>
 
             {/* Counter */}
