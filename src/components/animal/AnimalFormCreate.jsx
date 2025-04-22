@@ -25,7 +25,8 @@ const initialState = {
     exitDate: "",
     status: "ACTIVE",
     weight: "",
-    penId: ""
+    penId: "",
+    quantity: 1
 };
 
 const AnimalFormCreate = ({ onClose }) => {
@@ -49,21 +50,26 @@ const AnimalFormCreate = ({ onClose }) => {
 
     const fetchPigPens = async (role, id) => {
         try {
-            let pens;
-            // Nếu là MANAGER, lấy tất cả chuồng active
-            if (role === 'MANAGER') {
-                pens = await pigPenService.getAllPigPens();
-            }
-            // Nếu là EMPLOYEE, chỉ lấy chuồng mà họ chăm sóc
-            else {
-                pens = await pigPenService.findByEmployeeId(id);
-            }
+            // Get empty pens regardless of role
+            const emptyPens = await animalService.getEmptyPens();
 
-            // Filter only active pens
-            const activePens = pens.filter(pen => pen.status === "ACTIVE");
-            setPigPens(activePens);
+            // If user is EMPLOYEE, filter the empty pens to only show ones they care for
+            if (role !== 'MANAGER') {
+                const userPens = await pigPenService.findByEmployeeId(id);
+                const userPenIds = userPens.map(pen => pen.penId);
+
+                // Filter empty pens to only include those assigned to this employee
+                const filteredPens = emptyPens.filter(pen =>
+                    userPenIds.includes(pen.penId)
+                );
+
+                setPigPens(filteredPens);
+            } else {
+                // For managers, show all empty pens
+                setPigPens(emptyPens);
+            }
         } catch (error) {
-            console.error("Error fetching pig pens:", error);
+            console.error("Error fetching empty pig pens:", error);
             setServerError("Could not load pig pen data.");
         }
     };
@@ -143,26 +149,33 @@ const AnimalFormCreate = ({ onClose }) => {
                     fullWidth
                 />
 
-                <FormControl fullWidth required error={!!errors.penId}>
-                    <InputLabel id="penId-label">Chuồng nuôi</InputLabel>
-                    <Select
-                        labelId="penId-label"
-                        name="penId"
-                        value={animal.penId}
-                        label="Chuồng nuôi"
-                        onChange={handleChange}
-                    >
-                        <MenuItem value="" disabled>
-                            <em>Chọn chuồng nuôi</em>
-                        </MenuItem>
-                        {pigPens.map((pen) => (
-                            <MenuItem key={pen.penId} value={pen.penId}>
-                                {pen.name} ({pen.quantity} con)
+                {pigPens.length === 0 ? (
+                    <Alert severity="info" sx={{ mb: 2 }}>
+                        Không có chuồng trống. Vui lòng tạo chuồng mới trước khi thêm động vật.
+                    </Alert>
+                ) : (
+                    <FormControl fullWidth required error={!!errors.penId}>
+                        <InputLabel id="penId-label">Chuồng nuôi</InputLabel>
+                        <Select
+                            labelId="penId-label"
+                            name="penId"
+                            value={animal.penId}
+                            label="Chuồng nuôi"
+                            onChange={handleChange}
+                        >
+                            <MenuItem value="" disabled>
+                                <em>Chọn chuồng nuôi</em>
                             </MenuItem>
-                        ))}
-                    </Select>
-                    {errors.penId && <FormHelperText>{errors.penId}</FormHelperText>}
-                </FormControl>
+                            {pigPens.map((pen) => (
+                                <MenuItem key={pen.penId} value={pen.penId}>
+                                    {pen.name} (Trống)
+                                </MenuItem>
+                            ))}
+                        </Select>
+                        {errors.penId && <FormHelperText>{errors.penId}</FormHelperText>}
+                        <FormHelperText>Chỉ hiển thị các chuồng đang trống</FormHelperText>
+                    </FormControl>
+                )}
 
                 <TextField
                     label="Ngày nhập"
@@ -208,6 +221,22 @@ const AnimalFormCreate = ({ onClose }) => {
                     className={errors.weight ? "field-error" : ""}
                 />
 
+                <TextField
+                    label="Số lượng"
+                    name="quantity"
+                    type="number"
+                    value={animal.quantity}
+                    onChange={handleChange}
+                    required
+                    error={!!errors.quantity}
+                    helperText={errors.quantity}
+                    InputProps={{
+                        inputProps: { min: 1, max: 1000 },
+                    }}
+                    sx={{ "& .MuiInputBase-input": { py: 1.5 } }}
+                    className={errors.quantity ? "field-error" : ""}
+                />
+
                 <FormControl fullWidth required error={!!errors.status}>
                     <InputLabel id="status-label">Trạng thái</InputLabel>
                     <Select
@@ -217,10 +246,10 @@ const AnimalFormCreate = ({ onClose }) => {
                         label="Trạng thái"
                         onChange={handleChange}
                     >
-                        <MenuItem value="ACTIVE">Đang nuôi</MenuItem>
-                        <MenuItem value="SOLD">Đã bán</MenuItem>
-                        <MenuItem value="DEAD">Đã chết</MenuItem>
-                        <MenuItem value="TRANSFERRED">Đã chuyển</MenuItem>
+                        <MenuItem value="ACTIVE">Khỏe mạnh</MenuItem>
+                        <MenuItem value="SICK">Bị bệnh</MenuItem>
+                        <MenuItem value="UNVACCINATED">Chưa tiêm phòng</MenuItem>
+
                     </Select>
                     {errors.status && <FormHelperText>{errors.status}</FormHelperText>}
                 </FormControl>
@@ -238,7 +267,7 @@ const AnimalFormCreate = ({ onClose }) => {
                     <Button
                         type="submit"
                         variant="contained"
-                        disabled={loading}
+                        disabled={loading || pigPens.length === 0}
                         sx={{ px: 3, py: 1 }}
                     >
                         {loading ? <CircularProgress size={24} /> : "Thêm mới"}

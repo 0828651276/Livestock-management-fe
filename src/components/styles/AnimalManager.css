@@ -150,3 +150,59 @@
 .MuiChip-root:hover {
     transform: scale(1.05);
 }
+
+/* Status badge styles */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 16px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1;
+}
+
+.status-active {
+    background-color: rgba(46, 204, 113, 0.15);
+    color: #27ae60;
+}
+
+.status-sick {
+    background-color: rgba(243, 156, 18, 0.15);
+    color: #d35400;
+}
+
+.status-unvaccinated {
+    background-color: rgba(231, 76, 60, 0.15);
+    color: #c0392b;
+}
+
+.status-exported {
+    background-color: rgba(149, 165, 166, 0.15);
+    color: #7f8c8d;
+}
+
+/* Export button styles */
+.action-button[color="info"] {
+    background-color: #3498db;
+}
+
+.action-button[color="info"]:hover {
+    background-color: #2980b9;
+}
+
+/* Export dialog highlight */
+#export-dialog-description {
+    padding-left: 8px;
+    border-left: 3px solid #3498db;
+}
+
+/* Animation for exported animals */
+.animal-table tr.exported {
+    transition: opacity 0.3s ease;
+    opacity: 0.7;
+}
+
+.animal-table tr.exported:hover {
+    opacity: 1;
+}

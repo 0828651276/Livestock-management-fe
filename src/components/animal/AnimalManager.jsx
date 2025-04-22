@@ -42,7 +42,8 @@ import {
     FilterAlt,
     FilterAltOff,
     Refresh,
-    Pets
+    Pets,
+    ExitToApp
 } from "@mui/icons-material";
 import AnimalFormUpdate from "./AnimalFormUpdate.jsx";
 import AnimalFormCreate from "./AnimalFormCreate.jsx";
@@ -80,11 +81,12 @@ const SearchContainer = styled(Paper)(({ theme }) => ({
 
 // Status mapping for display
 const statusMapping = {
-    'ACTIVE': { label: 'Đang nuôi', color: 'success', class: 'status-active' },
-    'SOLD': { label: 'Đã bán', color: 'info', class: 'status-sold' },
-    'DEAD': { label: 'Đã chết', color: 'error', class: 'status-dead' },
-    'TRANSFERRED': { label: 'Đã chuyển', color: 'warning', class: 'status-transferred' }
+    ACTIVE: { label: 'Khỏe mạnh', color: 'success', class: 'status-active' },
+    SICK: { label: 'Bị bệnh', color: 'warning', class: 'status-sick' },
+    UNVACCINATED: { label: 'Chưa tiêm phòng', color: 'error', class: 'status-unvaccinated' },
+    EXPORTED: { label: 'Đã xuất chuồng', color: 'default', class: 'status-exported' }
 };
+
 
 export default function AnimalManager() {
     // State variables
@@ -106,6 +108,11 @@ export default function AnimalManager() {
     const [deleteDialog, setDeleteDialog] = useState({
         open: false,
         animalId: null
+    });
+    const [exportDialog, setExportDialog] = useState({
+        open: false,
+        animalId: null,
+        animalName: ''
     });
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -333,6 +340,38 @@ export default function AnimalManager() {
         }
     };
 
+    // Export operation handlers
+    const handleExportClick = (id, name) => {
+        setExportDialog({
+            open: true,
+            animalId: id,
+            animalName: name
+        });
+    };
+
+    const handleExportCancel = () => {
+        setExportDialog({
+            open: false,
+            animalId: null,
+            animalName: ''
+        });
+    };
+
+    const handleExportConfirm = async () => {
+        try {
+            await animalService.exportAnimal(exportDialog.animalId);
+
+            // Refresh data after export
+            fetchAnimals(userRole, employeeId);
+            showNotification(`Xuất chuồng cá thể "${exportDialog.animalName}" thành công`);
+        } catch (err) {
+            console.error("Error exporting animal:", err);
+            showNotification("Lỗi khi xuất chuồng cá thể vật nuôi", "error");
+        } finally {
+            handleExportCancel();
+        }
+    };
+
     // Helper functions
     const formatDate = (dateStr) => {
         if (!dateStr) return "—";
@@ -347,6 +386,11 @@ export default function AnimalManager() {
     const getPenName = (penId) => {
         const pen = pigPens.find(p => p.penId === penId);
         return pen ? pen.name : "—";
+    };
+
+    // Check if animal can be exported (only active animals)
+    const canExport = (animal) => {
+        return animal.status === 'ACTIVE';
     };
 
     // Prepare data for table
@@ -436,10 +480,10 @@ export default function AnimalManager() {
                                         onChange={handleFilterStatusChange}
                                     >
                                         <MenuItem value="">Tất cả</MenuItem>
-                                        <MenuItem value="ACTIVE">Đang nuôi</MenuItem>
-                                        <MenuItem value="SOLD">Đã bán</MenuItem>
-                                        <MenuItem value="DEAD">Đã chết</MenuItem>
-                                        <MenuItem value="TRANSFERRED">Đã chuyển</MenuItem>
+                                        <MenuItem value="ACTIVE">Khỏe mạnh</MenuItem>
+                                        <MenuItem value="SICK">Bị bệnh</MenuItem>
+                                        <MenuItem value="UNVACCINATED">Chưa tiêm phòng</MenuItem>
+                                        <MenuItem value="EXPORTED">Đã xuất chuồng</MenuItem>
                                     </Select>
                                 </FormControl>
                             </Grid>
@@ -536,13 +580,15 @@ export default function AnimalManager() {
                 <Table sx={{ minWidth: 650 }} aria-label="animals table" className="animal-table">
                     <TableHead>
                         <TableRow>
+                            <StyledTableHeaderCell>ID</StyledTableHeaderCell>
                             <StyledTableHeaderCell>Tên</StyledTableHeaderCell>
                             <StyledTableHeaderCell>Chuồng nuôi</StyledTableHeaderCell>
                             <StyledTableHeaderCell>Ngày nhập</StyledTableHeaderCell>
                             <StyledTableHeaderCell>Ngày xuất</StyledTableHeaderCell>
-                            <StyledTableHeaderCell>Cân nặng (kg)</StyledTableHeaderCell>
+                            <StyledTableHeaderCell>Cân nặng</StyledTableHeaderCell>
+                            <StyledTableHeaderCell>Số lượng</StyledTableHeaderCell>
                             <StyledTableHeaderCell>Trạng thái</StyledTableHeaderCell>
-                            <StyledTableHeaderCell align="center">Hành động</StyledTableHeaderCell>
+                            <StyledTableHeaderCell align="center">Thao tác</StyledTableHeaderCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -555,11 +601,13 @@ export default function AnimalManager() {
                                         '&:hover': { backgroundColor: '#f0f7ff' }
                                     }}
                                 >
-                                    <StyledTableCell sx={{ fontWeight: 'medium' }}>{animal.name}</StyledTableCell>
+                                    <StyledTableCell>{animal.pigId}</StyledTableCell>
+                                    <StyledTableCell>{animal.name}</StyledTableCell>
                                     <StyledTableCell>{animal.pigPen ? animal.pigPen.name : "—"}</StyledTableCell>
                                     <StyledTableCell>{formatDate(animal.entryDate)}</StyledTableCell>
                                     <StyledTableCell>{formatDate(animal.exitDate) || "—"}</StyledTableCell>
                                     <StyledTableCell>{animal.weight ? animal.weight.toFixed(1) : "—"}</StyledTableCell>
+                                    <StyledTableCell>{animal.quantity || "—"}</StyledTableCell>
                                     <StyledTableCell>
                                         <Box
                                             component="span"
@@ -570,42 +618,79 @@ export default function AnimalManager() {
                                     </StyledTableCell>
                                     <StyledTableCell align="center">
                                         <Stack direction="row" spacing={1} justifyContent="center">
-                                            <Tooltip title="Sửa">
-                                                <ActionButton
-                                                    size="small"
-                                                    variant="contained"
-                                                    color="warning"
-                                                    onClick={() => {
-                                                        setSelectedAnimal(animal);
-                                                        setOpenUpdateForm(true);
-                                                    }}
-                                                    className="action-button"
-                                                >
-                                                    <Edit fontSize="small" />
-                                                    <Box component="span"
-                                                         sx={{ ml: 0.5, display: { xs: 'none', sm: 'inline' } }}>SỬA</Box>
-                                                </ActionButton>
-                                            </Tooltip>
-                                            <Tooltip title="Xóa">
-                                                <ActionButton
-                                                    size="small"
-                                                    variant="contained"
-                                                    color="error"
-                                                    onClick={() => handleDeleteClick(animal.pigId)}
-                                                    className="action-button"
-                                                >
-                                                    <Delete fontSize="small" />
-                                                    <Box component="span"
-                                                         sx={{ ml: 0.5, display: { xs: 'none', sm: 'inline' } }}>XÓA</Box>
-                                                </ActionButton>
-                                            </Tooltip>
+                                            {animal.status !== 'EXPORTED' && (
+                                                <>
+                                                    <Tooltip title="Sửa">
+                                                        <ActionButton
+                                                            size="small"
+                                                            variant="contained"
+                                                            color="warning"
+                                                            onClick={() => {
+                                                                setSelectedAnimal(animal);
+                                                                setOpenUpdateForm(true);
+                                                            }}
+                                                            className="action-button"
+                                                        >
+                                                            <Edit fontSize="small" />
+                                                            <Box component="span"
+                                                                 sx={{ ml: 0.5, display: { xs: 'none', sm: 'inline' } }}>SỬA</Box>
+                                                        </ActionButton>
+                                                    </Tooltip>
+
+                                                    {canExport(animal) && (
+                                                        <Tooltip title="Xuất chuồng">
+                                                            <ActionButton
+                                                                size="small"
+                                                                variant="contained"
+                                                                color="info"
+                                                                onClick={() => handleExportClick(animal.pigId, animal.name)}
+                                                                className="action-button"
+                                                                sx={{
+                                                                    bgcolor: '#3498db',
+                                                                    '&:hover': { bgcolor: '#2980b9' }
+                                                                }}
+                                                            >
+                                                                <ExitToApp fontSize="small" />
+                                                                <Box component="span"
+                                                                     sx={{ ml: 0.5, display: { xs: 'none', sm: 'inline' } }}>XUẤT</Box>
+                                                            </ActionButton>
+                                                        </Tooltip>
+                                                    )}
+
+                                                    <Tooltip title="Xóa">
+                                                        <ActionButton
+                                                            size="small"
+                                                            variant="contained"
+                                                            color="error"
+                                                            onClick={() => handleDeleteClick(animal.pigId)}
+                                                            className="action-button"
+                                                        >
+                                                            <Delete fontSize="small" />
+                                                            <Box component="span"
+                                                                 sx={{ ml: 0.5, display: { xs: 'none', sm: 'inline' } }}>XÓA</Box>
+                                                        </ActionButton>
+                                                    </Tooltip>
+                                                </>
+                                            )}
+
+                                            {animal.status === 'EXPORTED' && (
+                                                <Typography variant="body2" color="text.secondary"
+                                                            sx={{
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                fontStyle: 'italic'
+                                                            }}>
+                                                    <ExitToApp fontSize="small" sx={{ mr: 0.5, color: 'gray' }}/>
+                                                    Đã xuất chuồng
+                                                </Typography>
+                                            )}
                                         </Stack>
                                     </StyledTableCell>
                                 </TableRow>
                             ))
                         ) : !loading && (
                             <TableRow>
-                                <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
+                                <TableCell colSpan={9} align="center" sx={{ py: 3 }}>
                                     <Typography variant="body1" color="text.secondary">
                                         Không có dữ liệu
                                     </Typography>
@@ -730,6 +815,36 @@ export default function AnimalManager() {
                     </Button>
                     <Button onClick={handleDeleteConfirm} color="error" variant="contained" autoFocus>
                         Xóa
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Export Dialog */}
+            <Dialog
+                open={exportDialog.open}
+                onClose={handleExportCancel}
+                aria-labelledby="export-dialog-title"
+                aria-describedby="export-dialog-description"
+                PaperProps={{ sx: { borderRadius: '8px' } }}
+            >
+                <DialogTitle id="export-dialog-title" sx={{ borderBottom: '1px solid #e0e0e0' }}>
+                    Xác nhận xuất chuồng
+                </DialogTitle>
+                <DialogContent sx={{ mt: 2 }}>
+                    <DialogContentText id="export-dialog-description">
+                        Bạn có chắc chắn muốn xuất chuồng cá thể vật nuôi "{exportDialog.animalName}" không?
+                        <Typography variant="body2" sx={{ mt: 1, fontStyle: 'italic', color: 'text.secondary' }}>
+                            Khi xuất chuồng, cá thể này sẽ được đánh dấu là "Đã xuất" và không còn trong chuồng nuôi nữa.
+                        </Typography>
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions sx={{ px: 3, py: 2 }}>
+                    <Button onClick={handleExportCancel} color="primary" variant="outlined">
+                        Hủy
+                    </Button>
+                    <Button onClick={handleExportConfirm} color="info" variant="contained" autoFocus
+                            startIcon={<ExitToApp />}>
+                        Xác nhận xuất chuồng
                     </Button>
                 </DialogActions>
             </Dialog>

@@ -1,18 +1,18 @@
 export const animalStatus = {
     ACTIVE: {
-        label: 'Đang nuôi',
+        label: 'Khỏe Mạnh',
         color: 'green'
     },
-    SOLD: {
-        label: 'Đã bán',
-        color: 'blue'
+    SICK: {
+        label: 'Bị bệnh',
+        color: 'orange'
     },
-    DEAD: {
-        label: 'Đã chết',
+    UNVACCINATED: {
+        label: 'Chưa tiêm phòng',
         color: 'red'
     },
-    TRANSFERRED: {
-        label: 'Đã chuyển',
-        color: 'orange'
+    EXPORTED: {
+        label: 'Đã xuất',
+        color: 'gray'
     }
-}; 
+};

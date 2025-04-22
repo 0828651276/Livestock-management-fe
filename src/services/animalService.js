@@ -1,7 +1,5 @@
 import axios from 'axios';
 import { authService } from './authService';
-import { pigPenService } from './pigPenService';
-
 const API_URL = 'http://localhost:8080/api';
 
 export const animalService = {
@@ -17,6 +15,22 @@ export const animalService = {
             return response.data;
         } catch (error) {
             console.error('Error fetching animals:', error);
+            throw error;
+        }
+    },
+
+    // Get empty pens (pens with no animals)
+    getEmptyPens: async () => {
+        try {
+            const token = authService.getCurrentUser();
+            const response = await axios.get(`${API_URL}/animals/empty`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching empty pens:', error);
             throw error;
         }
     },
@@ -103,6 +117,24 @@ export const animalService = {
         }
     },
 
+    // Xuất chuồng động vật
+    exportAnimal: async (id) => {
+        try {
+            const token = authService.getCurrentUser();
+
+            // Sử dụng POST đến endpoint xuất chuồng
+            const response = await axios.post(`${API_URL}/animals/${id}/export`, null, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            return response.data;
+        } catch (error) {
+            console.error(`Lỗi khi xuất chuồng động vật #${id}:`, error);
+            throw error;
+        }
+    },
+
     // Search animals by criteria
     searchAnimals: async (params) => {
         try {
@@ -132,6 +164,21 @@ export const animalService = {
             return response.data;
         } catch (error) {
             console.error(`Error fetching animals by status ${status}:`, error);
+            throw error;
+        }
+    },
+
+    getExportedAnimals: async () => {
+        try {
+            const token = authService.getCurrentUser();
+            const response = await axios.get(`${API_URL}/animals/exported`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching exported animals:', error);
             throw error;
         }
     },

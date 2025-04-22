@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { pigPenService } from "../../services/pigPenService";
+import { animalService } from "../../services/animalService";
 import "../styles/PenManager.css";
 import {
     Button,
@@ -75,6 +76,53 @@ const SearchContainer = styled(Paper)(({ theme }) => ({
     boxShadow: theme.shadows[1],
     borderRadius: '8px'
 }));
+
+// AnimalNamesList component to display animal names
+const AnimalNamesList = ({ penId }) => {
+    const [animals, setAnimals] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchAnimals = async () => {
+            try {
+                const data = await animalService.getAnimalsByPenId(penId);
+                // Filter only ACTIVE animals
+                const activeAnimals = data.filter(animal => animal.status === "ACTIVE");
+                setAnimals(activeAnimals);
+            } catch (error) {
+                console.error("Error fetching animals for pen:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchAnimals();
+    }, [penId]);
+
+    if (loading) {
+        return <CircularProgress size={20} />;
+    }
+
+    if (animals.length === 0) {
+        return <Typography variant="body2" color="text.secondary">Không có</Typography>;
+    }
+
+    // Display animal names without delete button
+    return (
+        <Box>
+            {animals.slice(0, 3).map((animal) => (
+                <Typography key={animal.pigId} variant="body2" sx={{ mb: 0.5 }}>
+                    • {animal.name}
+                </Typography>
+            ))}
+            {animals.length > 3 && (
+                <Typography variant="body2" color="text.secondary">
+                    và {animals.length - 3} con khác
+                </Typography>
+            )}
+        </Box>
+    );
+};
 
 export default function PenManager() {
     const navigate = useNavigate();
@@ -472,6 +520,7 @@ export default function PenManager() {
                             {userRole === 'MANAGER' && (
                                 <StyledTableHeaderCell>Người chăm sóc</StyledTableHeaderCell>
                             )}
+                            <StyledTableHeaderCell>Đang nuôi</StyledTableHeaderCell>
                             <StyledTableHeaderCell>Ngày tạo</StyledTableHeaderCell>
                             <StyledTableHeaderCell>Ngày đóng</StyledTableHeaderCell>
                             <StyledTableHeaderCell>Số lượng</StyledTableHeaderCell>
@@ -493,10 +542,12 @@ export default function PenManager() {
                                     {userRole === 'MANAGER' && (
                                         <StyledTableCell>
                                             <CaretakersList
-                                                caretakers={pen.caretakers}
-                                            />
+                                                caretakers={pen.caretakers}/>
                                         </StyledTableCell>
                                     )}
+                                    <StyledTableCell>
+                                        <AnimalNamesList penId={pen.penId} />
+                                    </StyledTableCell>
                                     <StyledTableCell>{formatDate(pen.createdDate)}</StyledTableCell>
                                     <StyledTableCell>{formatDate(pen.closedDate) || "Đang hoạt động"}</StyledTableCell>
                                     <StyledTableCell>{pen.quantity}</StyledTableCell>
@@ -584,7 +635,7 @@ export default function PenManager() {
                             ))
                         ) : !loading && (
                             <TableRow>
-                                <TableCell colSpan={userRole === 'MANAGER' ? 7 : 6} align="center" sx={{ py: 3 }}>
+                                <TableCell colSpan={userRole === 'MANAGER' ? 8 : 7} align="center" sx={{ py: 3 }}>
                                     <Typography variant="body1" color="text.secondary">
                                         Không có dữ liệu
                                     </Typography>
