@@ -16,6 +16,7 @@ import FeedInventoryTable from "./components/feed/FeedInventoryTable.jsx";
 import FeedSummaryTable from "./components/feedlan/FeedSummaryTable.jsx";
 import FeedPlanUpdatePage from "./components/feedlan/FeedPlanUpdatePage.jsx";
 import FeedPlanForm from "./components/feedlan/FeedPlanForm.jsx";
+import NotificationManager from "./components/common/NotificationManager.jsx";
 
 // Tạo theme tùy chỉnh
 const theme = createTheme({
@@ -84,7 +85,7 @@ function App() {
 
                         {/* Routes chỉ cho MANAGER */}
                         <Route path="employees" element={<RoleBasedRoute element={<EmployeeManager/>} requiredRole="MANAGER"/>}/>
-                        <Route path="notifications" element={<RoleBasedRoute element={<div>Quản lý thông báo</div>} requiredRole="MANAGER"/>}/>
+                        <Route path="notifications" element={<RoleBasedRoute element={<NotificationManager/>} requiredRole="MANAGER"/>}/>
 
                         {/* Routes cho tất cả người dùng */}
                         <Route path="pigpens" element={<PigPenManager/>}/>
