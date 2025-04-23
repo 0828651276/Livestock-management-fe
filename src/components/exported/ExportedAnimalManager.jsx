@@ -24,7 +24,8 @@ import {
     TablePagination,
     Tooltip,
     CircularProgress,
-    Chip
+    Chip,
+    Grid
 } from "@mui/material";
 import {
     Search,
@@ -63,6 +64,8 @@ export default function ExportedAnimalManager() {
     const [searchLoading, setSearchLoading] = useState(false);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
+    const [showDateFilter, setShowDateFilter] = useState(false);
+    const [dateRange, setDateRange] = useState({ startDate: '', endDate: '' });
     const [deleteDialog, setDeleteDialog] = useState({
         open: false,
         animalId: null
@@ -95,15 +98,26 @@ export default function ExportedAnimalManager() {
         }
     };
 
-    const handleSearch = () => {
+    const handleSearch = async () => {
         setSearchLoading(true);
         try {
-            const filtered = animals.filter(animal =>
-                animal.name.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-            setFilteredAnimals(filtered);
+            let data;
+            if (searchTerm || dateRange.startDate || dateRange.endDate) {
+                // Kiểm tra và format ngày trước khi gửi request
+                const startDate = dateRange.startDate ? new Date(dateRange.startDate) : null;
+                const endDate = dateRange.endDate ? new Date(dateRange.endDate) : null;
+                
+                data = await animalService.searchExportedAnimals(
+                    searchTerm ? parseInt(searchTerm) : null,
+                    startDate ? startDate.toISOString().split('T')[0] : null,
+                    endDate ? endDate.toISOString().split('T')[0] : null
+                );
+            } else {
+                data = await animalService.getExportedAnimals();
+            }
+            setFilteredAnimals(data);
 
-            if (filtered.length === 0) {
+            if (data.length === 0) {
                 showNotification("Không tìm thấy kết quả", "info");
             }
         } catch (error) {
@@ -116,6 +130,10 @@ export default function ExportedAnimalManager() {
 
     const handleSearchChange = (e) => {
         setSearchTerm(e.target.value);
+        // Nếu xóa hết ký tự tìm kiếm, load lại toàn bộ danh sách
+        if (!e.target.value) {
+            fetchExportedAnimals();
+        }
     };
 
     const handleKeyPress = (e) => {
@@ -124,9 +142,24 @@ export default function ExportedAnimalManager() {
         }
     };
 
+    const handleDateRangeChange = (e) => {
+        const { name, value } = e.target;
+        setDateRange(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleToggleDateFilter = () => {
+        setShowDateFilter(!showDateFilter);
+        if (showDateFilter) {
+            setDateRange({ startDate: '', endDate: '' });
+            fetchExportedAnimals();
+        }
+    };
+
     const handleResetFilters = () => {
         setSearchTerm('');
-        setFilteredAnimals(animals);
+        setDateRange({ startDate: '', endDate: '' });
+        setShowDateFilter(false);
+        fetchExportedAnimals();
     };
 
     const handleChangePage = (event, newPage) => {
@@ -227,42 +260,94 @@ export default function ExportedAnimalManager() {
                     }
                 }}
             >
-                <Stack
-                    direction={{xs: 'column', sm: 'row'}}
-                    spacing={2}
-                    alignItems={{xs: 'stretch', sm: 'center'}}
-                >
-                    <TextField
-                        label="Tìm theo tên"
-                        variant="outlined"
-                        value={searchTerm}
-                        onChange={handleSearchChange}
-                        onKeyPress={handleKeyPress}
-                        sx={{flexGrow: 1}}
-                        size="small"
-                        InputProps={{
-                            startAdornment: (
-                                <InputAdornment position="start">
-                                    <Search color="action"/>
-                                </InputAdornment>
-                            ),
-                        }}
-                    />
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        startIcon={searchLoading ? <CircularProgress size={20} color="inherit"/> : <Search/>}
-                        onClick={handleSearch}
-                        disabled={searchLoading}
-                        sx={{
-                            flexShrink: 0,
-                            fontWeight: 'bold',
-                            textTransform: 'uppercase'
-                        }}
-                    >
-                        Tìm kiếm
-                    </Button>
-                </Stack>
+                <Grid container spacing={2} alignItems="center">
+                    <Grid item xs={12} md={5}>
+                        <TextField
+                            fullWidth
+                            label="Tìm theo ID"
+                            variant="outlined"
+                            value={searchTerm}
+                            onChange={handleSearchChange}
+                            onKeyPress={handleKeyPress}
+                            size="small"
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <Search color="action"/>
+                                    </InputAdornment>
+                                ),
+                                sx: { borderRadius: 1 }
+                            }}
+                        />
+                    </Grid>
+                    <Grid item xs={6} md={2}>
+                        <Button
+                            fullWidth
+                            variant="contained"
+                            color="primary"
+                            startIcon={searchLoading ? <CircularProgress size={20} color="inherit"/> : <Search/>}
+                            onClick={handleSearch}
+                            disabled={searchLoading}
+                            sx={{ height: '40px' }}
+                        >
+                            Tìm kiếm
+                        </Button>
+                    </Grid>
+                    <Grid item xs={6} md={5} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                        <Tooltip title={showDateFilter ? "Ẩn bộ lọc ngày" : "Lọc theo ngày nhập"}>
+                            <Button
+                                variant="outlined"
+                                startIcon={showDateFilter ? <FilterAltOff/> : <FilterAlt/>}
+                                onClick={handleToggleDateFilter}
+                                size="small"
+                                color="primary"
+                                className="filter-button"
+                            >
+                                {showDateFilter ? 'Ẩn bộ lọc' : 'Lọc theo ngày'}
+                            </Button>
+                        </Tooltip>
+                        {(searchTerm || dateRange.startDate || dateRange.endDate) && (
+                            <Button
+                                variant="text"
+                                color="error"
+                                onClick={handleResetFilters}
+                                size="small"
+                                startIcon={<Refresh />}
+                            >
+                                Xóa bộ lọc
+                            </Button>
+                        )}
+                    </Grid>
+
+                    {showDateFilter && (
+                        <>
+                            <Grid item xs={12} md={6}>
+                                <TextField
+                                    fullWidth
+                                    name="startDate"
+                                    label="Từ ngày"
+                                    type="date"
+                                    value={dateRange.startDate}
+                                    onChange={handleDateRangeChange}
+                                    InputLabelProps={{ shrink: true }}
+                                    size="small"
+                                />
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                                <TextField
+                                    fullWidth
+                                    name="endDate"
+                                    label="Đến ngày"
+                                    type="date"
+                                    value={dateRange.endDate}
+                                    onChange={handleDateRangeChange}
+                                    InputLabelProps={{ shrink: true }}
+                                    size="small"
+                                />
+                            </Grid>
+                        </>
+                    )}
+                </Grid>
             </Paper>
 
             {/* Counter */}
@@ -381,7 +466,14 @@ export default function ExportedAnimalManager() {
                     onClose={handleCloseNotification}
                     severity={notification.severity}
                     variant="filled"
-                    sx={{width: '100%'}}
+                    sx={{
+                        width: '100%',
+                        backgroundColor: '#1E8449',
+                        color: 'white',
+                        '& .MuiAlert-icon': {
+                            color: 'white'
+                        }
+                    }}
                 >
                     {notification.message}
                 </Alert>
