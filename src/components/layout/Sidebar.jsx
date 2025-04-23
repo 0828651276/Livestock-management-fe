@@ -46,9 +46,9 @@ const Sidebar = ({drawerWidth, activeMenu, setActiveMenu}) => {
         setOpenMenuFeel((prev) => !prev);
     }
 
-    function toggleMenuHospital() {
+    const toggleMenuHospital = () => {
         setOpenMenuHospital((prev) => !prev);
-    }
+    };
 
     // Style chung cho tất cả các menu item
     const menuItemStyle = {
@@ -133,18 +133,23 @@ const Sidebar = ({drawerWidth, activeMenu, setActiveMenu}) => {
                                 >
                                     <ListItemText primary="Quản lý cá thể vật nuôi"/>
                                 </ListItem>
-                                {/* Thêm menu item cho danh sách xuất chuồng */}
-                                <ListItem
-                                    onClick={() => handleMenuClick('exported-animals')}
-                                    sx={{...menuItemStyle, pl: 4}}
-                                >
-                                    <ListItemIcon sx={{color: 'white', minWidth: '30px'}}>
-                                        <LocalShippingIcon fontSize="small" />
-                                    </ListItemIcon>
-                                    <ListItemText primary="Danh sách xuất chuồng"/>
-                                </ListItem>
                             </List>
                         </Collapse>
+
+                        {/* Danh sách xuất chuồng as a main menu item */}
+                        <ListItem 
+                            onClick={() => handleMenuClick('exported-animals')}
+                            sx={{
+                                ...menuItemStyle,
+                                backgroundColor: activeMenu === 'exported-animals' ? '#333' : 'transparent'
+                            }}
+                        >
+                            <ListItemIcon sx={{color: 'white'}}>
+                                <LocalShippingIcon/>
+                            </ListItemIcon>
+                            <ListItemText primary="Danh sách xuất chuồng"/>
+                        </ListItem>
+
                         <ListItem onClick={toggleMenuFeel} sx={{...menuItemStyle, backgroundColor: '#222'}}>
                             <ListItemIcon sx={{color: 'white'}}>
                                 <RestaurantIcon/>
@@ -178,16 +183,10 @@ const Sidebar = ({drawerWidth, activeMenu, setActiveMenu}) => {
                         <Collapse in={openMenuHospital} timeout="auto" unmountOnExit>
                             <List component="ul" disablePadding>
                                 <ListItem
-                                    onClick={() => handleMenuClick('feedwarehouse')}
+                                    onClick={() => handleMenuClick('vaccination')}
                                     sx={{...menuItemStyle, pl: 4}}
                                 >
-                                    <ListItemText primary="Quản lý tồn kho"/>
-                                </ListItem>
-                                <ListItem
-                                    onClick={() => handleMenuClick('animals')}
-                                    sx={{...menuItemStyle, pl: 4}}
-                                >
-                                    <ListItemText primary="Quản lý khẩu phần ăn"/>
+                                    <ListItemText primary="Lịch tiêm phòng"/>
                                 </ListItem>
                             </List>
                         </Collapse>
