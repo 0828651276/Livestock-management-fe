@@ -21,6 +21,7 @@ const Sidebar = ({drawerWidth, activeMenu, setActiveMenu}) => {
     const [openInfoMenu, setOpenInfoMenu] = useState(false);
     const [openMenuFeel, setOpenMenuFeel] =useState(false);
     const [openMenuHospital, setOpenMenuHospital] =useState(false);
+    const [openExportMenu, setOpenExportMenu] = useState(false);
     const [userRole, setUserRole] = useState('');
 
     useEffect(() => {
@@ -48,6 +49,10 @@ const Sidebar = ({drawerWidth, activeMenu, setActiveMenu}) => {
 
     const toggleMenuHospital = () => {
         setOpenMenuHospital((prev) => !prev);
+    };
+
+    const toggleExportMenu = () => {
+        setOpenExportMenu((prev) => !prev);
     };
 
     // Style chung cho tất cả các menu item
@@ -136,20 +141,25 @@ const Sidebar = ({drawerWidth, activeMenu, setActiveMenu}) => {
                             </List>
                         </Collapse>
 
-                        {/* Danh sách xuất chuồng as a main menu item */}
-                        <ListItem 
-                            onClick={() => handleMenuClick('exported-animals')}
-                            sx={{
-                                ...menuItemStyle,
-                                backgroundColor: activeMenu === 'exported-animals' ? '#333' : 'transparent'
-                            }}
-                        >
+                        {/* Quản lý xuất chuồng */}
+                        <ListItem onClick={toggleExportMenu} sx={{...menuItemStyle, backgroundColor: '#222'}}>
                             <ListItemIcon sx={{color: 'white'}}>
                                 <LocalShippingIcon/>
                             </ListItemIcon>
-                            <ListItemText primary="Danh sách xuất chuồng"/>
+                            <ListItemText primary="Quản lý xuất chuồng"/>
+                            {openExportMenu ? <ExpandLess/> : <ExpandMore/>}
                         </ListItem>
-
+                        <Collapse in={openExportMenu} timeout="auto" unmountOnExit>
+                            <List component="ul" disablePadding>
+                                <ListItem
+                                    onClick={() => handleMenuClick('exported-animals')}
+                                    sx={{...menuItemStyle, pl: 4}}
+                                >
+                                    <ListItemText primary="Danh sách xuất chuồng"/>
+                                </ListItem>
+                            </List>
+                        </Collapse>
+                        
                         <ListItem onClick={toggleMenuFeel} sx={{...menuItemStyle, backgroundColor: '#222'}}>
                             <ListItemIcon sx={{color: 'white'}}>
                                 <RestaurantIcon/>
