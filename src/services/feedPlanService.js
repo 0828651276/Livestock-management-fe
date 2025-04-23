@@ -41,3 +41,10 @@ export const getDailyFeedSummary = async () => {
         throw error;
     }
 };
+
+export const searchByPenName = async (penName) => {
+    const response = await axios.get(`${API_URL}/search`, {
+        params: { penName }
+    });
+    return response.data;
+};
