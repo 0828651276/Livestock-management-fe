@@ -6,18 +6,21 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import HouseIcon from '@mui/icons-material/House';
 import PetsIcon from '@mui/icons-material/Pets';
 import PeopleIcon from '@mui/icons-material/People';
+import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
+import RestaurantIcon from '@mui/icons-material/Restaurant';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import {useNavigate} from "react-router-dom";
 import {Collapse} from '@mui/material';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
-import { authService } from '../../services/authService';
 
 const Sidebar = ({drawerWidth, activeMenu, setActiveMenu}) => {
     const navigate = useNavigate();
     const [openSystemMenu, setOpenSystemMenu] = useState(false);
     const [openInfoMenu, setOpenInfoMenu] = useState(false);
+    const [openMenuFeel, setOpenMenuFeel] =useState(false);
+    const [openMenuHospital, setOpenMenuHospital] =useState(false);
     const [userRole, setUserRole] = useState('');
 
     useEffect(() => {
@@ -38,6 +41,14 @@ const Sidebar = ({drawerWidth, activeMenu, setActiveMenu}) => {
     const toggleInfoMenu = () => {
         setOpenInfoMenu((prev) => !prev);
     };
+
+    function toggleMenuFeel() {
+        setOpenMenuFeel((prev) => !prev);
+    }
+
+    function toggleMenuHospital() {
+        setOpenMenuHospital((prev) => !prev);
+    }
 
     // Style chung cho tất cả các menu item
     const menuItemStyle = {
@@ -122,22 +133,64 @@ const Sidebar = ({drawerWidth, activeMenu, setActiveMenu}) => {
                                 >
                                     <ListItemText primary="Quản lý cá thể vật nuôi"/>
                                 </ListItem>
+                                {/* Thêm menu item cho danh sách xuất chuồng */}
+                                <ListItem
+                                    onClick={() => handleMenuClick('exported-animals')}
+                                    sx={{...menuItemStyle, pl: 4}}
+                                >
+                                    <ListItemIcon sx={{color: 'white', minWidth: '30px'}}>
+                                        <LocalShippingIcon fontSize="small" />
+                                    </ListItemIcon>
+                                    <ListItemText primary="Danh sách xuất chuồng"/>
+                                </ListItem>
                             </List>
                         </Collapse>
-
-                        {/* Menu item riêng cho danh sách xuất chuồng */}
-                        <ListItem 
-                            onClick={() => handleMenuClick('exported-animals')}
-                            sx={{
-                                ...menuItemStyle,
-                                backgroundColor: '#222'
-                            }}
-                        >
+                        <ListItem onClick={toggleMenuFeel} sx={{...menuItemStyle, backgroundColor: '#222'}}>
                             <ListItemIcon sx={{color: 'white'}}>
-                                <LocalShippingIcon/>
+                                <RestaurantIcon/>
                             </ListItemIcon>
-                            <ListItemText primary="Danh sách xuất chuồng"/>
+                            <ListItemText primary="Quản lý thức ăn"/>
+                            {openMenuFeel ? <ExpandLess/> : <ExpandMore/>}
                         </ListItem>
+                        <Collapse in={openMenuFeel} timeout="auto" unmountOnExit>
+                            <List component="ul" disablePadding>
+                                <ListItem
+                                    onClick={() => handleMenuClick('feedwarehouse')}
+                                    sx={{...menuItemStyle, pl: 4}}
+                                >
+                                    <ListItemText primary="Quản lý tồn kho"/>
+                                </ListItem>
+                                <ListItem
+                                    onClick={() => handleMenuClick('animals')}
+                                    sx={{...menuItemStyle, pl: 4}}
+                                >
+                                    <ListItemText primary="Quản lý khẩu phần ăn"/>
+                                </ListItem>
+                            </List>
+                        </Collapse>
+                        <ListItem onClick={toggleMenuHospital} sx={{...menuItemStyle, backgroundColor: '#222'}}>
+                            <ListItemIcon sx={{color: 'white'}}>
+                                <LocalHospitalIcon/>
+                            </ListItemIcon>
+                            <ListItemText primary="Quản lý bệnh lý"/>
+                            {openMenuHospital ? <ExpandLess/> : <ExpandMore/>}
+                        </ListItem>
+                        <Collapse in={openMenuHospital} timeout="auto" unmountOnExit>
+                            <List component="ul" disablePadding>
+                                <ListItem
+                                    onClick={() => handleMenuClick('feedwarehouse')}
+                                    sx={{...menuItemStyle, pl: 4}}
+                                >
+                                    <ListItemText primary="Quản lý tồn kho"/>
+                                </ListItem>
+                                <ListItem
+                                    onClick={() => handleMenuClick('animals')}
+                                    sx={{...menuItemStyle, pl: 4}}
+                                >
+                                    <ListItemText primary="Quản lý khẩu phần ăn"/>
+                                </ListItem>
+                            </List>
+                        </Collapse>
                     </List>
                 </div>
             </Drawer>

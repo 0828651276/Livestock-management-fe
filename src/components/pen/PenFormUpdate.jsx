@@ -216,13 +216,22 @@ const PigPenFormUpdate = ({ onClose, pigPenData }) => {
                             onChange={handleCaretakersChange}
                             input={<OutlinedInput label="Người chăm sóc" />}
                             renderValue={(selected) => (
-                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                                     {selected.map((value) => {
                                         const employee = employees.find(emp => emp.employeeId === value);
                                         return (
                                             <Chip
                                                 key={value}
                                                 label={employee ? employee.fullName : value}
+                                                onMouseDown={e => e.stopPropagation()} // Ngăn Select đóng khi bấm x
+                                                onDelete={e => {
+                                                    e.stopPropagation(); // Ngăn dropdown đóng và xóa luôn khi đang mở
+                                                    const newSelected = pigPen.caretakers.filter(ct => ct.employeeId !== value);
+                                                    setPigPen(prev => ({ ...prev, caretakers: newSelected }));
+                                                }}
+                                                color="primary"
+                                                variant="outlined"
+                                                sx={{ mr: 0.5 }}
                                             />
                                         );
                                     })}

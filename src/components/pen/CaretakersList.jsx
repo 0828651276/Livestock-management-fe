@@ -24,9 +24,9 @@ const CaretakersList = ({ caretakers = [], maxDisplay = 3 }) => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Avatar
                     src={caretakers[0].imagePath ? `http://localhost:8080/${caretakers[0].imagePath}` : undefined}
-                    sx={{ width: 24, height: 24 }}
+                    sx={{ width: 32, height: 32 }}
                 >
-                    {!caretakers[0].imagePath && <PersonIcon fontSize="small" />}
+                    {!caretakers[0].imagePath && <PersonIcon fontSize="medium" />}
                 </Avatar>
                 <Typography>{caretakers[0].fullName}</Typography>
             </Box>
@@ -36,7 +36,7 @@ const CaretakersList = ({ caretakers = [], maxDisplay = 3 }) => {
     // Nếu có nhiều người chăm sóc
     return (
         <Box>
-            <AvatarGroup max={maxDisplay} sx={{ justifyContent: 'flex-start' }}>
+            <AvatarGroup max={maxDisplay} sx={{ justifyContent: 'flex-start', '& .MuiAvatar-root': { width: 32, height: 32 } }}>
                 {caretakers.map((caretaker) => (
                     <Tooltip
                         key={caretaker.employeeId}
@@ -45,7 +45,7 @@ const CaretakersList = ({ caretakers = [], maxDisplay = 3 }) => {
                     >
                         <Avatar
                             src={caretaker.imagePath ? `http://localhost:8080/${caretaker.imagePath}` : undefined}
-                            sx={{ width: 24, height: 24 }}
+                            sx={{ width: 32, height: 32 }}
                         >
                             {!caretaker.imagePath && caretaker.fullName?.charAt(0)}
                         </Avatar>
