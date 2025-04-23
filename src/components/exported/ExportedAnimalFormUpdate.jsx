@@ -155,20 +155,7 @@ const ExportedAnimalFormUpdate = ({ onClose, animalData }) => {
                     className={errors.entryDate ? "field-error" : ""}
                 />
 
-                <TextField
-                    label="Ngày xuất"
-                    name="exitDate"
-                    type="date"
-                    value={animal.exitDate}
-                    onChange={handleChange}
-                    InputLabelProps={{ shrink: true }}
-                    required
-                    error={!!errors.exitDate}
-                    helperText={errors.exitDate}
-                    sx={{ "& .MuiInputBase-input": { py: 1.5 } }}
-                    className={errors.exitDate ? "field-error" : ""}
-                />
-
+        
                 <TextField
                     label="Cân nặng"
                     name="weight"
