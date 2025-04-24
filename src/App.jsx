@@ -17,6 +17,8 @@ import FeedSummaryTable from "./components/feedlan/FeedSummaryTable.jsx";
 import NotificationManager from "./components/common/NotificationManager.jsx";
 import MedicalManager from "./components/medical/MedicalManager.jsx";
 import VaccinationList from "./components/vaccination/VaccinationList.jsx";
+import FeedWarehousePage from "./pages/feed/FeedWarehousePage.jsx";
+import FeedTransactionDetail from "./components/feed/FeedTransactionDetail.jsx";
 
 // Tạo theme tùy chỉnh
 const theme = createTheme({
@@ -93,10 +95,11 @@ function App() {
                         <Route path="employees/detail" element={<EmployeeDetail/>}/>
                         <Route path="feedwarehouse" element={<FeedInventoryTable/>}/>
                         <Route path="feedplan" element={<FeedSummaryTable/>}/>
+                        <Route path="feed-inventory/:feedType" element={<FeedTransactionDetail />} />
 
                         {/* Route mới cho quản lý điều trị y tế */}
-                        <Route path="medical-treatments" element={<MedicalManager/>}/>
                         <Route path="vaccinations" element={<VaccinationList/>}/>
+                        <Route path="medical" element={<MedicalManager/>}/>
                     </Route>
                 </Routes>
             </ThemeProvider>

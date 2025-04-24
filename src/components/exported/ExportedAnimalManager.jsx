@@ -87,7 +87,7 @@ export default function ExportedAnimalManager() {
     const fetchExportedAnimals = async () => {
         setLoading(true);
         try {
-            const data = await animalService.getExportedAnimals();
+            const data = await animalService.getExported();
             setAnimals(data);
             setFilteredAnimals(data);
         } catch (error) {
@@ -113,7 +113,7 @@ export default function ExportedAnimalManager() {
                     endDate ? endDate.toISOString().split('T')[0] : null
                 );
             } else {
-                data = await animalService.getExportedAnimals();
+                data = await animalService.getExported();
             }
             setFilteredAnimals(data);
 

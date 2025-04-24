@@ -195,22 +195,15 @@ const Sidebar = ({drawerWidth, activeMenu, setActiveMenu}) => {
                         <Collapse in={openMenuHospital} timeout="auto" unmountOnExit>
                             <List component="ul" disablePadding>
                                 <ListItem
-                                    onClick={() => handleMenuClick('medical-treatments')}
+                                    onClick={() => handleMenuClick('medical')}
+                                    sx={{...menuItemStyle, pl: 4}}
+                                >
+                                    <ListItemText primary="Lịch điều trị"/>
+                                </ListItem>
+                                <ListItem
                                     onClick={() => handleMenuClick('vaccinations')}
                                     sx={{...menuItemStyle, pl: 4}}
                                 >
-                                    <ListItemIcon sx={{color: 'white', minWidth: '30px'}}>
-                                        <VaccinesIcon fontSize="small" />
-                                    </ListItemIcon>
-                                    <ListItemText primary="Quản lý điều trị y tế"/>
-                                </ListItem>
-                                <ListItem
-                                    onClick={() => handleMenuClick('medicine-inventory')}
-                                    sx={{...menuItemStyle, pl: 4}}
-                                >
-                                    <ListItemIcon sx={{color: 'white', minWidth: '30px'}}>
-                                        <MedicationIcon fontSize="small" />
-                                    </ListItemIcon>
                                     <ListItemText primary="Lịch tiêm phòng"/>
                                 </ListItem>
                             </List>

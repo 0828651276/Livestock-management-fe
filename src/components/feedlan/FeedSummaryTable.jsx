@@ -73,6 +73,7 @@ const FeedSummaryTable = () => {
         try {
             const data = await searchByPenName(keyword);
             const result = data.map(plan => ({
+                id: plan.feedPlanId, // Giữ lại ID để cập nhật
                 pigPenId: plan.pigPen?.id,
                 penName: plan.pigPen?.name,
                 feedType: plan.feedType,
@@ -85,6 +86,7 @@ const FeedSummaryTable = () => {
         }
     };
 
+
     const handlePenNameChange = (e) => {
         const value = e.target.value;
         setPenName(value);
@@ -95,6 +97,7 @@ const FeedSummaryTable = () => {
         setSelectedItem(item);
         setOpenEditForm(true);
     };
+
 
     const handleSuccess = (message) => {
         fetchData();

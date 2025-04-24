@@ -263,7 +263,7 @@ export const validateEmployeeForm = (employee) => {
 
 
 /**
- * Validates an animal form
+ * Validates an animal form with separate health and raising status
  * @param {Object} animal - The animal data
  * @returns {Object} Object containing validation result and errors
  */
@@ -272,14 +272,16 @@ export const validateAnimalForm = (animal) => {
     let isValid = true;
 
     // Validate required fields
-    // Nếu status là EXPORTED thì không bắt buộc penId
-    const requiredFields = animal.status === 'EXPORTED'
-        ? ['name', 'entryDate', 'status', 'weight', 'quantity']
-        : ['name', 'entryDate', 'status', 'weight', 'penId', 'quantity'];
+    // Nếu raisingStatus là EXPORTED thì không bắt buộc penId
+    const requiredFields = animal.raisingStatus === 'EXPORTED'
+        ? ['name', 'entryDate', 'healthStatus', 'raisingStatus', 'weight', 'quantity']
+        : ['name', 'entryDate', 'healthStatus', 'raisingStatus', 'weight', 'penId', 'quantity'];
+
     const fieldLabels = {
         name: 'Tên',
         entryDate: 'Ngày nhập',
-        status: 'Trạng thái',
+        healthStatus: 'Trạng thái sức khỏe',
+        raisingStatus: 'Trạng thái nuôi',
         weight: 'Cân nặng',
         penId: 'Chuồng nuôi',
         quantity: 'Số lượng'
@@ -338,12 +340,35 @@ export const validateAnimalForm = (animal) => {
         isValid = false;
     }
 
-    if (animal.status && !validateField(errors, 'status', animal.status, [
+    // Validate healthStatus
+    if (animal.healthStatus && !validateField(errors, 'healthStatus', animal.healthStatus, [
         (value) => {
-            const validStatuses = ['ACTIVE', 'SICK', 'UNVACCINATED', 'EXPORTED'];
-            return validStatuses.includes(value) ? "" : "Trạng thái không hợp lệ";
+            const validHealthStatuses = ['ACTIVE', 'SICK', 'UNVACCINATED'];
+            return validHealthStatuses.includes(value) ? "" : "Trạng thái sức khỏe không hợp lệ";
         }
     ])) {
+        isValid = false;
+    }
+
+    // Validate raisingStatus
+    if (animal.raisingStatus && !validateField(errors, 'raisingStatus', animal.raisingStatus, [
+        (value) => {
+            const validRaisingStatuses = ['RAISING', 'EXPORTED'];
+            return validRaisingStatuses.includes(value) ? "" : "Trạng thái nuôi không hợp lệ";
+        }
+    ])) {
+        isValid = false;
+    }
+
+    // Validate consistency between raisingStatus and exitDate
+    if (animal.raisingStatus === 'EXPORTED' && !animal.exitDate) {
+        errors.exitDate = "Động vật đã xuất chuồng phải có ngày xuất";
+        isValid = false;
+    }
+
+    // Validate consistency between exitDate and raisingStatus
+    if (animal.exitDate && animal.raisingStatus !== 'EXPORTED') {
+        errors.raisingStatus = "Động vật có ngày xuất phải có trạng thái đã xuất chuồng";
         isValid = false;
     }
 

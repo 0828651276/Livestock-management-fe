@@ -9,6 +9,7 @@ import { Search, Upload, Download } from "@mui/icons-material";
 import { styled } from '@mui/material/styles';
 import ImportFeedForm from "./ImportFeedForm.jsx";
 import ExportFeedForm from "./ExportFeedForm.jsx";
+import {Link, useNavigate} from "react-router-dom";
 
 const StyledTableCell = styled(TableCell)(() => ({
     padding: '12px 16px',
@@ -37,6 +38,11 @@ export default function FeedInventoryManager() {
         severity: 'success'
     });
     const [searchTimeout, setSearchTimeout] = useState(null);
+    const navigate = useNavigate();
+
+    const goToDetailPage = (feedType) => {
+        navigate(`/feed-transactions/${encodeURIComponent(feedType)}`);
+    };
 
     const fetchInventory = async () => {
         try {
@@ -162,34 +168,41 @@ export default function FeedInventoryManager() {
                 </Stack>
             </Box>
 
-            <TableContainer component={Paper}>
-                <Table sx={{ minWidth: 650 }} aria-label="feed inventory table">
-                    <TableHead>
-                        <TableRow>
-                            <StyledTableHeaderCell>Loại thức ăn</StyledTableHeaderCell>
-                            <StyledTableHeaderCell>Số lượng còn</StyledTableHeaderCell>
+            <TableHead>
+                <TableRow>
+                    <StyledTableHeaderCell>Loại thức ăn</StyledTableHeaderCell>
+                    <StyledTableHeaderCell>Số lượng còn</StyledTableHeaderCell>
+                    <StyledTableHeaderCell>Hành động</StyledTableHeaderCell>
+                </TableRow>
+            </TableHead>
+            <TableBody>
+                {filteredInventory.length > 0 ? (
+                    filteredInventory.map((item, index) => (
+                        <TableRow key={item.id || index}>
+                            <StyledTableCell>{item.feedType}</StyledTableCell>
+                            <StyledTableCell>{item.remainingQuantity} kg</StyledTableCell>
+                            <StyledTableCell>
+                                <Button
+                                    variant="outlined"
+                                    size="small"
+                                    component={Link}
+                                    to={`/dashboard/feed-inventory/${item.feedType}`}
+                                >
+                                    Chi tiết
+                                </Button>
+                            </StyledTableCell>
                         </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {filteredInventory.length > 0 ? (
-                            filteredInventory.map((item, index) => (
-                                <TableRow key={item.id || index}>
-                                    <StyledTableCell>{item.feedType}</StyledTableCell>
-                                    <StyledTableCell>{item.remainingQuantity} kg</StyledTableCell>
-                                </TableRow>
-                            ))
-                        ) : (
-                            <TableRow>
-                                <StyledTableCell colSpan={2} align="center">
-                                    <Typography variant="body1" color="text.secondary">
-                                        Không có dữ liệu
-                                    </Typography>
-                                </StyledTableCell>
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
-            </TableContainer>
+                    ))
+                ) : (
+                    <TableRow>
+                        <StyledTableCell colSpan={3} align="center">
+                            <Typography variant="body1" color="text.secondary">
+                                Không có dữ liệu
+                            </Typography>
+                        </StyledTableCell>
+                    </TableRow>
+                )}
+            </TableBody>
 
             <Snackbar
                 open={notification.open}

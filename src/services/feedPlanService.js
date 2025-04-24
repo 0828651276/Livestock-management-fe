@@ -7,10 +7,10 @@ export const createFeedPlan = async (feedPlan) => {
     return axios.post(`${API_URL}`, feedPlan);
 };
 
-export const updateFeedPlan = async (id, feedPlan) => {
+export const updateFeedPlan = async (feedPlanId, feedPlan) => {
     try {
         const token = authService.getCurrentUser();
-        return axios.put(`${API_URL}/${id}`, feedPlan, {
+        return axios.put(`${API_URL}/${feedPlanId}`, feedPlan, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }

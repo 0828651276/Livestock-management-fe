@@ -5,17 +5,18 @@ import {pigPenService} from '../../services/pigPenService';
 import {updateFeedPlan} from "../../services/feedPlanService";
 
 const FeedPlanEditForm = ({onClose, onSuccess, initialData}) => {
+    console.log('Initial data in FeedPlanEditForm:', initialData);
     const [formData, setFormData] = useState({
+        id: initialData.feedPlanId,
         feedType: initialData.feedType,
         dailyFood: initialData.totalDailyFood,
-        pigPenId: initialData.pigPenId,
+        pigPenId: initialData.penId,
     });
 
     const [pigPens, setPigPens] = useState([]);
     const [feedTypes, setFeedTypes] = useState([]);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(true);
-    const id = useState('');
 
     useEffect(() => {
         const fetchData = async () => {
@@ -70,19 +71,21 @@ const FeedPlanEditForm = ({onClose, onSuccess, initialData}) => {
             const data = {
                 feedType: formData.feedType,
                 dailyFood: parseInt(formData.dailyFood),
-                pigPenId: formData.pigPenId
+                penId: formData.pigPenId
             };
+            if (!formData.id) {
+                setError('Không tìm thấy ID kế hoạch để cập nhật.');
+                return;
+            }
 
-            await updateFeedPlan(initialData.id, data);
+            await updateFeedPlan(formData.id, data);
             onSuccess();
             setError('');
         } catch (error) {
-            console.error('Lỗi khi cập nhật khẩu phần:', error);
+            console.error('Lỗi khi cập nhật khẩu phần:', error.response?.data || error);
             setError('Không thể cập nhật khẩu phần. Vui lòng thử lại sau.');
         }
     };
-
-    console.log('Initial data:', initialData);
 
     return (
         <Box maxWidth={600} mx="auto" padding={2}>
