@@ -6,6 +6,22 @@ import {
     Stack, TextField, MenuItem, Button
 } from "@mui/material";
 import { getFilteredTransactions } from "../../services/feedWarehouseService.js";
+import {styled} from "@mui/material/styles";
+
+const StyledTableCell = styled(TableCell)(() => ({
+    padding: '12px 16px',
+    fontSize: '0.875rem',
+    textAlign: 'center'
+}));
+
+const StyledTableHeaderCell = styled(TableCell)(({ theme }) => ({
+    backgroundColor: theme.palette.primary.main,
+    color: theme.palette.common.white,
+    padding: '14px 16px',
+    fontSize: '0.875rem',
+    fontWeight: 'bold',
+    textAlign: 'center'
+}));
 
 export default function FeedTransactionDetail() {
     const { feedType } = useParams();
@@ -96,29 +112,29 @@ export default function FeedTransactionDetail() {
                 <Table>
                     <TableHead>
                         <TableRow>
-                            <TableCell align="center">Ngày giao dịch</TableCell>
-                            <TableCell align="center">Loại giao dịch</TableCell>
-                            <TableCell align="center">Số lượng (kg)</TableCell>
-                            <TableCell align="center">Ghi chú</TableCell>
+                            <StyledTableHeaderCell align="center">Ngày giao dịch</StyledTableHeaderCell>
+                            <StyledTableHeaderCell align="center">Loại giao dịch</StyledTableHeaderCell>
+                            <StyledTableHeaderCell align="center">Số lượng (kg)</StyledTableHeaderCell>
+                            <StyledTableHeaderCell align="center">Ghi chú</StyledTableHeaderCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {transactions && transactions.length > 0 ? (
                             transactions.map((tran, idx) => (
                                 <TableRow key={idx}>
-                                    <TableCell align="center">{tran.date}</TableCell>
-                                    <TableCell align="center">
+                                    <StyledTableCell align="center">{tran.date}</StyledTableCell>
+                                    <StyledTableCell align="center">
                                         {tran.transactionType === "IMPORT" ? "Nhập kho" : "Xuất kho"}
-                                    </TableCell>
-                                    <TableCell align="center">{tran.quantity}</TableCell>
-                                    <TableCell align="center">{tran.note || "-"}</TableCell>
+                                    </StyledTableCell>
+                                    <StyledTableCell align="center">{tran.quantity}</StyledTableCell>
+                                    <StyledTableCell align="center">{tran.note || "-"}</StyledTableCell>
                                 </TableRow>
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={4} align="center">
+                                <StyledTableCell colSpan={4} align="center">
                                     Không có giao dịch nào
-                                </TableCell>
+                                </StyledTableCell>
                             </TableRow>
                         )}
                     </TableBody>
