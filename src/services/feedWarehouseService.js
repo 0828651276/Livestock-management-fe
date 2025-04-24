@@ -36,12 +36,13 @@ export const searchFeedInventory = async (keyword) => {
 export const importFeed = async (feedRequest) => {
     try {
         const token = authService.getCurrentUser();
-        await axios.post(`${API_URL}/import`, feedRequest, {
+        const response = await axios.post(`${API_URL}/import`, feedRequest, {
             headers: { 
                 Authorization: `Bearer ${token}`,
                 'Content-Type': 'application/json'
             }
         });
+        return response.data;
     } catch (error) {
         console.error("Lỗi khi nhập thức ăn:", error);
         throw error;
@@ -80,43 +81,27 @@ export const fetchTransactionsByFeedType = async (feedType) => {
 };
 
 // Lọc giao dịch theo nhiều điều kiện
-export const getFilteredTransactions = async ({ feedType, transactionType, startDate, endDate }) => {
+export const getFilteredTransactions = async ({ transactionType, startDate, endDate }) => {
     try {
         const token = authService.getCurrentUser();
-        const params = new URLSearchParams();
-        
-        // Thêm các tham số lọc nếu có giá trị
-        if (feedType) params.append('feedType', feedType);
-        if (transactionType) params.append('transactionType', transactionType);
-        if (startDate) params.append('startDate', startDate);
-        if (endDate) params.append('endDate', endDate);
+        const url = `${API_URL}/filter`;
 
-        console.log("Tham số lọc:", params.toString());
-
-        const response = await axios.get(`${API_URL}/transactions?${params.toString()}`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        console.log("Dữ liệu trả về:", response.data);
-        return response.data;
-    } catch (error) {
-        console.error("Lỗi khi lấy danh sách giao dịch:", error);
-        throw error;
-    }
-};
-
-export const fetchTransactionsByFeed = async (feedType, transactionType, startDate, endDate) => {
-    try {
         const params = {};
-        if (feedType) params.feedType = feedType;
         if (transactionType) params.transactionType = transactionType;
         if (startDate) params.startDate = startDate;
         if (endDate) params.endDate = endDate;
 
-        const response = await axios.get(`${API_URL}/transactions`, { params });
+        const response = await axios.get(url, {
+            headers: { Authorization: `Bearer ${token}` },
+            params
+        });
         return response.data;
     } catch (error) {
-        console.error("Lỗi khi lấy danh sách giao dịch:", error);
+        console.error("Lỗi khi lọc giao dịch:", error);
         throw error;
     }
+};
+
+export default {
+    getFilteredTransactions
 };

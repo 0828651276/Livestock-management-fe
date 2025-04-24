@@ -21,21 +21,6 @@ export const updateFeedPlan = async (feedPlanId, feedPlan) => {
     }
 };
 
-export const getFeedPlanById = async (id) => {
-    try {
-        const token = authService.getCurrentUser();
-        const response = await axios.get(`${API_URL}/${id}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        return response.data;
-    } catch (error) {
-        console.error('Lỗi khi lấy thông tin khẩu phần:', error);
-        throw error;
-    }
-};
-
 export const getDailyFeedSummary = async () => {
     try {
         const token = authService.getCurrentUser();

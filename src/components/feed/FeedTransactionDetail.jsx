@@ -19,25 +19,14 @@ export default function FeedTransactionDetail() {
     const loadTransactions = async () => {
         setLoading(true);
         try {
-            console.log("Đang tải dữ liệu với các tham số:", {
-                feedType,
-                transactionType,
-                startDate,
-                endDate
-            });
-            
             const data = await getFilteredTransactions({
-                feedType,
                 transactionType,
                 startDate,
                 endDate
             });
-            
-            console.log("Dữ liệu nhận được:", data);
             setTransactions(data);
             setError(null);
         } catch (err) {
-            console.error("Lỗi khi tải dữ liệu:", err);
             setError("Không thể tải dữ liệu giao dịch");
         } finally {
             setLoading(false);
@@ -49,12 +38,6 @@ export default function FeedTransactionDetail() {
     }, [feedType]);
 
     const handleFilter = () => {
-        console.log("Áp dụng bộ lọc:", {
-            feedType,
-            transactionType,
-            startDate,
-            endDate
-        });
         loadTransactions();
     };
 
