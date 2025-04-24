@@ -11,26 +11,13 @@ dayjs.extend(relativeTime);
 const NotificationDropdown = ({ notifications = [], onCreated }) => {
     const [anchorEl, setAnchorEl] = useState(null);
     const [userRole, setUserRole] = useState('');
-    const [employeeId, setEmployeeId] = useState('');
-    const [employeeNotifications, setEmployeeNotifications] = useState([]);
     const open = Boolean(anchorEl);
 
-    // Lấy vai trò và ID người dùng
+    // Lấy vai trò người dùng
     useEffect(() => {
         const role = localStorage.getItem('role');
-        const id = localStorage.getItem('employeeId');
         setUserRole(role);
-        setEmployeeId(id);
     }, []);
-
-    // Lọc thông báo cho employee dựa trên ID employee
-    useEffect(() => {
-        if (userRole === 'STAFF' && employeeId && notifications.length > 0) {
-            // Lọc chỉ thông báo dành cho employee này
-            // Backend đã lọc sẵn, chỉ cần hiển thị
-            setEmployeeNotifications(notifications);
-        }
-    }, [userRole, employeeId, notifications]);
 
     const handleOpen = (e) => setAnchorEl(e.currentTarget);
     const handleClose = () => setAnchorEl(null);
@@ -39,17 +26,6 @@ const NotificationDropdown = ({ notifications = [], onCreated }) => {
     const handleCreated = () => {
         if (typeof window.reloadNotifications === 'function') {
             window.reloadNotifications();
-        }
-    };
-
-    // Đánh dấu thông báo đã đọc
-    const handleMarkAsRead = async (notifId) => {
-        try {
-            await notificationService.markAsRead(notifId);
-            onCreated && onCreated(); // Reload thông báo
-            handleClose(); // Đóng dropdown sau khi đánh dấu đã đọc
-        } catch (err) {
-            console.error("Lỗi khi đánh dấu đã đọc:", err);
         }
     };
 
@@ -65,7 +41,7 @@ const NotificationDropdown = ({ notifications = [], onCreated }) => {
     };
 
     // Đếm số lượng thông báo chưa đọc
-    const unreadCount = employeeNotifications.filter(n => !getIsRead(n)).length;
+    const unreadCount = notifications.filter(n => !getIsRead(n)).length;
 
     return (
         <>
@@ -80,17 +56,17 @@ const NotificationDropdown = ({ notifications = [], onCreated }) => {
                 onClose={handleClose}
                 anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                 transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                PaperProps={{ sx: { minWidth: 320, maxHeight: '80vh' } }}
+                PaperProps={{ sx: { minWidth: 320 } }}
             >
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2 }}>
                     <Typography sx={{ fontWeight: 'bold' }}>Thông báo</Typography>
                 </Box>
                 <Divider />
 
-                {employeeNotifications.length === 0 ? (
+                {notifications.length === 0 ? (
                     <MenuItem disabled>Không có thông báo nào</MenuItem>
                 ) : (
-                    employeeNotifications.map(notif => (
+                    notifications.map(notif => (
                         <MenuItem
                             key={notif.id}
                             sx={{
@@ -104,20 +80,16 @@ const NotificationDropdown = ({ notifications = [], onCreated }) => {
                                     backgroundColor: getIsRead(notif) ? '#f5f5f5' : 'rgba(25, 118, 210, 0.15)',
                                 },
                             }}
-                            onClick={() => {
+                            onClick={async () => {
                                 if (!getIsRead(notif)) {
-                                    handleMarkAsRead(notif.id);
+                                    await notificationService.markAsRead(notif.id);
+                                    onCreated && onCreated();
                                 }
                             }}
                         >
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                 <Box sx={{ flex: 1 }}>
-                                    <Typography variant="body2" sx={{
-                                        wordBreak: 'break-word',
-                                        fontWeight: getIsRead(notif) ? 'normal' : 'bold'
-                                    }}>
-                                        {notif.content}
-                                    </Typography>
+                                    <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>{notif.content}</Typography>
                                     <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
                                         {notif.postedAt ? dayjs(notif.postedAt).fromNow() : ''}
                                     </Typography>

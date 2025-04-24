@@ -1,27 +1,97 @@
-import React, { useState } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Box, Alert } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import {
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Button,
+    TextField,
+    Box,
+    Alert,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
+    Chip,
+    OutlinedInput
+} from '@mui/material';
 import { notificationService } from '../../services/NotificationService';
+import { pigPenService } from '../../services/pigPenService';
+
+// Cấu hình cho dropdown multi-select
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const MenuProps = {
+    PaperProps: {
+        style: {
+            maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+            width: 250,
+        },
+    },
+};
 
 const CreateNotificationForm = ({ open, onClose, onCreated }) => {
     const [content, setContent] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    // Thêm state cho danh sách chuồng
+    const [pigPens, setPigPens] = useState([]);
+    const [selectedPigPens, setSelectedPigPens] = useState([]);
+
+    // Fetch danh sách chuồng khi mở form
+    useEffect(() => {
+        if (open) {
+            fetchPigPens();
+        }
+    }, [open]);
+
+    const fetchPigPens = async () => {
+        try {
+            const pens = await pigPenService.getAllPigPens();
+            // Chỉ lấy các chuồng đang hoạt động
+            const activePens = pens.filter(pen => pen.status === 'ACTIVE');
+            setPigPens(activePens);
+        } catch (err) {
+            console.error("Lỗi khi lấy danh sách chuồng:", err);
+            setError("Không thể tải danh sách chuồng nuôi");
+        }
+    };
+
+    const handlePigPensChange = (event) => {
+        const { value } = event.target;
+        setSelectedPigPens(value);
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+
         if (!content.trim()) {
             setError('Nội dung không được để trống');
             return;
         }
+
+        if (selectedPigPens.length === 0) {
+            setError('Vui lòng chọn ít nhất một chuồng nuôi');
+            return;
+        }
+
         setLoading(true);
         try {
-            await notificationService.add({ content });
+            // Tạo đối tượng thông báo với danh sách chuồng
+            const notificationData = {
+                content,
+                pigPens: selectedPigPens.map(penId => ({ penId }))
+            };
+
+            await notificationService.add(notificationData);
             if (onCreated) onCreated();
             setContent('');
+            setSelectedPigPens([]);
             onClose();
         } catch (err) {
             setError('Thêm thông báo thất bại');
+            console.error("Lỗi khi thêm thông báo:", err);
         } finally {
             setLoading(false);
         }
@@ -30,6 +100,7 @@ const CreateNotificationForm = ({ open, onClose, onCreated }) => {
     const handleClose = () => {
         setContent('');
         setError('');
+        setSelectedPigPens([]);
         onClose();
     };
 
@@ -38,7 +109,7 @@ const CreateNotificationForm = ({ open, onClose, onCreated }) => {
             <DialogTitle>Thêm mới thông báo</DialogTitle>
             <form onSubmit={handleSubmit}>
                 <DialogContent>
-                    <Box mb={2}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 2 }}>
                         <TextField
                             label="Nội dung thông báo"
                             value={content}
@@ -48,12 +119,53 @@ const CreateNotificationForm = ({ open, onClose, onCreated }) => {
                             minRows={3}
                             required
                         />
+
+                        {/* Dropdown chọn chuồng nuôi */}
+                        <FormControl fullWidth required>
+                            <InputLabel id="pigpens-label">Chuồng nuôi</InputLabel>
+                            <Select
+                                labelId="pigpens-label"
+                                multiple
+                                value={selectedPigPens}
+                                onChange={handlePigPensChange}
+                                input={<OutlinedInput label="Chuồng nuôi" />}
+                                renderValue={(selected) => (
+                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                        {selected.map((value) => {
+                                            const pen = pigPens.find(p => p.penId === value);
+                                            return (
+                                                <Chip
+                                                    key={value}
+                                                    label={pen ? pen.name : value}
+                                                    color="primary"
+                                                    variant="outlined"
+                                                />
+                                            );
+                                        })}
+                                    </Box>
+                                )}
+                                MenuProps={MenuProps}
+                            >
+                                {pigPens.map((pen) => (
+                                    <MenuItem key={pen.penId} value={pen.penId}>
+                                        {pen.name}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
                     </Box>
+
                     {error && <Alert severity="error">{error}</Alert>}
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleClose} disabled={loading}>Hủy</Button>
-                    <Button type="submit" variant="contained" disabled={loading}>Thêm</Button>
+                    <Button
+                        type="submit"
+                        variant="contained"
+                        disabled={loading || !content.trim() || selectedPigPens.length === 0}
+                    >
+                        {loading ? 'Đang xử lý...' : 'Thêm'}
+                    </Button>
                 </DialogActions>
             </form>
         </Dialog>

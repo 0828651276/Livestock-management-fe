@@ -10,6 +10,8 @@ import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
+import MedicationIcon from '@mui/icons-material/Medication';
+import VaccinesIcon from '@mui/icons-material/Vaccines';
 import {useNavigate} from "react-router-dom";
 import {Collapse} from '@mui/material';
 import ExpandLess from '@mui/icons-material/ExpandLess';
@@ -178,16 +180,22 @@ const Sidebar = ({drawerWidth, activeMenu, setActiveMenu}) => {
                         <Collapse in={openMenuHospital} timeout="auto" unmountOnExit>
                             <List component="ul" disablePadding>
                                 <ListItem
-                                    onClick={() => handleMenuClick('feedwarehouse')}
+                                    onClick={() => handleMenuClick('medical-treatments')}
                                     sx={{...menuItemStyle, pl: 4}}
                                 >
-                                    <ListItemText primary="Quản lý tồn kho"/>
+                                    <ListItemIcon sx={{color: 'white', minWidth: '30px'}}>
+                                        <VaccinesIcon fontSize="small" />
+                                    </ListItemIcon>
+                                    <ListItemText primary="Quản lý điều trị y tế"/>
                                 </ListItem>
                                 <ListItem
-                                    onClick={() => handleMenuClick('animals')}
+                                    onClick={() => handleMenuClick('medicine-inventory')}
                                     sx={{...menuItemStyle, pl: 4}}
                                 >
-                                    <ListItemText primary="Quản lý khẩu phần ăn"/>
+                                    <ListItemIcon sx={{color: 'white', minWidth: '30px'}}>
+                                        <MedicationIcon fontSize="small" />
+                                    </ListItemIcon>
+                                    <ListItemText primary="Quản lý thuốc"/>
                                 </ListItem>
                             </List>
                         </Collapse>
