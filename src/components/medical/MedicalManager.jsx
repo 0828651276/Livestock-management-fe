@@ -22,26 +22,50 @@ import {
   Alert
 } from '@mui/material';
 import { Edit, Delete, Schedule } from '@mui/icons-material';
+import { styled } from '@mui/material/styles';
+import { tableCellClasses } from '@mui/material/TableCell';
 import { animalService } from '../../services/animalService';
 import { medicalService } from '../../services/medicalService';
 import CreateMedicalForm from './CreateMedicalForm';
 import { useNavigate } from 'react-router-dom';
+
+// styled table cells and rows for nicer UI
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+  [`&.${tableCellClasses.head}`]: {
+    backgroundColor: theme.palette.success.main,
+    color: theme.palette.common.white,
+    textTransform: 'uppercase',
+    fontWeight: 'bold',
+  },
+  [`&.${tableCellClasses.body}`]: {
+    fontSize: 14,
+  },
+}));
+
+const StyledTableRow = styled(TableRow)(({ theme }) => ({
+  '&:nth-of-type(odd)': {
+    backgroundColor: theme.palette.action.hover,
+  },
+}));
 
 export default function MedicalManager() {
   const [animals, setAnimals] = useState([]);
   const [loadingAnimals, setLoadingAnimals] = useState(true);
   const [selectedAnimal, setSelectedAnimal] = useState(null);
   const [medicalRecords, setMedicalRecords] = useState([]);
-  const [displayedRecords, setDisplayedRecords] = useState([]);
   const [loadingMedicals, setLoadingMedicals] = useState(false);
   const [openUpdate, setOpenUpdate] = useState(false);
   const [currentRecord, setCurrentRecord] = useState(null);
   const [formData, setFormData] = useState({ treatmentDate: '', treatmentMethod: '', veterinarian: '', notes: '' });
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [openCreate, setOpenCreate] = useState(false);
-  const [showUpdateForm, setShowUpdateForm] = useState(false);
-  const [medicalToEdit, setMedicalToEdit] = useState(null);
   const navigate = useNavigate();
+
+  // derive set of pigIds already scheduled
+  const scheduledSet = React.useMemo(
+    () => new Set(medicalRecords.map(r => r.animal.pigId)),
+    [medicalRecords]
+  );
 
   useEffect(() => {
     fetchSickAnimals();
@@ -74,8 +98,6 @@ export default function MedicalManager() {
 
   const handleSchedule = (animal) => {
     setSelectedAnimal(animal);
-    const filtered = medicalRecords.filter(r => r.animal.pigId === animal.pigId);
-    setDisplayedRecords(filtered);
     setOpenCreate(true);
   };
 
@@ -146,22 +168,6 @@ export default function MedicalManager() {
     }
   };
 
-  const handleEditMedical = (medical) => {
-    setMedicalToEdit(medical);
-    setShowUpdateForm(true);
-  };
-
-  const handleCloseUpdateForm = () => {
-    setShowUpdateForm(false);
-    setMedicalToEdit(null);
-  };
-
-  const handleUpdateSuccess = () => {
-    handleCloseUpdateForm();
-    fetchAllMedical();
-    if (selectedAnimal) handleSchedule(selectedAnimal);
-  };
-
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h5" gutterBottom>Medical Manager</Typography>
@@ -173,34 +179,40 @@ export default function MedicalManager() {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>ID</TableCell>
-                <TableCell>Tên</TableCell>
-                <TableCell>Ngày nhập</TableCell>
-                <TableCell>Hành động</TableCell>
+                <StyledTableCell>ID</StyledTableCell>
+                <StyledTableCell>Tên</StyledTableCell>
+                <StyledTableCell>Ngày nhập</StyledTableCell>
+                <StyledTableCell>Hành động</StyledTableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {animals.map(a => (
-                <TableRow key={a.pigId}>
-                  <TableCell>{a.pigId}</TableCell>
-                  <TableCell>{a.name}</TableCell>
-                  <TableCell>{a.entryDate}</TableCell>
-                  <TableCell>
-                    <Button
-                      startIcon={<Schedule />}
-                      onClick={() => handleSchedule(a)}
-                    >
-                      Đặt lịch
-                    </Button>
-                  </TableCell>
-                </TableRow>
+                <StyledTableRow key={a.pigId} hover>
+                  <StyledTableCell>{a.pigId}</StyledTableCell>
+                  <StyledTableCell>{a.name}</StyledTableCell>
+                  <StyledTableCell>{a.entryDate}</StyledTableCell>
+                  <StyledTableCell>
+                    {scheduledSet.has(a.pigId) ? (
+                      <Button disabled variant="outlined">
+                        Đã đặt lịch
+                      </Button>
+                    ) : (
+                      <Button
+                        startIcon={<Schedule />}
+                        onClick={() => handleSchedule(a)}
+                      >
+                        Đặt lịch
+                      </Button>
+                    )}
+                  </StyledTableCell>
+                </StyledTableRow>
               ))}
             </TableBody>
           </Table>
         </TableContainer>
       )}
 
-      <Typography variant="h6">Lịch sử điều trị</Typography>
+      <Typography variant="h6">Lịch sử điều trị{selectedAnimal ? ` - ${selectedAnimal.name}` : ''}</Typography>
       {loadingMedicals ? (
         <CircularProgress />
       ) : (
@@ -208,28 +220,27 @@ export default function MedicalManager() {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>ID</TableCell>
-                <TableCell>Ngày điều trị</TableCell>
-                <TableCell>Phương pháp</TableCell>
-                <TableCell>Thú y</TableCell>
-                <TableCell>Ghi chú</TableCell>
-                <TableCell>Hành động</TableCell>
+                <StyledTableCell>Tên động vật</StyledTableCell>
+                <StyledTableCell>Ngày điều trị</StyledTableCell>
+                <StyledTableCell>Phương pháp</StyledTableCell>
+                <StyledTableCell>Thú y</StyledTableCell>
+                <StyledTableCell>Ghi chú</StyledTableCell>
+                <StyledTableCell>Hành động</StyledTableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {displayedRecords.map(r => (
-                <TableRow key={r.id}>
-                  <TableCell>{r.id}</TableCell>
-                  <TableCell>{r.treatmentDate}</TableCell>
-                  <TableCell>{r.treatmentMethod}</TableCell>
-                  <TableCell>{r.veterinarian}</TableCell>
-                  <TableCell>{r.notes}</TableCell>
-                  <TableCell>
+              {medicalRecords.map(r => (
+                <StyledTableRow key={r.id} hover>
+                  <StyledTableCell>{r.animal?.name}</StyledTableCell>
+                  <StyledTableCell>{r.treatmentDate}</StyledTableCell>
+                  <StyledTableCell>{r.treatmentMethod}</StyledTableCell>
+                  <StyledTableCell>{r.veterinarian}</StyledTableCell>
+                  <StyledTableCell>{r.notes}</StyledTableCell>
+                  <StyledTableCell>
                     <IconButton onClick={() => handleOpenUpdate(r)}><Edit /></IconButton>
                     <IconButton onClick={() => handleDeleteRecord(r.id)}><Delete /></IconButton>
-                    <button onClick={() => handleEditMedical(r)}>Sửa</button>
-                  </TableCell>
-                </TableRow>
+                  </StyledTableCell>
+                </StyledTableRow>
               ))}
             </TableBody>
           </Table>
@@ -249,6 +260,12 @@ export default function MedicalManager() {
         <DialogTitle>Cập nhật điều trị</DialogTitle>
         <DialogContent>
           <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            <TextField
+              label="Tên động vật"
+              value={currentRecord?.animal?.name || ''}
+              disabled
+              fullWidth
+            />
             <TextField
               label="Ngày điều trị"
               type="date"
@@ -289,15 +306,6 @@ export default function MedicalManager() {
         </DialogActions>
       </Dialog>
 
-      {showUpdateForm && (
-        <UpdateMedicalForm
-          medical={medicalToEdit}
-          animals={animals}
-          onSuccess={handleUpdateSuccess}
-          onCancel={handleCloseUpdateForm}
-        />
-      )}
-
       <Snackbar
         open={snackbar.open}
         autoHideDuration={3000}
@@ -309,4 +317,4 @@ export default function MedicalManager() {
       </Snackbar>
     </Box>
   );
-}
+} 
