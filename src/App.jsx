@@ -14,10 +14,9 @@ import UnauthorizedPage from './pages/UnauthorizedPage';
 import ExportedAnimalsManager from "./components/exported/ExportedAnimalManager.jsx";
 import FeedInventoryTable from "./components/feed/FeedInventoryTable.jsx";
 import FeedSummaryTable from "./components/feedlan/FeedSummaryTable.jsx";
-import FeedPlanUpdatePage from "./components/feedlan/FeedPlanUpdatePage.jsx";
-import FeedPlanForm from "./components/feedlan/FeedPlanForm.jsx";
 import NotificationManager from "./components/common/NotificationManager.jsx";
 import MedicalManager from "./components/medical/MedicalManager.jsx";
+import VaccinationList from "./components/vaccination/VaccinationList.jsx";
 
 // Tạo theme tùy chỉnh
 const theme = createTheme({
@@ -94,11 +93,10 @@ function App() {
                         <Route path="employees/detail" element={<EmployeeDetail/>}/>
                         <Route path="feedwarehouse" element={<FeedInventoryTable/>}/>
                         <Route path="feedplan" element={<FeedSummaryTable/>}/>
-                        <Route path="feedplanupdate" element={<FeedPlanUpdatePage/>}/>
-                        <Route path="feedplanup" element={<FeedPlanForm/>}/>
 
                         {/* Route mới cho quản lý điều trị y tế */}
                         <Route path="medical-treatments" element={<MedicalManager/>}/>
+                        <Route path="vaccinations" element={<VaccinationList/>}/>
                     </Route>
                 </Routes>
             </ThemeProvider>

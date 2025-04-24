@@ -131,10 +131,12 @@ export default function MedicalManager() {
 
     const fetchTreatments = async () => {
         try {
-            const treatments = await medicalService.getAllTreatments();
-            setTreatments(treatments);
+            const result = await medicalService.getAllTreatments();
+            const data = Array.isArray(result) ? result : [];
+            setTreatments(data);
         } catch (error) {
             console.error("Error fetching treatments:", error);
+            setTreatments([]); // fallback để tránh map lỗi
         }
     };
 
@@ -221,11 +223,10 @@ export default function MedicalManager() {
 
     const handleTreatmentSubmit = async () => {
         try {
-            let response;
             if (activeTreatment) {
-                response = await medicalService.updateTreatment(activeTreatment.id, treatmentForm);
+                await medicalService.updateTreatment(activeTreatment.id, treatmentForm);
             } else {
-                response = await medicalService.createTreatment(treatmentForm);
+                await medicalService.createTreatment(treatmentForm);
             }
             showNotification(activeTreatment ? "Cập nhật điều trị thành công" : "Thêm điều trị thành công", "success");
             fetchTreatments();

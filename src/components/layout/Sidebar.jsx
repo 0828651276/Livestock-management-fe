@@ -135,18 +135,18 @@ const Sidebar = ({drawerWidth, activeMenu, setActiveMenu}) => {
                                 >
                                     <ListItemText primary="Quản lý cá thể vật nuôi"/>
                                 </ListItem>
-                                {/* Thêm menu item cho danh sách xuất chuồng */}
-                                <ListItem
-                                    onClick={() => handleMenuClick('exported-animals')}
-                                    sx={{...menuItemStyle, pl: 4}}
-                                >
-                                    <ListItemIcon sx={{color: 'white', minWidth: '30px'}}>
-                                        <LocalShippingIcon fontSize="small" />
-                                    </ListItemIcon>
-                                    <ListItemText primary="Danh sách xuất chuồng"/>
-                                </ListItem>
                             </List>
                         </Collapse>
+                        {/* Thêm menu item cho danh sách xuất chuồng */}
+                        <ListItem
+                            onClick={() => handleMenuClick('exported-animals')}
+                            sx={{...menuItemStyle, backgroundColor: '#222'}}
+                        >
+                            <ListItemIcon sx={{color: 'white'}}>
+                                <LocalShippingIcon/>
+                            </ListItemIcon>
+                            <ListItemText primary="Danh sách xuất chuồng"/>
+                        </ListItem>
                         <ListItem onClick={toggleMenuFeel} sx={{...menuItemStyle, backgroundColor: '#222'}}>
                             <ListItemIcon sx={{color: 'white'}}>
                                 <RestaurantIcon/>
