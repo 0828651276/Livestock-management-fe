@@ -17,7 +17,6 @@ import FeedSummaryTable from "./components/feedlan/FeedSummaryTable.jsx";
 import FeedPlanUpdatePage from "./components/feedlan/FeedPlanUpdatePage.jsx";
 import FeedPlanForm from "./components/feedlan/FeedPlanForm.jsx";
 import NotificationManager from "./components/common/NotificationManager.jsx";
-import MedicalManager from "./components/medical/MedicalManager.jsx";
 
 // Tạo theme tùy chỉnh
 const theme = createTheme({
@@ -98,7 +97,6 @@ function App() {
                         <Route path="feedplanup" element={<FeedPlanForm/>}/>
 
                         {/* Route mới cho quản lý điều trị y tế */}
-                        <Route path="medical-treatments" element={<MedicalManager/>}/>
                     </Route>
                 </Routes>
             </ThemeProvider>

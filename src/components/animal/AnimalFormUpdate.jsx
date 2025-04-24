@@ -3,300 +3,367 @@ import {
     Box,
     TextField,
     Button,
+    Grid,
     MenuItem,
-    CircularProgress,
-    DialogActions,
-    Typography,
     FormControl,
     InputLabel,
     Select,
     FormHelperText,
-    Alert,
-    InputAdornment
+    CircularProgress,
+    Typography,
+    Divider,
+    InputAdornment,
+    Alert
 } from "@mui/material";
 import { animalService } from "../../services/animalService";
-import { pigPenService } from "../../services/pigPenService";
-import "../styles/FormValidation.css";
-import { validateAnimalForm } from "../../utils/validateUtils";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import viLocale from "date-fns/locale/vi";
 
-const initialState = {
-    name: "",
-    entryDate: "",
-    exitDate: "",
-    status: "ACTIVE",
-    weight: "",
-    penId: "",
-    quantity: 1
-};
+const AnimalFormUpdate = ({ animal, pigPens, onSuccess, onCancel }) => {
+    const [formData, setFormData] = useState({
+        name: "",
+        entryDate: new Date(),
+        exitDate: null,
+        healthStatus: "ACTIVE",
+        raisingStatus: "RAISING",
+        weight: "",
+        penId: "",
+        quantity: 1
+    });
 
-const AnimalFormUpdate = ({ onClose, animalData }) => {
-    const [animal, setAnimal] = useState(initialState);
-    const [loading, setLoading] = useState(false);
-    const [pigPens, setPigPens] = useState([]);
-    const [errors, setErrors] = useState({});
-    const [serverError, setServerError] = useState("");
     const [originalPenId, setOriginalPenId] = useState(null);
-    const [userRole, setUserRole] = useState('');
-    const [employeeId, setEmployeeId] = useState('');
+    const [originalQuantity, setOriginalQuantity] = useState(1);
+    const [errors, setErrors] = useState({});
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        // Lấy vai trò và ID nhân viên từ localStorage
-        const role = localStorage.getItem('role');
-        const id = localStorage.getItem('employeeId');
-        setUserRole(role);
-        setEmployeeId(id);
+        if (animal) {
+            // Khởi tạo form data từ dữ liệu động vật
+            setFormData({
+                name: animal.name || "",
+                entryDate: animal.entryDate ? new Date(animal.entryDate) : new Date(),
+                exitDate: animal.exitDate ? new Date(animal.exitDate) : null,
+                healthStatus: animal.healthStatus || "ACTIVE",
+                raisingStatus: animal.raisingStatus || "RAISING",
+                weight: animal.weight?.toString() || "",
+                penId: animal.pigPen?.penId || "",
+                quantity: animal.quantity || 1
+            });
 
-        fetchPigPens(role, id);
-
-        if (animalData) {
-            // Format dates for form inputs
-            const formattedAnimal = {
-                ...animalData,
-                entryDate: animalData.entryDate ? new Date(animalData.entryDate).toISOString().split('T')[0] : "",
-                exitDate: animalData.exitDate ? new Date(animalData.exitDate).toISOString().split('T')[0] : "",
-                penId: animalData.pigPen?.penId || "",
-                quantity: animalData.quantity || 1 // Đảm bảo quantity có giá trị mặc định
-            };
-            setAnimal(formattedAnimal);
-            setOriginalPenId(animalData.pigPen?.penId);
+            // Lưu thông tin ban đầu để tính toán thay đổi
+            setOriginalPenId(animal.pigPen?.penId || null);
+            setOriginalQuantity(animal.quantity || 1);
         }
-    }, [animalData]);
+    }, [animal]);
 
-    const fetchPigPens = async (role, id) => {
-        try {
-            let pens;
-            // Nếu là MANAGER, lấy tất cả chuồng active
-            if (role === 'MANAGER') {
-                pens = await pigPenService.getAllPigPens();
-            }
-            // Nếu là EMPLOYEE, chỉ lấy chuồng mà họ chăm sóc
-            else {
-                pens = await pigPenService.findByEmployeeId(id);
-            }
+    const validateForm = () => {
+        const newErrors = {};
 
-            // Filter only active pens
-            const activePens = pens.filter(pen => pen.status === "ACTIVE");
-            setPigPens(activePens);
-        } catch (error) {
-            console.error("Lỗi khi lấy danh sách chuồng:", error);
-            setServerError("Không thể tải dữ liệu chuồng nuôi.");
+        // Validate name
+        if (!formData.name.trim()) {
+            newErrors.name = "Tên không được để trống";
+        } else if (formData.name.length < 2 || formData.name.length > 100) {
+            newErrors.name = "Tên phải từ 2 đến 100 ký tự";
         }
+
+        // Validate entry date
+        if (!formData.entryDate) {
+            newErrors.entryDate = "Ngày nhập không được để trống";
+        }
+
+        // Validate exit date
+        if (formData.exitDate && formData.entryDate && formData.exitDate < formData.entryDate) {
+            newErrors.exitDate = "Ngày xuất phải sau ngày nhập";
+        }
+
+        // Validate weight
+        if (!formData.weight) {
+            newErrors.weight = "Cân nặng không được để trống";
+        } else if (isNaN(Number(formData.weight)) || Number(formData.weight) <= 0) {
+            newErrors.weight = "Cân nặng phải là số dương";
+        } else if (Number(formData.weight) > 1000) {
+            newErrors.weight = "Cân nặng không được vượt quá 1000kg";
+        }
+
+        // Validate quantity
+        if (!formData.quantity) {
+            newErrors.quantity = "Số lượng không được để trống";
+        } else if (isNaN(Number(formData.quantity)) || Number(formData.quantity) <= 0) {
+            newErrors.quantity = "Số lượng phải là số dương";
+        } else if (Number(formData.quantity) > 1000) {
+            newErrors.quantity = "Số lượng không được vượt quá 1000";
+        }
+
+        // Validate penId
+        if (formData.raisingStatus === "RAISING" && !formData.penId) {
+            newErrors.penId = "Vui lòng chọn chuồng nuôi cho động vật đang nuôi";
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
     };
 
-    const handleChange = (e) => {
+    const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setAnimal((prev) => ({ ...prev, [name]: value }));
+        setFormData((prev) => ({ ...prev, [name]: value }));
+    };
 
-        // Xóa lỗi khi người dùng nhập
-        if (errors[name]) {
-            setErrors((prev) => ({ ...prev, [name]: "" }));
-        }
+    const handleDateChange = (name, date) => {
+        setFormData((prev) => ({ ...prev, [name]: date }));
+    };
+
+    const handleRaisingStatusChange = (e) => {
+        const { value } = e.target;
+        setFormData((prev) => ({
+            ...prev,
+            raisingStatus: value,
+            // Nếu chuyển sang EXPORTED thì tự động đặt ngày xuất là hôm nay nếu chưa có
+            exitDate: value === "EXPORTED" && !prev.exitDate ? new Date() : prev.exitDate,
+            // Nếu chuyển sang EXPORTED thì xóa chuồng nuôi
+            penId: value === "EXPORTED" ? "" : prev.penId
+        }));
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setServerError("");
 
-        // Xác thực form
-        const { isValid, errors: validationErrors } = validateAnimalForm(animal);
-        if (!isValid) {
-            setErrors(validationErrors);
+        if (!validateForm()) {
             return;
         }
 
         setLoading(true);
+
         try {
-            // Chuẩn bị dữ liệu cần thiết cho API theo đúng định dạng AnimalRequest
-            const animalRequestData = {
-                name: animal.name,
-                entryDate: animal.entryDate,
-                exitDate: animal.exitDate || null,
-                status: animal.status,
-                weight: parseFloat(animal.weight),
-                penId: parseInt(animal.penId),
-                quantity: parseInt(animal.quantity) // Thêm trường quantity vào dữ liệu gửi đi
+            // Chuẩn bị dữ liệu gửi đi
+            const payload = {
+                name: formData.name,
+                entryDate: formData.entryDate.toISOString().split('T')[0],
+                exitDate: formData.exitDate ? formData.exitDate.toISOString().split('T')[0] : null,
+                healthStatus: formData.healthStatus,
+                raisingStatus: formData.raisingStatus,
+                weight: formData.weight,
+                penId: formData.raisingStatus === "EXPORTED" ? null : formData.penId,
+                quantity: formData.quantity
             };
 
-            // Để debug
-            console.log("Gửi dữ liệu cập nhật:", animalRequestData);
+            // Gọi API để cập nhật animal
+            await animalService.update(animal.pigId, payload);
 
-            await animalService.updateAnimal(animal.pigId, animalRequestData);
-            onClose(true);
+            // Thêm một khoảng thời gian trễ nhỏ để đảm bảo backend đã xử lý xong
+            setTimeout(() => {
+                onSuccess();
+            }, 300);
         } catch (error) {
             console.error("Lỗi khi cập nhật động vật:", error);
-            // Log chi tiết lỗi từ server
-            if (error.response) {
-                console.error("Response data:", error.response.data);
-                console.error("Response status:", error.response.status);
-            }
-            setServerError(error.response?.data?.error || "Không thể cập nhật. Vui lòng thử lại.");
-            setLoading(false);
+            setErrors((prev) => ({
+                ...prev,
+                submit: "Có lỗi xảy ra khi cập nhật động vật. Vui lòng thử lại!"
+            }));
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <Box
-            component="form"
-            onSubmit={handleSubmit}
-            sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 2,
-                p: 4,
-                minHeight: "400px",
-            }}
-            className="pen-form"
-        >
-            <Typography variant="h6" sx={{ mb: 1, fontWeight: "bold" }}>
-                CẬP NHẬT THÔNG TIN CON VẬT
-            </Typography>
+        <Box component="form" onSubmit={handleSubmit} noValidate>
+            <Grid container spacing={3}>
+                {originalPenId === null && formData.raisingStatus === "RAISING" && (
+                    <Grid item xs={12}>
+                        <Alert severity="warning">
+                            Động vật này trước đây không được gán vào chuồng nuôi. Nếu cập nhật trạng thái thành "Đang nuôi",
+                            vui lòng chọn một chuồng nuôi.
+                        </Alert>
+                    </Grid>
+                )}
 
-            {serverError && (
-                <Alert severity="error" sx={{ mb: 2 }} className="form-error-alert">
-                    {serverError}
-                </Alert>
-            )}
+                <Grid item xs={12}>
+                    <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: "medium" }}>
+                        Thông tin cơ bản
+                    </Typography>
+                </Grid>
 
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                <TextField
-                    label="Tên"
-                    name="name"
-                    value={animal.name}
-                    onChange={handleChange}
-                    required
-                    error={!!errors.name}
-                    helperText={errors.name}
-                    sx={{ "& .MuiInputBase-input": { py: 1.5 } }}
-                    className={errors.name ? "field-error" : ""}
-                    fullWidth
-                />
+                <Grid item xs={12} md={6}>
+                    <TextField
+                        fullWidth
+                        required
+                        label="Tên động vật"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleInputChange}
+                        error={!!errors.name}
+                        helperText={errors.name || ""}
+                    />
+                </Grid>
 
-                <FormControl fullWidth required error={!!errors.penId}>
-                    <InputLabel id="penId-label">Chuồng nuôi</InputLabel>
-                    <Select
-                        labelId="penId-label"
-                        name="penId"
-                        value={animal.penId}
-                        label="Chuồng nuôi"
-                        onChange={handleChange}
-                    >
-                        <MenuItem value="" disabled>
-                            <em>Chọn chuồng nuôi</em>
-                        </MenuItem>
-                        {/* Hiển thị chuồng gốc (nếu không còn active) */}
-                        {originalPenId &&
-                            !pigPens.some(pen => pen.penId === originalPenId) && (
-                                <MenuItem key={originalPenId} value={originalPenId}>
-                                    {animalData.pigPen?.name || "Chuồng hiện tại"} (Giữ nguyên)
-                                </MenuItem>
+                <Grid item xs={12} md={6}>
+                    <TextField
+                        fullWidth
+                        required
+                        label="Cân nặng (kg)"
+                        name="weight"
+                        type="number"
+                        value={formData.weight}
+                        onChange={handleInputChange}
+                        error={!!errors.weight}
+                        helperText={errors.weight || ""}
+                        InputProps={{
+                            endAdornment: <InputAdornment position="end">kg</InputAdornment>
+                        }}
+                    />
+                </Grid>
+
+                <Grid item xs={12} md={6}>
+                    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={viLocale}>
+                        <DatePicker
+                            label="Ngày nhập *"
+                            value={formData.entryDate}
+                            onChange={(date) => handleDateChange("entryDate", date)}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    fullWidth
+                                    required
+                                    error={!!errors.entryDate}
+                                    helperText={errors.entryDate || ""}
+                                />
                             )}
-                        {pigPens.map((pen) => (
-                            <MenuItem key={pen.penId} value={pen.penId}>
-                                {pen.name} ({pen.quantity} con)
-                            </MenuItem>
-                        ))}
-                    </Select>
-                    {errors.penId && <FormHelperText>{errors.penId}</FormHelperText>}
-                </FormControl>
+                            maxDate={new Date()}
+                        />
+                    </LocalizationProvider>
+                </Grid>
 
-                <TextField
-                    label="Ngày nhập"
-                    name="entryDate"
-                    type="date"
-                    value={animal.entryDate}
-                    onChange={handleChange}
-                    InputLabelProps={{ shrink: true }}
-                    required
-                    error={!!errors.entryDate}
-                    helperText={errors.entryDate}
-                    sx={{ "& .MuiInputBase-input": { py: 1.5 } }}
-                    className={errors.entryDate ? "field-error" : ""}
-                />
+                <Grid item xs={12} md={6}>
+                    <TextField
+                        fullWidth
+                        required
+                        label="Số lượng"
+                        name="quantity"
+                        type="number"
+                        value={formData.quantity}
+                        onChange={handleInputChange}
+                        error={!!errors.quantity}
+                        helperText={errors.quantity || ""}
+                        InputProps={{
+                            inputProps: { min: 1 }
+                        }}
+                    />
+                </Grid>
 
-                <TextField
-                    label="Ngày xuất"
-                    name="exitDate"
-                    type="date"
-                    value={animal.exitDate}
-                    onChange={handleChange}
-                    InputLabelProps={{ shrink: true }}
-                    error={!!errors.exitDate}
-                    helperText={errors.exitDate || "Để trống nếu chưa xuất chuồng"}
-                    sx={{ "& .MuiInputBase-input": { py: 1.5 } }}
-                    className={errors.exitDate ? "field-error" : ""}
-                />
+                <Grid item xs={12}>
+                    <Divider sx={{ my: 1 }} />
+                    <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: "medium", mt: 2 }}>
+                        Trạng thái
+                    </Typography>
+                </Grid>
 
-                <TextField
-                    label="Cân nặng"
-                    name="weight"
-                    type="number"
-                    value={animal.weight}
-                    onChange={handleChange}
-                    required
-                    error={!!errors.weight}
-                    helperText={errors.weight}
-                    InputProps={{
-                        inputProps: { min: 0.1, step: "0.1" },
-                        endAdornment: <InputAdornment position="end">kg</InputAdornment>,
-                    }}
-                    sx={{ "& .MuiInputBase-input": { py: 1.5 } }}
-                    className={errors.weight ? "field-error" : ""}
-                />
+                <Grid item xs={12} md={6}>
+                    <FormControl fullWidth required>
+                        <InputLabel>Trạng thái sức khỏe</InputLabel>
+                        <Select
+                            name="healthStatus"
+                            value={formData.healthStatus}
+                            onChange={handleInputChange}
+                            label="Trạng thái sức khỏe"
+                        >
+                            <MenuItem value="ACTIVE">Khỏe mạnh</MenuItem>
+                            <MenuItem value="SICK">Bị bệnh</MenuItem>
+                        </Select>
+                    </FormControl>
+                </Grid>
 
-                <FormControl fullWidth required error={!!errors.status}>
-                    <InputLabel id="status-label">Trạng thái</InputLabel>
-                    <Select
-                        labelId="status-label"
-                        name="status"
-                        value={animal.status}
-                        label="Trạng thái"
-                        onChange={handleChange}
-                    >
-                        <MenuItem value="ACTIVE">Khỏe mạnh</MenuItem>
-                        <MenuItem value="SICK">Bị bệnh</MenuItem>
-                        <MenuItem value="UNVACCINATED">Chưa tiêm phòng</MenuItem>
-                        <MenuItem value="EXPORTED">Đã xuất</MenuItem>
-                    </Select>
-                    {errors.status && <FormHelperText>{errors.status}</FormHelperText>}
-                </FormControl>
+                <Grid item xs={12} md={6}>
+                    <FormControl fullWidth required>
+                        <InputLabel>Trạng thái nuôi</InputLabel>
+                        <Select
+                            name="raisingStatus"
+                            value={formData.raisingStatus}
+                            onChange={handleRaisingStatusChange}
+                            label="Trạng thái nuôi"
+                        >
+                            <MenuItem value="RAISING">Đang nuôi</MenuItem>
+                            <MenuItem value="EXPORTED">Đã xuất chuồng</MenuItem>
+                        </Select>
+                        <FormHelperText>
+                            {formData.raisingStatus === "EXPORTED"
+                                ? "Động vật đã xuất chuồng sẽ không gắn với chuồng nuôi nào"
+                                : ""}
+                        </FormHelperText>
+                    </FormControl>
+                </Grid>
 
-                <TextField
-                    label="Số lượng"
-                    name="quantity"
-                    type="number"
-                    value={animal.quantity}
-                    onChange={handleChange}
-                    required
-                    error={!!errors.quantity}
-                    helperText={errors.quantity}
-                    InputProps={{
-                        inputProps: { min: 1 }
-                    }}
-                    fullWidth
-                />
-            </Box>
+                {formData.raisingStatus === "EXPORTED" && (
+                    <Grid item xs={12} md={6}>
+                        <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={viLocale}>
+                            <DatePicker
+                                label="Ngày xuất chuồng"
+                                value={formData.exitDate}
+                                onChange={(date) => handleDateChange("exitDate", date)}
+                                renderInput={(params) => (
+                                    <TextField
+                                        {...params}
+                                        fullWidth
+                                        error={!!errors.exitDate}
+                                        helperText={errors.exitDate || ""}
+                                    />
+                                )}
+                                minDate={formData.entryDate}
+                                maxDate={new Date()}
+                            />
+                        </LocalizationProvider>
+                    </Grid>
+                )}
 
-            <Box sx={{ mt: 2 }}>
-                <DialogActions sx={{ justifyContent: "flex-end", gap: 2 }}>
-                    <Button
-                        onClick={() => onClose(false)}
-                        color="error"
-                        sx={{ px: 3, py: 1 }}
-                    >
-                        Hủy
-                    </Button>
-                    <Button
-                        type="submit"
-                        variant="contained"
-                        disabled={loading}
-                        sx={{ px: 3, py: 1 }}
-                    >
-                        {loading ? <CircularProgress size={24} /> : "Cập nhật"}
-                    </Button>
-                </DialogActions>
-            </Box>
+                {formData.raisingStatus === "RAISING" && (
+                    <Grid item xs={12} md={6}>
+                        <FormControl fullWidth required error={!!errors.penId}>
+                            <InputLabel>Chuồng nuôi</InputLabel>
+                            <Select
+                                name="penId"
+                                value={formData.penId}
+                                onChange={handleInputChange}
+                                label="Chuồng nuôi"
+                            >
+                                {pigPens && pigPens.length > 0 ? (
+                                    pigPens.map((pen) => (
+                                        <MenuItem key={pen.penId} value={pen.penId}>
+                                            {pen.name}
+                                        </MenuItem>
+                                    ))
+                                ) : (
+                                    <MenuItem disabled>Không có chuồng nuôi</MenuItem>
+                                )}
+                            </Select>
+                            {errors.penId && <FormHelperText>{errors.penId}</FormHelperText>}
+                        </FormControl>
+                    </Grid>
+                )}
+
+                {errors.submit && (
+                    <Grid item xs={12}>
+                        <FormHelperText error>{errors.submit}</FormHelperText>
+                    </Grid>
+                )}
+
+                <Grid item xs={12}>
+                    <Divider sx={{ my: 1 }} />
+                    <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
+                        <Button onClick={onCancel} sx={{ mr: 2 }}>
+                            Hủy
+                        </Button>
+                        <Button
+                            type="submit"
+                            variant="contained"
+                            color="primary"
+                            disabled={loading}
+                            startIcon={loading && <CircularProgress size={20} />}
+                        >
+                            Cập nhật
+                        </Button>
+                    </Box>
+                </Grid>
+            </Grid>
         </Box>
     );
 };

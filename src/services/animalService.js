@@ -1,77 +1,46 @@
 import axios from 'axios';
 import { authService } from './authService';
-const API_URL = 'http://localhost:8080/api';
+
+const API_URL = 'http://localhost:8080/api/animals';
 
 export const animalService = {
-    // Get all animals from backend
-    getAllAnimals: async () => {
+    // Lấy tất cả động vật
+    getAll: async () => {
         try {
             const token = authService.getCurrentUser();
-            const response = await axios.get(`${API_URL}/animals`, {
+            const response = await axios.get(API_URL, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
             return response.data;
         } catch (error) {
-            console.error('Error fetching animals:', error);
+            console.error('Lỗi khi lấy danh sách động vật:', error);
             throw error;
         }
     },
 
-    // Get empty pens (pens with no animals)
-    getEmptyPens: async () => {
+    // Lấy chi tiết một động vật
+    getById: async (id) => {
         try {
             const token = authService.getCurrentUser();
-            const response = await axios.get(`${API_URL}/animals/empty`, {
+            const response = await axios.get(`${API_URL}/${id}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
             return response.data;
         } catch (error) {
-            console.error('Error fetching empty pens:', error);
+            console.error(`Lỗi khi lấy thông tin động vật #${id}:`, error);
             throw error;
         }
     },
 
-    // Get animals for specific employee
-    getAnimalsByEmployeeId: async (employeeId) => {
+    // Tạo động vật mới
+    create: async (animalData) => {
         try {
             const token = authService.getCurrentUser();
-            const response = await axios.get(`${API_URL}/animals/employee/${employeeId}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            return response.data;
-        } catch (error) {
-            console.error(`Error fetching animals for employee #${employeeId}:`, error);
-            throw error;
-        }
-    },
-
-    // Get animal by ID
-    getAnimal: async (id) => {
-        try {
-            const token = authService.getCurrentUser();
-            const response = await axios.get(`${API_URL}/animals/${id}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            return response.data;
-        } catch (error) {
-            console.error(`Error fetching animal #${id}:`, error);
-            throw error;
-        }
-    },
-
-    // Create new animal
-    createAnimal: async (animalData) => {
-        try {
-            const token = authService.getCurrentUser();
-            const response = await axios.post(`${API_URL}/animals`, animalData, {
+            const response = await axios.post(API_URL, animalData, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -79,16 +48,16 @@ export const animalService = {
             });
             return response.data;
         } catch (error) {
-            console.error('Error creating animal:', error);
+            console.error('Lỗi khi tạo động vật mới:', error);
             throw error;
         }
     },
 
-    // Update animal
-    updateAnimal: async (id, animalData) => {
+    // Cập nhật thông tin động vật
+    update: async (id, animalData) => {
         try {
             const token = authService.getCurrentUser();
-            const response = await axios.put(`${API_URL}/animals/${id}`, animalData, {
+            const response = await axios.put(`${API_URL}/${id}`, animalData, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -96,23 +65,88 @@ export const animalService = {
             });
             return response.data;
         } catch (error) {
-            console.error(`Error updating animal #${id}:`, error);
+            console.error(`Lỗi khi cập nhật động vật #${id}:`, error);
             throw error;
         }
     },
 
-    // Delete animal
-    deleteAnimal: async (id) => {
+    // Xóa động vật
+    delete: async (id) => {
         try {
             const token = authService.getCurrentUser();
-            const response = await axios.delete(`${API_URL}/animals/${id}`, {
+            const response = await axios.delete(`${API_URL}/${id}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
             return response.data;
         } catch (error) {
-            console.error(`Error deleting animal #${id}:`, error);
+            console.error(`Lỗi khi xóa động vật #${id}:`, error);
+            throw error;
+        }
+    },
+
+    // Tìm kiếm động vật theo nhiều tiêu chí
+    search: async (params) => {
+        try {
+            const token = authService.getCurrentUser();
+            const response = await axios.get(`${API_URL}/search`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                params
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Lỗi khi tìm kiếm động vật:', error);
+            throw error;
+        }
+    },
+
+    // Lấy danh sách động vật theo chuồng
+    getByPenId: async (penId) => {
+        try {
+            const token = authService.getCurrentUser();
+            const response = await axios.get(`${API_URL}/pen/${penId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            return response.data;
+        } catch (error) {
+            console.error(`Lỗi khi lấy động vật theo chuồng #${penId}:`, error);
+            throw error;
+        }
+    },
+
+    // Lấy danh sách động vật theo trạng thái sức khỏe
+    getByHealthStatus: async (healthStatus) => {
+        try {
+            const token = authService.getCurrentUser();
+            const response = await axios.get(`${API_URL}/health-status/${healthStatus}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            return response.data;
+        } catch (error) {
+            console.error(`Lỗi khi lấy động vật theo trạng thái sức khỏe ${healthStatus}:`, error);
+            throw error;
+        }
+    },
+
+    // Lấy danh sách động vật theo trạng thái nuôi
+    getByRaisingStatus: async (raisingStatus) => {
+        try {
+            const token = authService.getCurrentUser();
+            const response = await axios.get(`${API_URL}/raising-status/${raisingStatus}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            return response.data;
+        } catch (error) {
+            console.error(`Lỗi khi lấy động vật theo trạng thái nuôi ${raisingStatus}:`, error);
             throw error;
         }
     },
@@ -121,9 +155,7 @@ export const animalService = {
     exportAnimal: async (id) => {
         try {
             const token = authService.getCurrentUser();
-
-            // Sử dụng POST đến endpoint xuất chuồng
-            const response = await axios.post(`${API_URL}/animals/${id}/export`, null, {
+            const response = await axios.post(`${API_URL}/${id}/export`, {}, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -135,90 +167,21 @@ export const animalService = {
         }
     },
 
-    // Search animals by criteria
-    searchAnimals: async (params) => {
+    // Lấy danh sách động vật đã xuất chuồng
+    getExported: async () => {
         try {
             const token = authService.getCurrentUser();
-            const response = await axios.get(`${API_URL}/animals/search`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
-                params
-            });
-            return response.data;
-        } catch (error) {
-            console.error('Error searching animals:', error);
-            throw error;
-        }
-    },
-
-    // Get animals by status
-    getAnimalsByStatus: async (status) => {
-        try {
-            const token = authService.getCurrentUser();
-            const response = await axios.get(`${API_URL}/animals/status/${status}`, {
+            const response = await axios.get(`${API_URL}/exported`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
             return response.data;
         } catch (error) {
-            console.error(`Error fetching animals by status ${status}:`, error);
-            throw error;
-        }
-    },
-
-    getExportedAnimals: async () => {
-        try {
-            const token = authService.getCurrentUser();
-            const response = await axios.get(`${API_URL}/animals/exported`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            return response.data;
-        } catch (error) {
-            console.error('Error fetching exported animals:', error);
-            throw error;
-        }
-    },
-
-    // Get animals by pen ID
-    getAnimalsByPenId: async (penId) => {
-        try {
-            const token = authService.getCurrentUser();
-            const response = await axios.get(`${API_URL}/animals/pen/${penId}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            return response.data;
-        } catch (error) {
-            console.error(`Error fetching animals for pen #${penId}:`, error);
-            throw error;
-        }
-    },
-
-    searchExportedAnimals: async (pigId, entryDateFrom, entryDateTo) => {
-        try {
-            const token = authService.getCurrentUser();
-            let url = `${API_URL}/animals/exported/search`;
-            const params = {};
-            
-            if (pigId) params.pigId = pigId;
-            if (entryDateFrom) params.entryDateFrom = entryDateFrom;
-            if (entryDateTo) params.entryDateTo = entryDateTo;
-            
-            const response = await axios.get(url, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
-                params: params
-            });
-            return response.data;
-        } catch (error) {
-            console.error('Error searching exported animals:', error);
+            console.error('Lỗi khi lấy danh sách động vật đã xuất chuồng:', error);
             throw error;
         }
     }
 };
+
+export default animalService;
