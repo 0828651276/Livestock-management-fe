@@ -7,10 +7,6 @@ export const healthStatus = {
     SICK: {
         label: 'Bị bệnh',
         color: 'error' // màu đỏ trong MUI
-    },
-    UNVACCINATED: {
-        label: 'Chưa tiêm phòng',
-        color: 'warning' // màu cam trong MUI
     }
 };
 

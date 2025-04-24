@@ -193,6 +193,12 @@ const Sidebar = ({drawerWidth, activeMenu, setActiveMenu}) => {
                         <Collapse in={openMenuHospital} timeout="auto" unmountOnExit>
                             <List component="ul" disablePadding>
                                 <ListItem
+                                    onClick={() => handleMenuClick('medical')}
+                                    sx={{...menuItemStyle, pl: 4}}
+                                >
+                                    <ListItemText primary="Lịch điều trị"/>
+                                </ListItem>
+                                <ListItem
                                     onClick={() => handleMenuClick('vaccination')}
                                     sx={{...menuItemStyle, pl: 4}}
                                 >
