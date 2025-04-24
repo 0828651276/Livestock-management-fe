@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { fetchFeedInventory } from "../../services/feedWarehouseService.js";
+import React, { useEffect, useState, useCallback } from "react";
+import { fetchFeedInventory, searchFeedInventory } from "../../services/feedWarehouseService.js";
 import {
     Button, TextField, Table, TableBody, TableCell, TableContainer,
     TableHead, TableRow, Paper, Stack, Box, Typography, Snackbar,
@@ -36,6 +36,7 @@ export default function FeedInventoryManager() {
         message: '',
         severity: 'success'
     });
+    const [searchTimeout, setSearchTimeout] = useState(null);
 
     const fetchInventory = async () => {
         try {
@@ -56,23 +57,49 @@ export default function FeedInventoryManager() {
         fetchInventory();
     }, []);
 
-    useEffect(() => {
-        if (searchKeyword.trim() === '') {
-            setFilteredInventory(inventory);
-        } else {
-            const searchTerm = searchKeyword.toLowerCase().trim();
-            const filtered = inventory.filter(
-                (item) =>
-                    item.feedType?.toLowerCase().includes(searchTerm) ||
-                    item.remainingQuantity?.toString().includes(searchTerm)
-            );
-            setFilteredInventory(filtered);
+    const handleSearch = useCallback(async (keyword) => {
+        try {
+            if (keyword.trim() === '') {
+                await fetchInventory();
+            } else {
+                const searchResults = await searchFeedInventory(keyword);
+                setFilteredInventory(searchResults);
+            }
+        } catch (err) {
+            console.error("Lỗi khi tìm kiếm:", err);
+            setNotification({
+                open: true,
+                message: "Không thể tìm kiếm thức ăn",
+                severity: "error"
+            });
         }
-    }, [searchKeyword, inventory]);
+    }, []);
 
     const handleSearchChange = (e) => {
-        setSearchKeyword(e.target.value);
+        const value = e.target.value;
+        setSearchKeyword(value);
+
+        // Xóa timeout cũ nếu có
+        if (searchTimeout) {
+            clearTimeout(searchTimeout);
+        }
+
+        // Tạo timeout mới
+        const timeout = setTimeout(() => {
+            handleSearch(value);
+        }, 500); // Đợi 500ms sau khi người dùng ngừng gõ
+
+        setSearchTimeout(timeout);
     };
+
+    // Cleanup timeout khi component unmount
+    useEffect(() => {
+        return () => {
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+        };
+    }, [searchTimeout]);
 
     return (
         <Box sx={{ py: 2 }}>
@@ -97,12 +124,16 @@ export default function FeedInventoryManager() {
                             ),
                         }}
                     />
+
                     <Button
                         variant="contained"
                         color="primary"
                         startIcon={<Search />}
-                        sx={{ flexShrink: 0, fontWeight: 'bold', textTransform: 'uppercase' }}
-                    >
+                        sx={{
+                            flexShrink: 0,
+                            fontWeight: 'bold',
+                            textTransform: 'uppercase'
+                        }}                    >
                         Tìm kiếm
                     </Button>
                 </Stack>
@@ -140,12 +171,22 @@ export default function FeedInventoryManager() {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {filteredInventory.map((item, index) => (
-                            <TableRow key={item.id || index}>
-                                <StyledTableCell>{item.feedType}</StyledTableCell>
-                                <StyledTableCell>{item.remainingQuantity} kg</StyledTableCell>
+                        {filteredInventory.length > 0 ? (
+                            filteredInventory.map((item, index) => (
+                                <TableRow key={item.id || index}>
+                                    <StyledTableCell>{item.feedType}</StyledTableCell>
+                                    <StyledTableCell>{item.remainingQuantity} kg</StyledTableCell>
+                                </TableRow>
+                            ))
+                        ) : (
+                            <TableRow>
+                                <StyledTableCell colSpan={2} align="center">
+                                    <Typography variant="body1" color="text.secondary">
+                                        Không có dữ liệu
+                                    </Typography>
+                                </StyledTableCell>
                             </TableRow>
-                        ))}
+                        )}
                     </TableBody>
                 </Table>
             </TableContainer>

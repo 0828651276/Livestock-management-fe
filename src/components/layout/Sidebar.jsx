@@ -161,7 +161,7 @@ const Sidebar = ({drawerWidth, activeMenu, setActiveMenu}) => {
                                     <ListItemText primary="Quản lý tồn kho"/>
                                 </ListItem>
                                 <ListItem
-                                    onClick={() => handleMenuClick('animals')}
+                                    onClick={() => handleMenuClick('feedplan')}
                                     sx={{...menuItemStyle, pl: 4}}
                                 >
                                     <ListItemText primary="Quản lý khẩu phần ăn"/>

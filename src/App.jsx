@@ -14,8 +14,6 @@ import UnauthorizedPage from './pages/UnauthorizedPage';
 import ExportedAnimalsManager from "./components/exported/ExportedAnimalManager.jsx";
 import FeedInventoryTable from "./components/feed/FeedInventoryTable.jsx";
 import FeedSummaryTable from "./components/feedlan/FeedSummaryTable.jsx";
-import FeedPlanUpdatePage from "./components/feedlan/FeedPlanUpdatePage.jsx";
-import FeedPlanForm from "./components/feedlan/FeedPlanForm.jsx";
 
 // Tạo theme tùy chỉnh
 const theme = createTheme({
@@ -94,8 +92,6 @@ function App() {
                         <Route path="employees/detail" element={<EmployeeDetail/>}/>
                         <Route path="feedwarehouse" element={<FeedInventoryTable/>}/>
                         <Route path="feedplan" element={<FeedSummaryTable/>}/>
-                        <Route path="feedplanupdate" element={<FeedPlanUpdatePage/>}/>
-                        <Route path="feedplanup" element={FeedPlanForm}/>
                     </Route>
                 </Routes>
             </ThemeProvider>
