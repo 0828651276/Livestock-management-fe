@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { animalService } from "../../services/animalService";
 import { pigPenService } from "../../services/pigPenService";
+import { medicalService } from "../../services/medicalService";
+import CreateMedicalForm from '../medical/CreateMedicalForm';
 import {
     Button,
     TextField,
@@ -44,7 +46,8 @@ import {
     FilterAlt,
     VisibilityOutlined,
     LocalShippingOutlined,
-    MoreVert
+    MoreVert,
+    Schedule
 } from "@mui/icons-material";
 import { styled } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
@@ -90,6 +93,9 @@ export default function AnimalManager() {
         open: false,
         animalId: null
     });
+    const [openScheduleDialog, setOpenScheduleDialog] = useState(false);
+    const [selectedAnimalForSchedule, setSelectedAnimalForSchedule] = useState(null);
+    const [medicalRecords, setMedicalRecords] = useState([]);
 
     // Menu thao tác
     const [actionMenu, setActionMenu] = useState({
@@ -110,6 +116,7 @@ export default function AnimalManager() {
 
     useEffect(() => {
         fetchData();
+        fetchMedicalRecords();
     }, []);
 
     useEffect(() => {
@@ -133,6 +140,16 @@ export default function AnimalManager() {
             showNotification("Lỗi khi tải dữ liệu", "error");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchMedicalRecords = async () => {
+        try {
+            const medicalRecordsData = await medicalService.getAllMedical();
+            setMedicalRecords(medicalRecordsData);
+        } catch (err) {
+            console.error("Lỗi khi tải dữ liệu:", err);
+            showNotification("Lỗi khi tải dữ liệu", "error");
         }
     };
 
@@ -216,6 +233,16 @@ export default function AnimalManager() {
         });
     };
 
+    const handleOpenScheduleDialog = (animal) => {
+        setSelectedAnimalForSchedule(animal);
+        setOpenScheduleDialog(true);
+    };
+
+    const handleCloseScheduleDialog = () => {
+        setOpenScheduleDialog(false);
+        setSelectedAnimalForSchedule(null);
+    };
+
     // Xử lý menu thao tác
     const handleActionMenuOpen = (event, animal) => {
         setActionMenu({
@@ -291,6 +318,17 @@ export default function AnimalManager() {
         return pen ? pen.name : `Chuồng #${penId}`;
     };
 
+    // Hàm xác định trạng thái sức khỏe động vật (có đặt lịch chữa trị hay chưa)
+    const getCustomHealthStatus = (animal) => {
+        if (animal.healthStatus === "SICK") {
+            // medicalRecords là mảng các bản ghi điều trị, mỗi bản ghi có thể có trường animal.pigId
+            const hasMedical = medicalRecords.some(r => r.animal && r.animal.pigId === animal.pigId);
+            if (hasMedical) return "SCHEDULED";
+            return "SICK";
+        }
+        return animal.healthStatus;
+    };
+
     // Get health status chip
     const getHealthStatusChip = (status) => {
         switch (status) {
@@ -298,6 +336,8 @@ export default function AnimalManager() {
                 return <Chip label="Khỏe mạnh" color="success" size="small" />;
             case "SICK":
                 return <Chip label="Bị bệnh" color="error" size="small" />;
+            case "SCHEDULED":
+                return <Chip label="Đã đặt lịch chữa trị" color="warning" size="small" />;
             default:
                 return <Chip label={status} size="small" />;
         }
@@ -402,6 +442,7 @@ export default function AnimalManager() {
                                         <MenuItem value="">Tất cả</MenuItem>
                                         <MenuItem value="ACTIVE">Khỏe mạnh</MenuItem>
                                         <MenuItem value="SICK">Bị bệnh</MenuItem>
+                                        <MenuItem value="SCHEDULED">Đã đặt lịch chữa trị</MenuItem>
                                     </Select>
                                 </FormControl>
                             </Grid>
@@ -463,7 +504,6 @@ export default function AnimalManager() {
                         <Table stickyHeader aria-label="sticky table">
                             <TableHead>
                                 <TableRow>
-                                    <StyledTableCell>ID</StyledTableCell>
                                     <StyledTableCell>Tên</StyledTableCell>
                                     <StyledTableCell>Chuồng nuôi</StyledTableCell>
                                     <StyledTableCell>Ngày nhập</StyledTableCell>
@@ -479,7 +519,6 @@ export default function AnimalManager() {
                                 {displayedAnimals.length > 0 ? (
                                     displayedAnimals.map((animal) => (
                                         <TableRow key={animal.pigId} hover>
-                                            <TableCell>{animal.pigId}</TableCell>
                                             <TableCell>{animal.name}</TableCell>
                                             <TableCell>
                                                 {animal.pigPen ? animal.pigPen.name : "—"}
@@ -488,13 +527,14 @@ export default function AnimalManager() {
                                             <TableCell>{formatDate(animal.exitDate)}</TableCell>
                                             <TableCell>{animal.weight}</TableCell>
                                             <TableCell>{animal.quantity}</TableCell>
-                                            <TableCell>{getHealthStatusChip(animal.healthStatus)}</TableCell>
+                                            <TableCell>{getHealthStatusChip(getCustomHealthStatus(animal))}</TableCell>
                                             <TableCell>{getRaisingStatusChip(animal.raisingStatus)}</TableCell>
                                             <TableCell align="center">
                                                 <IconButton
                                                     aria-label="thao tác"
                                                     size="small"
                                                     onClick={(event) => handleActionMenuOpen(event, animal)}
+                                                    disabled={animal.raisingStatus === "EXPORTED"}
                                                 >
                                                     <MoreVert />
                                                 </IconButton>
@@ -503,7 +543,7 @@ export default function AnimalManager() {
                                     ))
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={10} align="center">
+                                        <TableCell colSpan={9} align="center">
                                             {(nameFilter || healthStatusFilter || raisingStatusFilter || penIdFilter)
                                                 ? "Không tìm thấy động vật phù hợp với điều kiện tìm kiếm"
                                                 : "Không có dữ liệu"}
@@ -642,6 +682,21 @@ export default function AnimalManager() {
                 </DialogActions>
             </Dialog>
 
+            {/* Dialog đặt lịch điều trị */}
+            <CreateMedicalForm
+                open={openScheduleDialog}
+                animal={selectedAnimalForSchedule}
+                onCreate={async (data) => {
+                    await medicalService.createMedical(data);
+                    setOpenScheduleDialog(false);
+                    setSelectedAnimalForSchedule(null);
+                    fetchData();
+                    fetchMedicalRecords();
+                    showNotification('Đặt lịch điều trị thành công');
+                }}
+                onCancel={handleCloseScheduleDialog}
+            />
+
             {/* Snackbar thông báo */}
             <Snackbar
                 open={notification.open}
@@ -685,23 +740,37 @@ export default function AnimalManager() {
                     <ListItemText>Chỉnh sửa</ListItemText>
                 </MenuItem>
 
+                <MenuItem
+                    disabled={actionMenu.animal?.healthStatus === "ACTIVE"}
+                    onClick={() => {
+                        handleOpenScheduleDialog(actionMenu.animal);
+                        handleActionMenuClose();
+                    }}
+                >
+                    <ListItemIcon>
+                        <Schedule fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>Đặt lịch điều trị</ListItemText>
+                </MenuItem>
+
                 {actionMenu.animal?.raisingStatus === "RAISING" && (
                     <MenuItem
+                        disabled={actionMenu.animal?.healthStatus === "SICK"}
                         onClick={() => {
-                            handleExportClick(actionMenu.animal?.pigId);
+                            handleExportClick(actionMenu.animal.pigId);
                             handleActionMenuClose();
                         }}
                     >
                         <ListItemIcon>
-                            <LocalShippingOutlined fontSize="small" color="secondary" />
+                            <LocalShippingOutlined fontSize="small" />
                         </ListItemIcon>
-                        <ListItemText>Xuất chuồng</ListItemText>
+                        <ListItemText primary="Xuất chuồng" />
                     </MenuItem>
                 )}
 
                 <MenuItem
                     onClick={() => {
-                        handleDeleteClick(actionMenu.animal?.pigId);
+                        handleDeleteClick(actionMenu.animal.pigId);
                         handleActionMenuClose();
                     }}
                 >

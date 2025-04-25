@@ -10,8 +10,9 @@ import {
   Box
 } from '@mui/material';
 
-const CreateMedicalForm = ({ open, animal, onCreate, onCancel }) => {
+const CreateMedicalForm = ({ open, animal, animals = [], onCreate, onCancel }) => {
   const initial = {
+    animal: animal?.pigId || '',
     treatmentDate: '',
     treatmentMethod: 'INJECTION',
     veterinarian: '',
@@ -21,9 +22,29 @@ const CreateMedicalForm = ({ open, animal, onCreate, onCancel }) => {
 
   useEffect(() => {
     if (open) {
-      setForm(initial);
+      setForm(prev => ({
+        ...prev,
+        animal: animal?.pigId || '',
+        treatmentDate: '',
+        treatmentMethod: 'INJECTION',
+        veterinarian: '',
+        notes: ''
+      }));
     }
-  }, [open, animal]);
+  }, [animal, open]);
+
+  useEffect(() => {
+    if (open && animal && animal.defaultDate) {
+      setForm(prev => ({
+        ...prev,
+        animal: animal?.pigId || '',
+        treatmentDate: animal.defaultDate,
+        treatmentMethod: 'INJECTION',
+        veterinarian: '',
+        notes: ''
+      }));
+    }
+  }, [animal, open]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -31,9 +52,9 @@ const CreateMedicalForm = ({ open, animal, onCreate, onCancel }) => {
   };
 
   const handleSubmit = () => {
-    if (!animal || !animal.pigId) return;
+    if (!form.animal) return;
     onCreate({
-      animal: { pigId: animal.pigId },
+      animal: { pigId: form.animal },
       treatmentDate: form.treatmentDate,
       treatmentMethod: form.treatmentMethod,
       veterinarian: form.veterinarian,
@@ -41,13 +62,32 @@ const CreateMedicalForm = ({ open, animal, onCreate, onCancel }) => {
     });
   };
 
+  // Xác định có phải mở từ AnimalManager không
+  const isFromAnimalManager = !!(animal && animal.pigId);
+
   return (
     <Dialog open={open} onClose={onCancel} maxWidth="sm" fullWidth>
       <DialogTitle>
-        Đặt lịch điều trị{animal ? ` - ${animal.name}` : ''}
+        Đặt lịch điều trị
       </DialogTitle>
       <DialogContent>
         <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+          {/* Ẩn ô chọn động vật bị bệnh chỉ khi đặt lịch từ AnimalManager (có pigId) */}
+          {!isFromAnimalManager && (
+            <TextField
+              select
+              label="Chọn động vật bị bệnh"
+              name="animal"
+              value={form.animal}
+              onChange={handleChange}
+              fullWidth
+              required
+            >
+              {animals.map(a => (
+                <MenuItem key={a.pigId} value={a.pigId}>{a.name}</MenuItem>
+              ))}
+            </TextField>
+          )}
           <TextField
             label="Ngày điều trị"
             type="date"
@@ -56,6 +96,7 @@ const CreateMedicalForm = ({ open, animal, onCreate, onCancel }) => {
             onChange={handleChange}
             InputLabelProps={{ shrink: true }}
             fullWidth
+            required
           />
           <TextField
             select
@@ -64,9 +105,10 @@ const CreateMedicalForm = ({ open, animal, onCreate, onCancel }) => {
             value={form.treatmentMethod}
             onChange={handleChange}
             fullWidth
+            required
           >
             <MenuItem value="INJECTION">Tiêm</MenuItem>
-            <MenuItem value="ORAL">Cho uống</MenuItem>
+            <MenuItem value="ORAL">Uống thuốc</MenuItem>
           </TextField>
           <TextField
             label="Thú y"
@@ -94,4 +136,4 @@ const CreateMedicalForm = ({ open, animal, onCreate, onCancel }) => {
   );
 };
 
-export default CreateMedicalForm; 
+export default CreateMedicalForm;
