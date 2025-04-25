@@ -1,6 +1,6 @@
-import React, {useEffect, useState} from "react";
-import {animalService} from "../../services/animalService";
-import {pigPenService} from "../../services/pigPenService";
+import React, { useEffect, useState } from "react";
+import { animalService } from "../../services/animalService";
+import { pigPenService } from "../../services/pigPenService";
 import {
     Button,
     TextField,
@@ -46,21 +46,21 @@ import {
     LocalShippingOutlined,
     MoreVert
 } from "@mui/icons-material";
-import {styled} from "@mui/material/styles";
-import {useNavigate} from "react-router-dom";
+import { styled } from "@mui/material/styles";
+import { useNavigate } from "react-router-dom";
 import AnimalFormCreate from "./AnimalFormCreate";
 import AnimalFormUpdate from "./AnimalFormUpdate";
-import {format} from "date-fns";
+import { format } from "date-fns";
 
 // Styled components
-const StyledTableCell = styled(TableCell)(({theme}) => ({
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
     backgroundColor: theme.palette.primary.main,
     color: theme.palette.common.white,
     fontWeight: "bold",
     padding: "16px"
 }));
 
-const StyledPaper = styled(Paper)(({theme}) => ({
+const StyledPaper = styled(Paper)(({ theme }) => ({
     padding: theme.spacing(3),
     marginBottom: theme.spacing(3),
     backgroundColor: "#fff",
@@ -168,7 +168,7 @@ export default function AnimalManager() {
     };
 
     const handleCloseNotification = () => {
-        setNotification({...notification, open: false});
+        setNotification({ ...notification, open: false });
     };
 
     const showNotification = (message, severity = "success") => {
@@ -295,11 +295,11 @@ export default function AnimalManager() {
     const getHealthStatusChip = (status) => {
         switch (status) {
             case "ACTIVE":
-                return <Chip label="Khỏe mạnh" color="success" size="small"/>;
+                return <Chip label="Khỏe mạnh" color="success" size="small" />;
             case "SICK":
-                return <Chip label="Bị bệnh" color="error" size="small"/>;
+                return <Chip label="Bị bệnh" color="error" size="small" />;
             default:
-                return <Chip label={status} size="small"/>;
+                return <Chip label={status} size="small" />;
         }
     };
 
@@ -307,11 +307,11 @@ export default function AnimalManager() {
     const getRaisingStatusChip = (status) => {
         switch (status) {
             case "RAISING":
-                return <Chip label="Đang nuôi" color="primary" size="small"/>;
+                return <Chip label="Đang nuôi" color="primary" size="small" />;
             case "EXPORTED":
-                return <Chip label="Đã xuất" color="secondary" size="small"/>;
+                return <Chip label="Đã xuất" color="secondary" size="small" />;
             default:
-                return <Chip label={status} size="small"/>;
+                return <Chip label={status} size="small" />;
         }
     };
 
@@ -320,24 +320,37 @@ export default function AnimalManager() {
         .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
     return (
-        <Box sx={{p: 3}}>
+        <Box sx={{ p: 3 }}>
             {/* Header */}
-            <Box sx={{display: "flex", alignItems: "center", mb: 3}}>
+            <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
                 <IconButton
                     onClick={() => navigate("/dashboard")}
-                    sx={{mr: 2, bgcolor: "#f5f5f5"}}
+                    sx={{ mr: 2, bgcolor: "#f5f5f5" }}
                 >
-                    <ArrowBack/>
+                    <ArrowBack />
                 </IconButton>
-                <Typography variant="h5" component="h1" sx={{fontWeight: "bold"}}>
+                <Typography variant="h5" component="h1" sx={{ fontWeight: "bold" }}>
                     Quản lý động vật
                 </Typography>
-                <Box sx={{flexGrow: 1}}/>
-
+                <Box sx={{ flexGrow: 1 }} />
+                <Button
+                    variant="contained"
+                    color="primary"
+                    startIcon={<Add />}
+                    onClick={handleCreateAnimal}
+                    sx={{
+                        backgroundColor: "#1E8449",
+                        "&:hover": {
+                            backgroundColor: "#14532d"
+                        }
+                    }}
+                >
+                    Thêm mới
+                </Button>
             </Box>
 
             {/* Thanh tìm kiếm và lọc */}
-            <StyledPaper sx={{mb: 3, p: 2}}>
+            <StyledPaper sx={{ mb: 3, p: 2 }}>
                 <Grid container spacing={2}>
                     <Grid item xs={12} md={6}>
                         <TextField
@@ -349,18 +362,18 @@ export default function AnimalManager() {
                             InputProps={{
                                 startAdornment: (
                                     <InputAdornment position="start">
-                                        <Search/>
+                                        <Search />
                                     </InputAdornment>
                                 )
                             }}
                         />
                     </Grid>
-                    <Grid item xs={12} md={6} sx={{display: "flex", justifyContent: "flex-end", alignItems: "center"}}>
+                    <Grid item xs={12} md={6} sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center" }}>
                         <Button
                             variant="outlined"
-                            startIcon={<FilterAlt/>}
+                            startIcon={<FilterAlt />}
                             onClick={() => setShowFilters(!showFilters)}
-                            sx={{mr: 1}}
+                            sx={{ mr: 1 }}
                         >
                             {showFilters ? "Ẩn bộ lọc" : "Hiện bộ lọc"}
                         </Button>
@@ -377,7 +390,7 @@ export default function AnimalManager() {
 
                     {showFilters && (
                         <>
-                            <Grid item xs={12} md={4} sx={{mt: 2}}>
+                            <Grid item xs={12} md={4} sx={{ mt: 2 }}>
                                 <FormControl fullWidth variant="outlined">
                                     <InputLabel id="health-status-label">Trạng thái sức khỏe</InputLabel>
                                     <Select
@@ -392,7 +405,7 @@ export default function AnimalManager() {
                                     </Select>
                                 </FormControl>
                             </Grid>
-                            <Grid item xs={12} md={4} sx={{mt: 2}}>
+                            <Grid item xs={12} md={4} sx={{ mt: 2 }}>
                                 <FormControl fullWidth variant="outlined">
                                     <InputLabel id="raising-status-label">Trạng thái nuôi</InputLabel>
                                     <Select
@@ -407,7 +420,7 @@ export default function AnimalManager() {
                                     </Select>
                                 </FormControl>
                             </Grid>
-                            <Grid item xs={12} md={4} sx={{mt: 2}}>
+                            <Grid item xs={12} md={4} sx={{ mt: 2 }}>
                                 <FormControl fullWidth variant="outlined">
                                     <InputLabel id="pen-label">Chuồng nuôi</InputLabel>
                                     <Select
@@ -431,107 +444,94 @@ export default function AnimalManager() {
             </StyledPaper>
 
             {/* Danh sách động vật */}
-            <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2}}>
-                <Typography variant="h6" sx={{fontWeight: "bold"}}>
-                    Danh sách động vật
-                </Typography>
-                <Typography variant="body2" sx={{color: "text.secondary"}}>
-                    Tổng số: {filteredAnimals.length} cá thể
-                </Typography>
-            </Box>
-            <Box sx={{mb: 2}}>
-                <Button
-                    variant="contained"
-                    color="primary"
-                    startIcon={<Add/>}
-                    onClick={handleCreateAnimal}
-                    sx={{
-                        backgroundColor: "#1E8449",
-                        "&:hover": {
-                            backgroundColor: "#14532d"
-                        }
-                    }}
-                >
-                    Thêm mới
-                </Button>
-            </Box>
-            {loading ? (
-                <Box sx={{display: "flex", justifyContent: "center", p: 3}}>
-                    <CircularProgress/>
+            <StyledPaper>
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+                    <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                        Danh sách động vật
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                        Tổng số: {filteredAnimals.length} cá thể
+                    </Typography>
                 </Box>
-            ) : (
-                <TableContainer component={Paper}>
-                    <Table stickyHeader aria-label="sticky table">
-                        <TableHead>
-                            <TableRow>
-                                <StyledTableCell>ID</StyledTableCell>
-                                <StyledTableCell>Tên</StyledTableCell>
-                                <StyledTableCell>Chuồng nuôi</StyledTableCell>
-                                <StyledTableCell>Ngày nhập</StyledTableCell>
-                                <StyledTableCell>Ngày xuất</StyledTableCell>
-                                <StyledTableCell>Cân nặng (kg)</StyledTableCell>
-                                <StyledTableCell>Số lượng</StyledTableCell>
-                                <StyledTableCell>Sức khỏe</StyledTableCell>
-                                <StyledTableCell>Trạng thái</StyledTableCell>
-                                <StyledTableCell align="center">Thao tác</StyledTableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {displayedAnimals.length > 0 ? (
-                                displayedAnimals.map((animal) => (
-                                    <TableRow key={animal.pigId} hover>
-                                        <TableCell>{animal.pigId}</TableCell>
-                                        <TableCell>{animal.name}</TableCell>
-                                        <TableCell>
-                                            {animal.pigPen ? animal.pigPen.name : "—"}
-                                        </TableCell>
-                                        <TableCell>{formatDate(animal.entryDate)}</TableCell>
-                                        <TableCell>{formatDate(animal.exitDate)}</TableCell>
-                                        <TableCell>{animal.weight}</TableCell>
-                                        <TableCell>{animal.quantity}</TableCell>
-                                        <TableCell>{getHealthStatusChip(animal.healthStatus)}</TableCell>
-                                        <TableCell>{getRaisingStatusChip(animal.raisingStatus)}</TableCell>
-                                        <TableCell align="center">
-                                            <IconButton
-                                                aria-label="thao tác"
-                                                size="small"
-                                                onClick={(event) => handleActionMenuOpen(event, animal)}
-                                            >
-                                                <MoreVert/>
-                                            </IconButton>
+
+                {loading ? (
+                    <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
+                        <CircularProgress />
+                    </Box>
+                ) : (
+                    <TableContainer component={Paper}>
+                        <Table stickyHeader aria-label="sticky table">
+                            <TableHead>
+                                <TableRow>
+                                    <StyledTableCell>ID</StyledTableCell>
+                                    <StyledTableCell>Tên</StyledTableCell>
+                                    <StyledTableCell>Chuồng nuôi</StyledTableCell>
+                                    <StyledTableCell>Ngày nhập</StyledTableCell>
+                                    <StyledTableCell>Ngày xuất</StyledTableCell>
+                                    <StyledTableCell>Cân nặng (kg)</StyledTableCell>
+                                    <StyledTableCell>Số lượng</StyledTableCell>
+                                    <StyledTableCell>Sức khỏe</StyledTableCell>
+                                    <StyledTableCell>Trạng thái</StyledTableCell>
+                                    <StyledTableCell align="center">Thao tác</StyledTableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {displayedAnimals.length > 0 ? (
+                                    displayedAnimals.map((animal) => (
+                                        <TableRow key={animal.pigId} hover>
+                                            <TableCell>{animal.pigId}</TableCell>
+                                            <TableCell>{animal.name}</TableCell>
+                                            <TableCell>
+                                                {animal.pigPen ? animal.pigPen.name : "—"}
+                                            </TableCell>
+                                            <TableCell>{formatDate(animal.entryDate)}</TableCell>
+                                            <TableCell>{formatDate(animal.exitDate)}</TableCell>
+                                            <TableCell>{animal.weight}</TableCell>
+                                            <TableCell>{animal.quantity}</TableCell>
+                                            <TableCell>{getHealthStatusChip(animal.healthStatus)}</TableCell>
+                                            <TableCell>{getRaisingStatusChip(animal.raisingStatus)}</TableCell>
+                                            <TableCell align="center">
+                                                <IconButton
+                                                    aria-label="thao tác"
+                                                    size="small"
+                                                    onClick={(event) => handleActionMenuOpen(event, animal)}
+                                                >
+                                                    <MoreVert />
+                                                </IconButton>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={10} align="center">
+                                            {(nameFilter || healthStatusFilter || raisingStatusFilter || penIdFilter)
+                                                ? "Không tìm thấy động vật phù hợp với điều kiện tìm kiếm"
+                                                : "Không có dữ liệu"}
                                         </TableCell>
                                     </TableRow>
-                                ))
-                            ) : (
-                                <TableRow>
-                                    <TableCell colSpan={10} align="center">
-                                        {(nameFilter || healthStatusFilter || raisingStatusFilter || penIdFilter)
-                                            ? "Không tìm thấy động vật phù hợp với điều kiện tìm kiếm"
-                                            : "Không có dữ liệu"}
-                                    </TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                    {filteredAnimals.length > 0 && (
-                        <Box sx={{p: 2}}>
-                            <TablePagination
-                                rowsPerPageOptions={[10, 25, 50]}
-                                component="div"
-                                count={filteredAnimals.length}
-                                rowsPerPage={rowsPerPage}
-                                page={page}
-                                onPageChange={handleChangePage}
-                                onRowsPerPageChange={handleChangeRowsPerPage}
-                                labelDisplayedRows={({from, to, count}) =>
-                                    `${from}-${to} của ${count}`
-                                }
-                                labelRowsPerPage="Hàng mỗi trang:"
-                            />
-                        </Box>
-                    )}
-                </TableContainer>
-            )}
+                                )}
+                            </TableBody>
+                        </Table>
+                        {filteredAnimals.length > 0 && (
+                            <Box sx={{ p: 2 }}>
+                                <TablePagination
+                                    rowsPerPageOptions={[10, 25, 50]}
+                                    component="div"
+                                    count={filteredAnimals.length}
+                                    rowsPerPage={rowsPerPage}
+                                    page={page}
+                                    onPageChange={handleChangePage}
+                                    onRowsPerPageChange={handleChangeRowsPerPage}
+                                    labelDisplayedRows={({ from, to, count }) =>
+                                        `${from}-${to} của ${count}`
+                                    }
+                                    labelRowsPerPage="Hàng mỗi trang:"
+                                />
+                            </Box>
+                        )}
+                    </TableContainer>
+                )}
+            </StyledPaper>
 
             {/* Form dialog thêm mới */}
             <Dialog
@@ -540,7 +540,7 @@ export default function AnimalManager() {
                 maxWidth="md"
                 fullWidth
             >
-                <DialogTitle sx={{fontWeight: "bold"}}>
+                <DialogTitle sx={{ fontWeight: "bold" }}>
                     Thêm động vật mới
                 </DialogTitle>
                 <DialogContent dividers>
@@ -565,7 +565,7 @@ export default function AnimalManager() {
                 maxWidth="md"
                 fullWidth
             >
-                <DialogTitle sx={{fontWeight: "bold"}}>
+                <DialogTitle sx={{ fontWeight: "bold" }}>
                     Cập nhật thông tin động vật
                 </DialogTitle>
                 <DialogContent dividers>
@@ -628,7 +628,7 @@ export default function AnimalManager() {
                     <Typography>
                         Bạn có chắc chắn muốn xuất chuồng cá thể động vật này không?
                     </Typography>
-                    <Typography variant="body2" sx={{mt: 1, color: "text.secondary"}}>
+                    <Typography variant="body2" sx={{ mt: 1, color: "text.secondary" }}>
                         Thao tác này sẽ đánh dấu động vật là đã xuất chuồng và ghi nhận ngày xuất là ngày hôm nay.
                     </Typography>
                 </DialogContent>
@@ -647,13 +647,13 @@ export default function AnimalManager() {
                 open={notification.open}
                 autoHideDuration={6000}
                 onClose={handleCloseNotification}
-                anchorOrigin={{vertical: "bottom", horizontal: "right"}}
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
             >
                 <Alert
                     onClose={handleCloseNotification}
                     severity={notification.severity}
                     variant="filled"
-                    sx={{width: "100%"}}
+                    sx={{ width: "100%" }}
                 >
                     {notification.message}
                 </Alert>
@@ -680,7 +680,7 @@ export default function AnimalManager() {
                     }}
                 >
                     <ListItemIcon>
-                        <Edit fontSize="small" color="primary"/>
+                        <Edit fontSize="small" color="primary" />
                     </ListItemIcon>
                     <ListItemText>Chỉnh sửa</ListItemText>
                 </MenuItem>
@@ -693,7 +693,7 @@ export default function AnimalManager() {
                         }}
                     >
                         <ListItemIcon>
-                            <LocalShippingOutlined fontSize="small" color="secondary"/>
+                            <LocalShippingOutlined fontSize="small" color="secondary" />
                         </ListItemIcon>
                         <ListItemText>Xuất chuồng</ListItemText>
                     </MenuItem>
@@ -706,7 +706,7 @@ export default function AnimalManager() {
                     }}
                 >
                     <ListItemIcon>
-                        <Delete fontSize="small" color="error"/>
+                        <Delete fontSize="small" color="error" />
                     </ListItemIcon>
                     <ListItemText>Xóa</ListItemText>
                 </MenuItem>

@@ -107,7 +107,7 @@ export default function MedicalManager() {
     try {
       await medicalService.createMedical(data);
       setSnackbar({ open: true, message: 'Đặt lịch thành công', severity: 'success' });
-      handleCloseCreate();
+      setOpenCreate(false); // Đảm bảo đóng form tạo mới
       const all = await medicalService.getAllMedical();
       setMedicalRecords(all);
       if (selectedAnimal) {
@@ -137,18 +137,23 @@ export default function MedicalManager() {
   };
 
   const handleUpdateRecord = async () => {
+    if (!currentRecord || !currentRecord.animal || !currentRecord.animal.pigId) {
+      setSnackbar({ open: true, message: 'Không có thông tin động vật để cập nhật.', severity: 'error' });
+      return;
+    }
     try {
       await medicalService.updateMedical(currentRecord.id, {
-        animal: { pigId: selectedAnimal.pigId },
+        animal: { pigId: currentRecord.animal.pigId },
         treatmentDate: formData.treatmentDate,
         treatmentMethod: formData.treatmentMethod,
         veterinarian: formData.veterinarian,
         notes: formData.notes
       });
       setSnackbar({ open: true, message: 'Cập nhật thành công', severity: 'success' });
-      handleCloseUpdate();
+      setOpenUpdate(false);      // Force close dialog
+      setCurrentRecord(null);    // Reset record
       fetchAllMedical();
-      if (selectedAnimal) handleSchedule(selectedAnimal);
+      if (currentRecord.animal) handleSchedule(currentRecord.animal);
     } catch (err) {
       console.error(err);
       setSnackbar({ open: true, message: 'Lỗi khi cập nhật', severity: 'error' });
