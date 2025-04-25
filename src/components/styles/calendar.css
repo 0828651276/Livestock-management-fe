@@ -1,0 +1,49 @@
+/* medical-calendar.css */
+.fc {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    font-family: 'Roboto', Arial, sans-serif;
+}
+
+.fc-toolbar-title {
+    font-size: 2rem;
+    color: #1976d2;
+    font-weight: bold;
+}
+
+.fc-button {
+    background: #1976d2 !important;
+    color: #fff !important;
+    border-radius: 6px !important;
+    border: none !important;
+    margin: 0 3px;
+    transition: background 0.2s;
+}
+.fc-button:hover, .fc-button:focus {
+    background: #1565c0 !important;
+}
+
+.fc-daygrid-day-number {
+    color: #1976d2;
+    font-weight: 500;
+}
+
+.fc-day-today {
+    background: #e3f2fd !important;
+}
+
+.fc-event {
+    background: #43a047 !important;
+    border: none !important;
+    color: #fff !important;
+    border-radius: 8px !important;
+    font-weight: 500;
+    padding: 2px 8px;
+}
+
+.fc-daygrid-event-dot {
+    background-color: #1976d2 !important;
+}
+
+/* Tùy chỉnh thêm nếu muốn */

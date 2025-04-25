@@ -28,6 +28,10 @@ import { animalService } from '../../services/animalService';
 import { medicalService } from '../../services/medicalService';
 import CreateMedicalForm from './CreateMedicalForm';
 import { useNavigate } from 'react-router-dom';
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import interactionPlugin from '@fullcalendar/interaction';
+import '../styles/calendar.css'// import '@fullcalendar/daygrid/main.css';
 
 // styled table cells and rows for nicer UI
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -59,6 +63,7 @@ export default function MedicalManager() {
   const [formData, setFormData] = useState({ treatmentDate: '', treatmentMethod: '', veterinarian: '', notes: '' });
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [openCreate, setOpenCreate] = useState(false);
+  const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null });
   const navigate = useNavigate();
 
   // derive set of pigIds already scheduled
@@ -110,10 +115,6 @@ export default function MedicalManager() {
       setOpenCreate(false); // Đảm bảo đóng form tạo mới
       const all = await medicalService.getAllMedical();
       setMedicalRecords(all);
-      if (selectedAnimal) {
-        const filtered = all.filter(r => r.animal.pigId === selectedAnimal.pigId);
-        setDisplayedRecords(filtered);
-      }
     } catch (err) {
       console.error(err);
       setSnackbar({ open: true, message: 'Lỗi khi đặt lịch', severity: 'error' });
@@ -150,112 +151,116 @@ export default function MedicalManager() {
         notes: formData.notes
       });
       setSnackbar({ open: true, message: 'Cập nhật thành công', severity: 'success' });
-      setOpenUpdate(false);      // Force close dialog
+      setOpenUpdate(false);      // Đóng dialog
       setCurrentRecord(null);    // Reset record
       fetchAllMedical();
-      if (currentRecord.animal) handleSchedule(currentRecord.animal);
     } catch (err) {
       console.error(err);
       setSnackbar({ open: true, message: 'Lỗi khi cập nhật', severity: 'error' });
     }
   };
 
-  const handleDeleteRecord = async (id) => {
-    if (!window.confirm('Bạn có chắc muốn xóa bản ghi này?')) return;
+  const confirmDeleteRecord = (id) => {
+    setDeleteDialog({ open: true, id });
+  };
+
+  const handleDeleteConfirmed = async () => {
+    if (!deleteDialog.id) return;
     try {
-      await medicalService.deleteMedical(id);
+      await medicalService.deleteMedical(deleteDialog.id);
       setSnackbar({ open: true, message: 'Xóa thành công', severity: 'success' });
       fetchAllMedical();
       if (selectedAnimal) handleSchedule(selectedAnimal);
+      setOpenCreate(false); // Đảm bảo đóng form tạo mới nếu đang mở
     } catch (err) {
       console.error(err);
       setSnackbar({ open: true, message: 'Lỗi khi xóa', severity: 'error' });
+    } finally {
+      setDeleteDialog({ open: false, id: null });
     }
   };
+
+  // Thêm hàm chuyển đổi phương pháp
+  const getMethodLabel = (method) => {
+    if (method === "INJECTION") return "Tiêm";
+    if (method === "ORAL") return "Uống thuốc";
+    return method;
+  };
+
+  // Hàm chuyển đổi dữ liệu medical thành event cho FullCalendar
+  const getCalendarEvents = (medicalRecords) => {
+    return medicalRecords.map(r => ({
+      id: r.id,
+      title: `${r.animal?.name || ''}`,
+      start: r.treatmentDate,
+      backgroundColor: r.treatmentMethod === 'INJECTION' ? '#1976d2' : '#43a047',
+      borderColor: r.treatmentMethod === 'INJECTION' ? '#1976d2' : '#43a047',
+      allDay: true
+    }));
+  };
+
+  // Sửa lại hàm handleEventClick: so sánh id kiểu string để chắc chắn khớp
+  const handleEventClick = (clickInfo) => {
+    const record = medicalRecords.find(r => String(r.id) === String(clickInfo.event.id));
+    if (record) {
+      handleOpenUpdate(record);
+    }
+  };
+
+  // Thêm hàm xử lý khi click vào ngày trống trên calendar (lấy luôn ngày đó)
+  const handleDateClick = (info) => {
+    const today = new Date();
+    const selectedDate = new Date(info.dateStr);
+    today.setHours(0,0,0,0);
+    selectedDate.setHours(0,0,0,0);
+    if (selectedDate >= today) {
+      setSelectedAnimal({ defaultDate: info.dateStr });
+      setOpenCreate(true);
+    }
+  };
+
+  // Hiển thị nút X xoá trên mỗi event
+  function renderEventContent(arg) {
+    return (
+      <div style={{display: 'flex', alignItems: 'center'}}>
+        <span style={{flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>{arg.event.title}</span>
+        <IconButton
+          size="small"
+          color="error"
+          style={{marginLeft: 4, padding: 2}}
+          onClick={e => {
+            e.stopPropagation();
+            confirmDeleteRecord(arg.event.id);
+          }}
+        >
+          <Delete fontSize="small" />
+        </IconButton>
+      </div>
+    );
+  }
 
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h5" gutterBottom>Medical Manager</Typography>
-      <Typography variant="h6">Danh sách động vật bị ốm</Typography>
-      {loadingAnimals ? (
-        <CircularProgress />
-      ) : (
-        <TableContainer component={Paper} sx={{ mb: 4 }}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <StyledTableCell>ID</StyledTableCell>
-                <StyledTableCell>Tên</StyledTableCell>
-                <StyledTableCell>Ngày nhập</StyledTableCell>
-                <StyledTableCell>Hành động</StyledTableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {animals.map(a => (
-                <StyledTableRow key={a.pigId} hover>
-                  <StyledTableCell>{a.pigId}</StyledTableCell>
-                  <StyledTableCell>{a.name}</StyledTableCell>
-                  <StyledTableCell>{a.entryDate}</StyledTableCell>
-                  <StyledTableCell>
-                    {scheduledSet.has(a.pigId) ? (
-                      <Button disabled variant="outlined">
-                        Đã đặt lịch
-                      </Button>
-                    ) : (
-                      <Button
-                        startIcon={<Schedule />}
-                        onClick={() => handleSchedule(a)}
-                      >
-                        Đặt lịch
-                      </Button>
-                    )}
-                  </StyledTableCell>
-                </StyledTableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
+      <Box sx={{ mb: 4 }}>
+        <FullCalendar
+          plugins={[dayGridPlugin, interactionPlugin]}
+          initialView="dayGridMonth"
+          locale="vi"
+          events={getCalendarEvents(medicalRecords)}
+          height={550}
+          eventClick={handleEventClick}
+          dateClick={handleDateClick}
+          eventContent={renderEventContent}
+        />
+      </Box>
 
-      <Typography variant="h6">Lịch sử điều trị{selectedAnimal ? ` - ${selectedAnimal.name}` : ''}</Typography>
-      {loadingMedicals ? (
-        <CircularProgress />
-      ) : (
-        <TableContainer component={Paper} sx={{ mb: 4 }}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <StyledTableCell>Tên động vật</StyledTableCell>
-                <StyledTableCell>Ngày điều trị</StyledTableCell>
-                <StyledTableCell>Phương pháp</StyledTableCell>
-                <StyledTableCell>Thú y</StyledTableCell>
-                <StyledTableCell>Ghi chú</StyledTableCell>
-                <StyledTableCell>Hành động</StyledTableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {medicalRecords.map(r => (
-                <StyledTableRow key={r.id} hover>
-                  <StyledTableCell>{r.animal?.name}</StyledTableCell>
-                  <StyledTableCell>{r.treatmentDate}</StyledTableCell>
-                  <StyledTableCell>{r.treatmentMethod}</StyledTableCell>
-                  <StyledTableCell>{r.veterinarian}</StyledTableCell>
-                  <StyledTableCell>{r.notes}</StyledTableCell>
-                  <StyledTableCell>
-                    <IconButton onClick={() => handleOpenUpdate(r)}><Edit /></IconButton>
-                    <IconButton onClick={() => handleDeleteRecord(r.id)}><Delete /></IconButton>
-                  </StyledTableCell>
-                </StyledTableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
 
       {/* Create Form Dialog */}
       <CreateMedicalForm
         open={openCreate}
         animal={selectedAnimal}
+        animals={animals}
         onCreate={handleCreateRecord}
         onCancel={handleCloseCreate}
       />
@@ -287,7 +292,7 @@ export default function MedicalManager() {
               onChange={e => setFormData(prev => ({ ...prev, treatmentMethod: e.target.value }))}
             >
               <MenuItem value="INJECTION">Tiêm</MenuItem>
-              <MenuItem value="ORAL">Cho uống</MenuItem>
+              <MenuItem value="ORAL">Uống thuốc</MenuItem>
             </TextField>
             <TextField
               label="Thú y"
@@ -311,10 +316,23 @@ export default function MedicalManager() {
         </DialogActions>
       </Dialog>
 
+      {/* Dialog xác nhận xóa lịch chữa trị */}
+      <Dialog open={deleteDialog.open} onClose={() => setDeleteDialog({ open: false, id: null })}>
+        <DialogTitle>Xác nhận xóa</DialogTitle>
+        <DialogContent>
+          <Typography>Bạn có chắc chắn muốn xóa lịch chữa trị này không?</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialog({ open: false, id: null })} color="inherit">Hủy</Button>
+          <Button onClick={handleDeleteConfirmed} color="error" variant="contained">Xóa</Button>
+        </DialogActions>
+      </Dialog>
+
       <Snackbar
         open={snackbar.open}
         autoHideDuration={3000}
         onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
         <Alert severity={snackbar.severity} onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}>
           {snackbar.message}
@@ -322,4 +340,4 @@ export default function MedicalManager() {
       </Snackbar>
     </Box>
   );
-} 
+}
