@@ -2,13 +2,15 @@ import React, {useState, useEffect} from 'react';
 import {TextField, Button, Grid, Select, MenuItem, InputLabel, FormControl, Box, Alert} from '@mui/material';
 import {fetchFeedInventory} from '../../services/feedWarehouseService';
 import {pigPenService} from '../../services/pigPenService';
-import {createFeedPlan} from "../../services/feedPlanService";
+import {updateFeedPlan} from "../../services/feedPlanService";
 
-const FeedPlanForm = ({onClose, onSuccess}) => {
+const FeedPlanEditForm = ({onClose, onSuccess, initialData}) => {
+    console.log('Initial data in FeedPlanEditForm:', initialData);
     const [formData, setFormData] = useState({
-        feedType: '',
-        dailyFood: '',
-        pigPenId: '',
+        id: initialData.feedPlanId,
+        feedType: initialData.feedType,
+        dailyFood: initialData.totalDailyFood,
+        pigPenId: initialData.penId,
     });
 
     const [pigPens, setPigPens] = useState([]);
@@ -67,21 +69,21 @@ const FeedPlanForm = ({onClose, onSuccess}) => {
             }
 
             const data = {
-                ...formData,
-                dailyFood: parseInt(formData.dailyFood)
+                feedType: formData.feedType,
+                dailyFood: parseInt(formData.dailyFood),
+                penId: formData.pigPenId
             };
+            if (!formData.id) {
+                setError('Không tìm thấy ID kế hoạch để cập nhật.');
+                return;
+            }
 
-            await createFeedPlan(data);
+            await updateFeedPlan(formData.id, data);
             onSuccess();
-            setFormData({
-                feedType: '',
-                dailyFood: '',
-                pigPenId: '',
-            });
             setError('');
         } catch (error) {
-            console.error('Lỗi khi tạo khẩu phần:', error);
-            setError('Không thể tạo khẩu phần. Vui lòng thử lại sau.');
+            console.error('Lỗi khi cập nhật khẩu phần:', error.response?.data || error);
+            setError('Không thể cập nhật khẩu phần. Vui lòng thử lại sau.');
         }
     };
 
@@ -94,26 +96,6 @@ const FeedPlanForm = ({onClose, onSuccess}) => {
                             <Alert severity="error">{error}</Alert>
                         </Grid>
                     )}
-
-                    <Grid item xs={12}>
-                        <FormControl fullWidth required>
-                            <InputLabel>Chuồng nuôi</InputLabel>
-                            <Select
-                                name="pigPenId"
-                                value={formData.pigPenId}
-                                onChange={handleChange}
-                                label="Chuồng nuôi"
-                                disabled={loading}
-                            >
-                                {pigPens.map((pen) => (
-                                    <MenuItem key={pen.penId} value={pen.penId}>
-                                        {pen.name}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                    </Grid>
-
                     <Grid item xs={12}>
                         <FormControl fullWidth required>
                             <InputLabel>Loại thức ăn</InputLabel>
@@ -147,9 +129,28 @@ const FeedPlanForm = ({onClose, onSuccess}) => {
                     </Grid>
 
                     <Grid item xs={12}>
+                        <FormControl fullWidth required>
+                            <InputLabel>Chuồng nuôi</InputLabel>
+                            <Select
+                                name="pigPenId"
+                                value={formData.pigPenId}
+                                onChange={handleChange}
+                                label="Chuồng nuôi"
+                                disabled={loading}
+                            >
+                                {pigPens.map((pen) => (
+                                    <MenuItem key={pen.penId} value={pen.penId}>
+                                        {pen.name}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                    </Grid>
+
+                    <Grid item xs={12}>
                         <Box display="flex" gap={2}>
                             <Button type="submit" fullWidth variant="contained" color="primary">
-                                Tạo khẩu phần
+                                Cập nhật
                             </Button>
                             <Button fullWidth variant="outlined" onClick={onClose}>
                                 Đóng
@@ -162,4 +163,4 @@ const FeedPlanForm = ({onClose, onSuccess}) => {
     );
 };
 
-export default FeedPlanForm;
+export default FeedPlanEditForm;

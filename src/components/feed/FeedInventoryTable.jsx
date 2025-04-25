@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { fetchFeedInventory } from "../../services/feedWarehouseService.js";
+import React, { useEffect, useState, useCallback } from "react";
+import { fetchFeedInventory, searchFeedInventory } from "../../services/feedWarehouseService.js";
 import {
     Button, TextField, Table, TableBody, TableCell, TableContainer,
     TableHead, TableRow, Paper, Stack, Box, Typography, Snackbar,
@@ -9,6 +9,8 @@ import { Search, Upload, Download } from "@mui/icons-material";
 import { styled } from '@mui/material/styles';
 import ImportFeedForm from "./ImportFeedForm.jsx";
 import ExportFeedForm from "./ExportFeedForm.jsx";
+import {Link, useNavigate} from "react-router-dom";
+import { authService } from "../../services/authService";
 
 const StyledTableCell = styled(TableCell)(() => ({
     padding: '12px 16px',
@@ -36,6 +38,18 @@ export default function FeedInventoryManager() {
         message: '',
         severity: 'success'
     });
+    const [searchTimeout, setSearchTimeout] = useState(null);
+    const navigate = useNavigate();
+    const [userRole, setUserRole] = useState('');
+
+    useEffect(() => {
+        const role = authService.getRole();
+        setUserRole(role);
+    }, []);
+
+    const goToDetailPage = (feedType) => {
+        navigate(`/feed-transactions/${encodeURIComponent(feedType)}`);
+    };
 
     const fetchInventory = async () => {
         try {
@@ -56,28 +70,54 @@ export default function FeedInventoryManager() {
         fetchInventory();
     }, []);
 
-    useEffect(() => {
-        if (searchKeyword.trim() === '') {
-            setFilteredInventory(inventory);
-        } else {
-            const searchTerm = searchKeyword.toLowerCase().trim();
-            const filtered = inventory.filter(
-                (item) =>
-                    item.feedType?.toLowerCase().includes(searchTerm) ||
-                    item.remainingQuantity?.toString().includes(searchTerm)
-            );
-            setFilteredInventory(filtered);
+    const handleSearch = useCallback(async (keyword) => {
+        try {
+            if (keyword.trim() === '') {
+                await fetchInventory();
+            } else {
+                const searchResults = await searchFeedInventory(keyword);
+                setFilteredInventory(searchResults);
+            }
+        } catch (err) {
+            console.error("Lỗi khi tìm kiếm:", err);
+            setNotification({
+                open: true,
+                message: "Không thể tìm kiếm thức ăn",
+                severity: "error"
+            });
         }
-    }, [searchKeyword, inventory]);
+    }, []);
 
     const handleSearchChange = (e) => {
-        setSearchKeyword(e.target.value);
+        const value = e.target.value;
+        setSearchKeyword(value);
+
+        // Xóa timeout cũ nếu có
+        if (searchTimeout) {
+            clearTimeout(searchTimeout);
+        }
+
+        // Tạo timeout mới
+        const timeout = setTimeout(() => {
+            handleSearch(value);
+        }, 500); // Đợi 500ms sau khi người dùng ngừng gõ
+
+        setSearchTimeout(timeout);
     };
+
+    // Cleanup timeout khi component unmount
+    useEffect(() => {
+        return () => {
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+        };
+    }, [searchTimeout]);
 
     return (
         <Box sx={{ py: 2 }}>
             <Stack direction="row" spacing={2} mb={3}>
-               <h1>Quản lý tồn kho thức ăn</h1>
+                <h1>Quản lý tồn kho thức ăn</h1>
             </Stack>
 
             <Paper sx={{ p: 2, mb: 3 }}>
@@ -97,55 +137,86 @@ export default function FeedInventoryManager() {
                             ),
                         }}
                     />
+
                     <Button
                         variant="contained"
                         color="primary"
                         startIcon={<Search />}
-                        sx={{ flexShrink: 0, fontWeight: 'bold', textTransform: 'uppercase' }}
-                    >
+                        sx={{
+                            flexShrink: 0,
+                            fontWeight: 'bold',
+                            textTransform: 'uppercase'
+                        }}                    >
                         Tìm kiếm
                     </Button>
                 </Stack>
             </Paper>
 
-            <Box textAlign="center" mb={2}>
-                <Stack direction="row" spacing={2} justifyContent="row">
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        startIcon={<Upload />}
-                        onClick={() => setOpenImportForm(true)}
-                        sx={{ fontWeight: 'bold', textTransform: 'uppercase' }}
-                    >
-                        Nhập kho
-                    </Button>
-                    <Button
-                        variant="contained"
-                        color="secondary"
-                        startIcon={<Download />}
-                        onClick={() => setOpenExportForm(true)}
-                        sx={{ fontWeight: 'bold', textTransform: 'uppercase' }}
-                    >
-                        Xuất kho
-                    </Button>
-                </Stack>
-            </Box>
+            {userRole === 'MANAGER' && (
+                <Box textAlign="center" mb={2}>
+                    <Stack direction="row" spacing={2} justifyContent="row">
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            startIcon={<Upload />}
+                            onClick={() => setOpenImportForm(true)}
+                            sx={{ fontWeight: 'bold', textTransform: 'uppercase' }}
+                        >
+                            Nhập kho
+                        </Button>
+                        <Button
+                            variant="contained"
+                            color="secondary"
+                            startIcon={<Download />}
+                            onClick={() => setOpenExportForm(true)}
+                            sx={{ fontWeight: 'bold', textTransform: 'uppercase' }}
+                        >
+                            Xuất kho
+                        </Button>
+                    </Stack>
+                </Box>
+            )}
 
             <TableContainer component={Paper}>
-                <Table sx={{ minWidth: 650 }} aria-label="feed inventory table">
+                <Table>
                     <TableHead>
                         <TableRow>
                             <StyledTableHeaderCell>Loại thức ăn</StyledTableHeaderCell>
                             <StyledTableHeaderCell>Số lượng còn</StyledTableHeaderCell>
+                            {userRole === 'MANAGER' && (
+                            <StyledTableHeaderCell>Hành động</StyledTableHeaderCell>
+                            )}
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {filteredInventory.map((item, index) => (
-                            <TableRow key={item.id || index}>
-                                <StyledTableCell>{item.feedType}</StyledTableCell>
-                                <StyledTableCell>{item.remainingQuantity} kg</StyledTableCell>
+                        {filteredInventory.length > 0 ? (
+                            filteredInventory.map((item, index) => (
+                                <TableRow key={item.id || index}>
+                                    <StyledTableCell>{item.feedType}</StyledTableCell>
+                                    <StyledTableCell>{item.remainingQuantity} kg</StyledTableCell>
+                                    {userRole === 'MANAGER' && (
+                                    <StyledTableCell>
+                                        <Button
+                                            variant="outlined"
+                                            size="small"
+                                            component={Link}
+                                            to={`/dashboard/feed-inventory/${item.feedType}`}
+                                        >
+                                            Chi tiết
+                                        </Button>
+                                    </StyledTableCell>
+                                    )}
+                                </TableRow>
+                            ))
+                        ) : (
+                            <TableRow>
+                                <StyledTableCell colSpan={3} align="center">
+                                    <Typography variant="body1" color="text.secondary">
+                                        Không có dữ liệu
+                                    </Typography>
+                                </StyledTableCell>
                             </TableRow>
-                        ))}
+                        )}
                     </TableBody>
                 </Table>
             </TableContainer>

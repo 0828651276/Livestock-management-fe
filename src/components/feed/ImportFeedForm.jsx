@@ -7,6 +7,7 @@ const ImportFeedForm = ({onClose, onSuccess}) => {
         feedType: '',
         quantity: '',
         date: '',
+        note: ''
     });
 
     useEffect(() => {
@@ -23,14 +24,26 @@ const ImportFeedForm = ({onClose, onSuccess}) => {
         e.preventDefault();
         try {
             const data = {
-                ...formData,
-                quantity: parseInt(formData.quantity)
+                feedType: formData.feedType,
+                quantity: parseInt(formData.quantity),
+                date: formData.date,
+                note: formData.note
             };
-            await importFeed(data);
+            console.log('Data structure being sent to server:', {
+                feedType: typeof data.feedType,
+                quantity: typeof data.quantity,
+                date: typeof data.date,
+                note: typeof data.note
+            });
+            console.log('Full data being sent:', data);
+            const response = await importFeed(data);
+            console.log('Server response:', response);
             onSuccess();
-            setFormData({feedType: '', quantity: '', date: ''});
+            setFormData({feedType: '', quantity: '', date: '', note: ''});
         } catch (error) {
-            alert('Lỗi khi nhập kho!');
+            console.error('Error when submitting form:', error);
+            console.error('Error response:', error.response);
+            alert('Lỗi khi nhập kho! ' + (error.response?.data?.message || ''));
         }
     };
 
@@ -69,6 +82,16 @@ const ImportFeedForm = ({onClose, onSuccess}) => {
                             value={formData.date}
                             onChange={handleChange}
                             required
+                        />
+                    </Grid>
+                    <Grid item xs={12}>
+                        <TextField
+                            label="Ghi chú"
+                            name="note"
+                            type="text"
+                            fullWidth
+                            value={formData.note}
+                            onChange={handleChange}
                         />
                     </Grid>
                     <Grid item xs={12}>

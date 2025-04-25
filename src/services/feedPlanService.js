@@ -4,24 +4,19 @@ import { authService } from './authService';
 const API_URL = 'http://localhost:8080/api/plan';
 
 export const createFeedPlan = async (feedPlan) => {
-    return axios.post(`${API_URL}/`, feedPlan);
+    return axios.post(`${API_URL}`, feedPlan);
 };
 
-export const updateFeedPlan = async (id, feedPlan) => {
-    return axios.put(`${API_URL}/${id}`, feedPlan);
-};
-
-export const getFeedPlanById = async (id) => {
+export const updateFeedPlan = async (feedPlanId, feedPlan) => {
     try {
         const token = authService.getCurrentUser();
-        const response = await axios.get(`${API_URL}/${id}`, {
+        return axios.put(`${API_URL}/${feedPlanId}`, feedPlan, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
         });
-        return response.data;
     } catch (error) {
-        console.error('Lỗi khi lấy thông tin khẩu phần:', error);
+        console.error('Lỗi khi cập nhật khẩu phần:', error);
         throw error;
     }
 };

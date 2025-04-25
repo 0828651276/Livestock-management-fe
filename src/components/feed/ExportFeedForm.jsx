@@ -9,6 +9,7 @@ const ExportFeedForm = ({ onClose, onSuccess }) => {
         quantity: '',
         date: new Date().toISOString().split('T')[0], // Set default to today's date
         pigPenId: '',
+        note: ''
     });
 
     const [pigPens, setPigPens] = useState([]);
@@ -110,6 +111,7 @@ const ExportFeedForm = ({ onClose, onSuccess }) => {
                 quantity: '',
                 transactionDate: '',
                 pigPenId: '',
+                note: ''
             });
             setError('');
         } catch (error) {
@@ -188,7 +190,16 @@ const ExportFeedForm = ({ onClose, onSuccess }) => {
                             </Select>
                         </FormControl>
                     </Grid>
-
+                    <Grid item xs={12}>
+                        <TextField
+                            label="Ghi chú"
+                            name="note"
+                            type="text"
+                            fullWidth
+                            value={formData.note}
+                            onChange={handleChange}
+                        />
+                    </Grid>
                     <Grid item xs={12}>
                         <Box display="flex" gap={2}>
                             <Button type="submit" fullWidth variant="contained" color="secondary">

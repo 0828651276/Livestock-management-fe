@@ -14,8 +14,11 @@ import UnauthorizedPage from './pages/UnauthorizedPage';
 import ExportedAnimalsManager from "./components/exported/ExportedAnimalManager.jsx";
 import FeedInventoryTable from "./components/feed/FeedInventoryTable.jsx";
 import FeedSummaryTable from "./components/feedlan/FeedSummaryTable.jsx";
-import FeedPlanUpdatePage from "./components/feedlan/FeedPlanUpdatePage.jsx";
-import FeedPlanForm from "./components/feedlan/FeedPlanForm.jsx";
+import NotificationManager from "./components/common/NotificationManager.jsx";
+import MedicalManager from "./components/medical/MedicalManager.jsx";
+import VaccinationList from "./components/vaccination/VaccinationList.jsx";
+import FeedWarehousePage from "./pages/feed/FeedWarehousePage.jsx";
+import FeedTransactionDetail from "./components/feed/FeedTransactionDetail.jsx";
 
 // Tạo theme tùy chỉnh
 const theme = createTheme({
@@ -65,8 +68,6 @@ function App() {
         setLoading(false);
     }, []);
 
-
-
     if (loading) {
         return <div>Đang tải...</div>;
     }
@@ -84,18 +85,21 @@ function App() {
 
                         {/* Routes chỉ cho MANAGER */}
                         <Route path="employees" element={<RoleBasedRoute element={<EmployeeManager/>} requiredRole="MANAGER"/>}/>
-                        <Route path="notifications" element={<RoleBasedRoute element={<div>Quản lý thông báo</div>} requiredRole="MANAGER"/>}/>
+                        <Route path="notifications" element={<RoleBasedRoute element={<NotificationManager/>} requiredRole="MANAGER"/>}/>
 
                         {/* Routes cho tất cả người dùng */}
                         <Route path="pigpens" element={<PigPenManager/>}/>
                         <Route path="animals" element={<AnimalManager/>}/>
-                        <Route path="exported-animals" element={<ExportedAnimalsManager/>}/> {/* Add this line */}
+                        <Route path="exported-animals" element={<ExportedAnimalsManager/>}/>
                         <Route path="change-password" element={<ChangePasswordForm/>}/>
                         <Route path="employees/detail" element={<EmployeeDetail/>}/>
                         <Route path="feedwarehouse" element={<FeedInventoryTable/>}/>
                         <Route path="feedplan" element={<FeedSummaryTable/>}/>
-                        <Route path="feedplanupdate" element={<FeedPlanUpdatePage/>}/>
-                        <Route path="feedplanup" element={FeedPlanForm}/>
+                        <Route path="feed-inventory/:feedType" element={<FeedTransactionDetail />} />
+
+                        {/* Route mới cho quản lý điều trị y tế */}
+                        <Route path="vaccinations" element={<VaccinationList/>}/>
+                        <Route path="medical" element={<MedicalManager/>}/>
                     </Route>
                 </Routes>
             </ThemeProvider>

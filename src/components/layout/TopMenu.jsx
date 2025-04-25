@@ -21,6 +21,7 @@ const TopMenu = ({drawerWidth, handleDrawerToggle, user}) => {
     const open = Boolean(anchorEl);
     const [profile, setProfile] = useState();
     const [lastUpdate, setLastUpdate] = useState(Date.now);
+    const [userRole, setUserRole] = useState('');
 
     const [notifications, setNotifications] = useState([]);
     const fetchEmployee = async () => {
@@ -36,6 +37,9 @@ const TopMenu = ({drawerWidth, handleDrawerToggle, user}) => {
     };
 
     useEffect(() => {
+        const role = localStorage.getItem('role');
+        setUserRole(role);
+
         fetchEmployee();
     }, [lastUpdate]);
 
@@ -60,13 +64,19 @@ const TopMenu = ({drawerWidth, handleDrawerToggle, user}) => {
                 setNotifications([]);
             }
         }
-        fetchNotifications();
-    }, []);
+        // Chỉ fetch thông báo nếu là employee
+        if (userRole === 'STAFF') {
+            fetchNotifications();
+        }
+    }, [userRole]);
 
     const reloadNotifications = async () => {
         try {
-            const data = await notificationService.getAll();
-            setNotifications(data);
+            // Chỉ fetch khi là employee
+            if (userRole === 'STAFF') {
+                const data = await notificationService.getAll();
+                setNotifications(data);
+            }
         } catch (err) {
             setNotifications([]);
         }
@@ -74,9 +84,12 @@ const TopMenu = ({drawerWidth, handleDrawerToggle, user}) => {
 
     useEffect(() => {
         window.reloadNotifications = reloadNotifications;
-        reloadNotifications();
+        // Chỉ gọi nếu là employee
+        if (userRole === 'STAFF') {
+            reloadNotifications();
+        }
         return () => { delete window.reloadNotifications; };
-    }, []);
+    }, [userRole]);
 
     const handleUserMenuOpen = (e) => setAnchorEl(e.currentTarget);
     const handleUserMenuClose = () => setAnchorEl(null);
@@ -106,8 +119,10 @@ const TopMenu = ({drawerWidth, handleDrawerToggle, user}) => {
                 <Typography variant="h6" sx={{flexGrow: 1}}>
                     Livestock - Pig Farm Management System
                 </Typography>
-                {/* Nút thông báo */}
-                <NotificationDropdown notifications={notifications} onCreated={reloadNotifications} />
+                {/* Chỉ hiển thị nút thông báo nếu là STAFF, không phải MANAGER */}
+                {userRole === 'STAFF' && (
+                    <NotificationDropdown notifications={notifications} onCreated={reloadNotifications} />
+                )}
                 <Box onClick={handleUserMenuOpen} sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                     <IconButton>
                         <Avatar

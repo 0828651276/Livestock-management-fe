@@ -10,6 +10,8 @@ import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
+import MedicationIcon from '@mui/icons-material/Medication';
+import VaccinesIcon from '@mui/icons-material/Vaccines';
 import {useNavigate} from "react-router-dom";
 import {Collapse} from '@mui/material';
 import ExpandLess from '@mui/icons-material/ExpandLess';
@@ -159,7 +161,7 @@ const Sidebar = ({drawerWidth, activeMenu, setActiveMenu}) => {
                                 </ListItem>
                             </List>
                         </Collapse>
-                        
+
                         <ListItem onClick={toggleMenuFeel} sx={{...menuItemStyle, backgroundColor: '#222'}}>
                             <ListItemIcon sx={{color: 'white'}}>
                                 <RestaurantIcon/>
@@ -176,7 +178,7 @@ const Sidebar = ({drawerWidth, activeMenu, setActiveMenu}) => {
                                     <ListItemText primary="Quản lý tồn kho"/>
                                 </ListItem>
                                 <ListItem
-                                    onClick={() => handleMenuClick('animals')}
+                                    onClick={() => handleMenuClick('feedplan')}
                                     sx={{...menuItemStyle, pl: 4}}
                                 >
                                     <ListItemText primary="Quản lý khẩu phần ăn"/>
@@ -193,7 +195,13 @@ const Sidebar = ({drawerWidth, activeMenu, setActiveMenu}) => {
                         <Collapse in={openMenuHospital} timeout="auto" unmountOnExit>
                             <List component="ul" disablePadding>
                                 <ListItem
-                                    onClick={() => handleMenuClick('vaccination')}
+                                    onClick={() => handleMenuClick('medical')}
+                                    sx={{...menuItemStyle, pl: 4}}
+                                >
+                                    <ListItemText primary="Lịch điều trị"/>
+                                </ListItem>
+                                <ListItem
+                                    onClick={() => handleMenuClick('vaccinations')}
                                     sx={{...menuItemStyle, pl: 4}}
                                 >
                                     <ListItemText primary="Lịch tiêm phòng"/>

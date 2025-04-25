@@ -7,7 +7,8 @@ import {
     DialogActions,
     Typography,
     Alert,
-    InputAdornment
+    InputAdornment,
+    MenuItem
 } from "@mui/material";
 import { animalService } from "../../services/animalService";
 import { pigPenService } from "../../services/pigPenService";
@@ -18,9 +19,9 @@ const initialState = {
     name: "",
     entryDate: "",
     exitDate: "",
-    status: "EXPORTED",
+    healthStatus: "ACTIVE",
+    raisingStatus: "EXPORTED",
     weight: "",
-    penId: "",
     quantity: 1
 };
 
@@ -32,30 +33,20 @@ const ExportedAnimalFormUpdate = ({ onClose, animalData }) => {
     const [serverError, setServerError] = useState("");
 
     useEffect(() => {
-        fetchPigPens();
-
         if (animalData) {
-            // Format dates for form inputs
+            // Format dates and statuses for form inputs
             const formattedAnimal = {
                 ...animalData,
                 entryDate: animalData.entryDate ? new Date(animalData.entryDate).toISOString().split('T')[0] : "",
                 exitDate: animalData.exitDate ? new Date(animalData.exitDate).toISOString().split('T')[0] : "",
-                penId: animalData.pigPen?.penId || "",
+                healthStatus: animalData.healthStatus || "ACTIVE",
+                raisingStatus: animalData.raisingStatus || "EXPORTED",
+                weight: animalData.weight?.toString() || "",
                 quantity: animalData.quantity || 1
             };
             setAnimal(formattedAnimal);
         }
     }, [animalData]);
-
-    const fetchPigPens = async () => {
-        try {
-            const pens = await pigPenService.getAllPigPens();
-            setPigPens(pens);
-        } catch (error) {
-            console.error("Lỗi khi lấy danh sách chuồng:", error);
-            setServerError("Không thể tải danh sách chuồng.");
-        }
-    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -85,13 +76,14 @@ const ExportedAnimalFormUpdate = ({ onClose, animalData }) => {
                 name: animal.name,
                 entryDate: animal.entryDate,
                 exitDate: animal.exitDate || null,
-                status: "EXPORTED", // Force status to EXPORTED
+                healthStatus: animal.healthStatus,
+                raisingStatus: animal.raisingStatus,
                 weight: parseFloat(animal.weight),
-                penId: parseInt(animal.penId),
+                penId: null,
                 quantity: parseInt(animal.quantity)
             };
 
-            await animalService.updateAnimal(animal.pigId, animalRequestData);
+            await animalService.update(animal.pigId, animalRequestData);
             onClose(true);
         } catch (error) {
             console.error("Lỗi khi cập nhật động vật:", error);
@@ -139,8 +131,7 @@ const ExportedAnimalFormUpdate = ({ onClose, animalData }) => {
                     fullWidth
                 />
 
-                {/* Đã xoá ô chọn chuồng xuất */}
-
+                {/* Ngày nhập */}
                 <TextField
                     label="Ngày nhập"
                     name="entryDate"
@@ -155,7 +146,40 @@ const ExportedAnimalFormUpdate = ({ onClose, animalData }) => {
                     className={errors.entryDate ? "field-error" : ""}
                 />
 
-        
+                {/* Ngày xuất */}
+                <TextField
+                    label="Ngày xuất"
+                    name="exitDate"
+                    type="date"
+                    value={animal.exitDate}
+                    onChange={handleChange}
+                    InputLabelProps={{ shrink: true }}
+                    required
+                    error={!!errors.exitDate}
+                    helperText={errors.exitDate}
+                    sx={{ "& .MuiInputBase-input": { py: 1.5 } }}
+                    className={errors.exitDate ? "field-error" : ""}
+                    fullWidth
+                />
+
+                {/* Trạng thái sức khỏe */}
+                <TextField
+                    select
+                    label="Trạng thái sức khỏe"
+                    name="healthStatus"
+                    value={animal.healthStatus}
+                    onChange={handleChange}
+                    fullWidth
+                    required
+                    error={!!errors.healthStatus}
+                    helperText={errors.healthStatus}
+                    sx={{ "& .MuiInputBase-input": { py: 1.5 } }}
+                    className={errors.healthStatus ? "field-error" : ""}
+                >
+                    <MenuItem value="ACTIVE">Khỏe mạnh</MenuItem>
+                    <MenuItem value="SICK">Bị bệnh</MenuItem>
+                </TextField>
+
                 <TextField
                     label="Cân nặng"
                     name="weight"

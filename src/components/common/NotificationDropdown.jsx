@@ -2,40 +2,38 @@
 import React, { useState, useEffect } from 'react';
 import { IconButton, Badge, Menu, MenuItem, Typography, Divider, Box } from '@mui/material';
 import NotificationsIcon from '@mui/icons-material/Notifications';
-import AddIcon from '@mui/icons-material/Add';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import CreateNotificationForm from "./CreateNotificationManager.jsx";
-import UpdateNotificationForm from "./UpdateNotificationForm.jsx";
 import { notificationService } from '../../services/NotificationService';
 dayjs.extend(relativeTime);
 
-// Nhận props notifications là mảng các thông báo dạng { id, content, posted_date }
+// Component hiển thị danh sách thông báo
 const NotificationDropdown = ({ notifications = [], onCreated }) => {
     const [anchorEl, setAnchorEl] = useState(null);
-    const [openCreate, setOpenCreate] = useState(false);
-    const [anchorElMenu, setAnchorElMenu] = useState(null);
-    const [menuNotifId, setMenuNotifId] = useState(null);
-    const [openUpdate, setOpenUpdate] = useState(false);
-    const [selectedNotification, setSelectedNotification] = useState(null);
-    const [deleting, setDeleting] = useState(false);
     const [userRole, setUserRole] = useState('');
+    const [employeeId, setEmployeeId] = useState('');
+    const [employeeNotifications, setEmployeeNotifications] = useState([]);
     const open = Boolean(anchorEl);
 
-    // Lấy vai trò người dùng khi component được mount
+    // Lấy vai trò và ID người dùng
     useEffect(() => {
         const role = localStorage.getItem('role');
+        const id = localStorage.getItem('employeeId');
         setUserRole(role);
+        setEmployeeId(id);
     }, []);
 
-    // Kiểm tra xem người dùng có quyền admin không
-    const isAdmin = userRole === 'MANAGER';
+    // Lọc thông báo cho employee dựa trên ID employee
+    useEffect(() => {
+        if (userRole === 'STAFF' && employeeId && notifications.length > 0) {
+            // Lọc chỉ thông báo dành cho employee này
+            // Backend đã lọc sẵn, chỉ cần hiển thị
+            setEmployeeNotifications(notifications);
+        }
+    }, [userRole, employeeId, notifications]);
 
     const handleOpen = (e) => setAnchorEl(e.currentTarget);
     const handleClose = () => setAnchorEl(null);
-    const handleOpenCreate = () => setOpenCreate(true);
-    const handleCloseCreate = () => setOpenCreate(false);
 
     // Hàm reload lại danh sách khi thêm mới thành công
     const handleCreated = () => {
@@ -44,41 +42,14 @@ const NotificationDropdown = ({ notifications = [], onCreated }) => {
         }
     };
 
-    const handleMenuOpen = (event, notifId) => {
-        // Chỉ cho phép admin mở menu quản lý thông báo (sửa/xóa)
-        if (isAdmin) {
-            setAnchorElMenu(event.currentTarget);
-            setMenuNotifId(notifId);
-        }
-    };
-
-    const handleMenuClose = () => {
-        setAnchorElMenu(null);
-        setMenuNotifId(null);
-    };
-
-    const handleUpdateClick = () => {
-        const notif = notifications.find(n => n.id === menuNotifId);
-        setSelectedNotification(notif);
-        setOpenUpdate(true);
-        handleMenuClose();
-    };
-
-    const handleCloseUpdate = () => {
-        setOpenUpdate(false);
-        setSelectedNotification(null);
-    };
-
-    const handleDeleteClick = async () => {
-        setDeleting(true);
+    // Đánh dấu thông báo đã đọc
+    const handleMarkAsRead = async (notifId) => {
         try {
-            await notificationService.delete(menuNotifId);
-            if (onCreated) onCreated();
+            await notificationService.markAsRead(notifId);
+            onCreated && onCreated(); // Reload thông báo
+            handleClose(); // Đóng dropdown sau khi đánh dấu đã đọc
         } catch (err) {
-            alert('Xóa thông báo thất bại');
-        } finally {
-            setDeleting(false);
-            handleMenuClose();
+            console.error("Lỗi khi đánh dấu đã đọc:", err);
         }
     };
 
@@ -94,7 +65,7 @@ const NotificationDropdown = ({ notifications = [], onCreated }) => {
     };
 
     // Đếm số lượng thông báo chưa đọc
-    const unreadCount = notifications.filter(n => !getIsRead(n)).length;
+    const unreadCount = employeeNotifications.filter(n => !getIsRead(n)).length;
 
     return (
         <>
@@ -109,28 +80,17 @@ const NotificationDropdown = ({ notifications = [], onCreated }) => {
                 onClose={handleClose}
                 anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                 transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                PaperProps={{ sx: { minWidth: 320 } }}
+                PaperProps={{ sx: { minWidth: 320, maxHeight: '80vh' } }}
             >
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2 }}>
                     <Typography sx={{ fontWeight: 'bold' }}>Thông báo</Typography>
-                    {/* Chỉ hiển thị nút thêm mới nếu là admin */}
-                    {isAdmin && (
-                        <IconButton size="small" color="primary" onClick={handleOpenCreate}>
-                            <AddIcon />
-                        </IconButton>
-                    )}
                 </Box>
                 <Divider />
 
-                {/* Form thêm thông báo - chỉ hiển thị cho admin */}
-                {isAdmin && (
-                    <CreateNotificationForm open={openCreate} onClose={handleCloseCreate} onCreated={onCreated || handleCreated} />
-                )}
-
-                {notifications.length === 0 ? (
+                {employeeNotifications.length === 0 ? (
                     <MenuItem disabled>Không có thông báo nào</MenuItem>
                 ) : (
-                    notifications.map(notif => (
+                    employeeNotifications.map(notif => (
                         <MenuItem
                             key={notif.id}
                             sx={{
@@ -144,55 +104,29 @@ const NotificationDropdown = ({ notifications = [], onCreated }) => {
                                     backgroundColor: getIsRead(notif) ? '#f5f5f5' : 'rgba(25, 118, 210, 0.15)',
                                 },
                             }}
-                            onClick={async () => {
+                            onClick={() => {
                                 if (!getIsRead(notif)) {
-                                    await notificationService.markAsRead(notif.id);
-                                    onCreated && onCreated();
+                                    handleMarkAsRead(notif.id);
                                 }
                             }}
                         >
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                 <Box sx={{ flex: 1 }}>
-                                    <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>{notif.content}</Typography>
+                                    <Typography variant="body2" sx={{
+                                        wordBreak: 'break-word',
+                                        fontWeight: getIsRead(notif) ? 'normal' : 'bold'
+                                    }}>
+                                        {notif.content}
+                                    </Typography>
                                     <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
                                         {notif.postedAt ? dayjs(notif.postedAt).fromNow() : ''}
                                     </Typography>
                                 </Box>
-                                {/* Chỉ hiển thị nút 3 chấm (quản lý) nếu là admin */}
-                                {isAdmin && (
-                                    <IconButton size="small" sx={{ ml: 1 }} onClick={e => { e.stopPropagation(); handleMenuOpen(e, notif.id); }}>
-                                        <MoreVertIcon />
-                                    </IconButton>
-                                )}
                             </Box>
                         </MenuItem>
                     ))
                 )}
             </Menu>
-
-            {/* Menu quản lý thông báo - chỉ hiển thị cho admin */}
-            {isAdmin && (
-                <Menu
-                    anchorEl={anchorElMenu}
-                    open={Boolean(anchorElMenu)}
-                    onClose={handleMenuClose}
-                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                >
-                    <MenuItem onClick={handleUpdateClick}>Cập nhật</MenuItem>
-                    <MenuItem onClick={handleDeleteClick} disabled={deleting}>{deleting ? 'Đang xóa...' : 'Xóa'}</MenuItem>
-                </Menu>
-            )}
-
-            {/* Form cập nhật thông báo - chỉ hiển thị cho admin */}
-            {isAdmin && (
-                <UpdateNotificationForm
-                    open={openUpdate}
-                    onClose={handleCloseUpdate}
-                    notification={selectedNotification}
-                    onUpdated={onCreated}
-                />
-            )}
         </>
     );
 };

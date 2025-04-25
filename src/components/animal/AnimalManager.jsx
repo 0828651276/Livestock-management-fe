@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { animalService } from "../../services/animalService";
 import { pigPenService } from "../../services/pigPenService";
-import "../styles/AnimalManager.css";
 import {
     Button,
     TextField,
@@ -11,99 +10,77 @@ import {
     TableContainer,
     TableHead,
     TableRow,
+    TablePagination,
     Paper,
     Stack,
     Box,
     Dialog,
     DialogTitle,
     DialogContent,
-    DialogContentText,
     DialogActions,
     Typography,
     IconButton,
     Snackbar,
     Alert,
-    InputAdornment,
-    Grid,
-    TablePagination,
-    Tooltip,
-    CircularProgress,
     Chip,
+    MenuItem,
+    Select,
     FormControl,
     InputLabel,
-    Select,
-    MenuItem
+    Grid,
+    InputAdornment,
+    CircularProgress,
+    Tooltip,
+    Menu,
+    ListItemIcon,
+    ListItemText
 } from "@mui/material";
 import {
     Add,
     Edit,
     Delete,
     Search,
+    ArrowBack,
     FilterAlt,
-    FilterAltOff,
-    Refresh,
-    Pets,
-    ExitToApp
+    VisibilityOutlined,
+    LocalShippingOutlined,
+    MoreVert
 } from "@mui/icons-material";
-import AnimalFormUpdate from "./AnimalFormUpdate.jsx";
-import AnimalFormCreate from "./AnimalFormCreate.jsx";
-import { styled } from '@mui/material/styles';
+import { styled } from "@mui/material/styles";
+import { useNavigate } from "react-router-dom";
+import AnimalFormCreate from "./AnimalFormCreate";
+import AnimalFormUpdate from "./AnimalFormUpdate";
+import { format } from "date-fns";
 
 // Styled components
-const ActionButton = styled(Button)(({ theme }) => ({
-    minWidth: '32px',
-    padding: '6px 12px',
-    boxShadow: 'none',
-    '&:hover': {
-        boxShadow: theme.shadows[2]
-    }
-}));
-
-const StyledTableCell = styled(TableCell)(() => ({
-    padding: '12px 16px',
-    fontSize: '0.875rem',
-}));
-
-const StyledTableHeaderCell = styled(TableCell)(({ theme }) => ({
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
     backgroundColor: theme.palette.primary.main,
     color: theme.palette.common.white,
-    padding: '14px 16px',
-    fontSize: '0.875rem',
-    fontWeight: 'bold'
+    fontWeight: "bold",
+    padding: "16px"
 }));
 
-const SearchContainer = styled(Paper)(({ theme }) => ({
-    padding: theme.spacing(2),
+const StyledPaper = styled(Paper)(({ theme }) => ({
+    padding: theme.spacing(3),
     marginBottom: theme.spacing(3),
-    boxShadow: theme.shadows[1],
-    borderRadius: '8px'
+    backgroundColor: "#fff",
+    boxShadow: "0 2px 10px rgba(0, 0, 0, 0.1)"
 }));
-
-// Status mapping for display
-const statusMapping = {
-    ACTIVE: { label: 'Khỏe mạnh', color: 'success', class: 'status-active' },
-    SICK: { label: 'Bị bệnh', color: 'warning', class: 'status-sick' },
-    UNVACCINATED: { label: 'Chưa tiêm phòng', color: 'error', class: 'status-unvaccinated' },
-    EXPORTED: { label: 'Đã xuất chuồng', color: 'default', class: 'status-exported' }
-};
-
 
 export default function AnimalManager() {
-    // State variables
+    const navigate = useNavigate();
     const [animals, setAnimals] = useState([]);
     const [filteredAnimals, setFilteredAnimals] = useState([]);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
-    const [filterStatus, setFilterStatus] = useState('');
-    const [filterPenId, setFilterPenId] = useState('');
-    const [dateRange, setDateRange] = useState({ from: '', to: '' });
+    const [pigPens, setPigPens] = useState([]);
+    const [emptyPens, setEmptyPens] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [selectedAnimal, setSelectedAnimal] = useState(null);
     const [openCreateForm, setOpenCreateForm] = useState(false);
     const [openUpdateForm, setOpenUpdateForm] = useState(false);
     const [notification, setNotification] = useState({
         open: false,
-        message: '',
-        severity: 'success'
+        message: "",
+        severity: "success"
     });
     const [deleteDialog, setDeleteDialog] = useState({
         open: false,
@@ -111,33 +88,90 @@ export default function AnimalManager() {
     });
     const [exportDialog, setExportDialog] = useState({
         open: false,
-        animalId: null,
-        animalName: ''
+        animalId: null
     });
+
+    // Menu thao tác
+    const [actionMenu, setActionMenu] = useState({
+        anchorEl: null,
+        animal: null
+    });
+
+    // Filters
+    const [nameFilter, setNameFilter] = useState("");
+    const [healthStatusFilter, setHealthStatusFilter] = useState("");
+    const [raisingStatusFilter, setRaisingStatusFilter] = useState("");
+    const [penIdFilter, setPenIdFilter] = useState("");
+    const [showFilters, setShowFilters] = useState(false);
+
+    // Pagination
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
-    const [loading, setLoading] = useState(false);
-    const [searchLoading, setSearchLoading] = useState(false);
-    const [userRole, setUserRole] = useState('');
-    const [employeeId, setEmployeeId] = useState('');
-    const [pigPens, setPigPens] = useState([]);
 
-    // Initialize and fetch data
     useEffect(() => {
-        const role = localStorage.getItem('role');
-        const id = localStorage.getItem('employeeId');
-        setUserRole(role);
-        setEmployeeId(id);
-        fetchAnimals(role, id);
-        fetchPigPens();
+        fetchData();
     }, []);
 
-    // Notification handlers
+    useEffect(() => {
+        applyFilters();
+    }, [nameFilter, healthStatusFilter, raisingStatusFilter, penIdFilter, animals]);
+
+    const fetchData = async () => {
+        try {
+            setLoading(true);
+            const [animalsData, pensData, emptyPensData] = await Promise.all([
+                animalService.getAll(),
+                pigPenService.getAllPigPens(),
+                pigPenService.getEmptyPens()
+            ]);
+            setAnimals(animalsData);
+            setFilteredAnimals(animalsData);
+            setPigPens(pensData);
+            setEmptyPens(emptyPensData);
+        } catch (err) {
+            console.error("Lỗi khi tải dữ liệu:", err);
+            showNotification("Lỗi khi tải dữ liệu", "error");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const applyFilters = () => {
+        let filtered = [...animals];
+
+        if (nameFilter) {
+            filtered = filtered.filter(animal =>
+                animal.name.toLowerCase().includes(nameFilter.toLowerCase())
+            );
+        }
+
+        if (healthStatusFilter) {
+            filtered = filtered.filter(
+                animal => animal.healthStatus === healthStatusFilter
+            );
+        }
+
+        if (raisingStatusFilter) {
+            filtered = filtered.filter(
+                animal => animal.raisingStatus === raisingStatusFilter
+            );
+        }
+
+        if (penIdFilter) {
+            filtered = filtered.filter(
+                animal => animal.pigPen && animal.pigPen.penId === Number(penIdFilter)
+            );
+        }
+
+        setFilteredAnimals(filtered);
+        setPage(0);
+    };
+
     const handleCloseNotification = () => {
         setNotification({ ...notification, open: false });
     };
 
-    const showNotification = (message, severity = 'success') => {
+    const showNotification = (message, severity = "success") => {
         setNotification({
             open: true,
             message,
@@ -145,169 +179,92 @@ export default function AnimalManager() {
         });
     };
 
-    // Data fetching functions
-    const fetchAnimals = async (role, id) => {
-        setLoading(true);
+    const handleCreateAnimal = () => {
+        setOpenCreateForm(true);
+    };
+
+    const handleUpdateAnimal = (animal) => {
+        setSelectedAnimal(animal);
+        setOpenUpdateForm(true);
+    };
+
+    const handleDeleteClick = (id) => {
+        setDeleteDialog({
+            open: true,
+            animalId: id
+        });
+    };
+
+    const handleExportClick = (id) => {
+        setExportDialog({
+            open: true,
+            animalId: id
+        });
+    };
+
+    const handleDeleteCancel = () => {
+        setDeleteDialog({
+            open: false,
+            animalId: null
+        });
+    };
+
+    const handleExportCancel = () => {
+        setExportDialog({
+            open: false,
+            animalId: null
+        });
+    };
+
+    // Xử lý menu thao tác
+    const handleActionMenuOpen = (event, animal) => {
+        setActionMenu({
+            anchorEl: event.currentTarget,
+            animal: animal
+        });
+    };
+
+    const handleActionMenuClose = () => {
+        setActionMenu({
+            anchorEl: null,
+            animal: null
+        });
+    };
+
+    const handleDeleteConfirm = async () => {
         try {
-            let data;
-            // Nếu là MANAGER, lấy tất cả động vật
-            if (role === 'MANAGER') {
-                data = await animalService.getAllAnimals();
-            }
-            // Nếu là EMPLOYEE, chỉ lấy động vật từ chuồng mà họ chăm sóc
-            else {
-                // Đầu tiên lấy các chuồng mà nhân viên này chăm sóc
-                const pens = await pigPenService.findByEmployeeId(id);
-
-                // Nếu không có chuồng nào, trả về mảng rỗng
-                if (!pens || pens.length === 0) {
-                    setAnimals([]);
-                    setFilteredAnimals([]);
-                    setLoading(false);
-                    return;
-                }
-
-                // Lấy tất cả động vật từ các chuồng
-                const penIds = pens.map(pen => pen.penId);
-                const animalList = [];
-
-                // Lấy động vật từ từng chuồng và gộp lại
-                for (const penId of penIds) {
-                    const penAnimals = await animalService.getAnimalsByPenId(penId);
-                    animalList.push(...penAnimals);
-                }
-
-                // Loại bỏ trùng lặp (nếu có)
-                data = [...new Map(animalList.map(item => [item.pigId, item])).values()];
-            }
-
-            setAnimals(data);
-            setFilteredAnimals(data);
+            await animalService.delete(deleteDialog.animalId);
+            setAnimals(animals.filter(a => a.pigId !== deleteDialog.animalId));
+            showNotification("Xóa động vật thành công");
         } catch (err) {
-            console.error("Error fetching animals:", err);
-            showNotification("Could not load animal data", "error");
+            console.error("Lỗi khi xóa động vật:", err);
+            showNotification("Lỗi khi xóa động vật", "error");
         } finally {
-            setLoading(false);
+            handleDeleteCancel();
         }
     };
 
-    const fetchPigPens = async () => {
+    const handleExportConfirm = async () => {
         try {
-            // Nếu là MANAGER, lấy tất cả chuồng
-            // Nếu là EMPLOYEE, chỉ lấy chuồng mà họ chăm sóc
-            const role = localStorage.getItem('role');
-            const id = localStorage.getItem('employeeId');
-
-            let pens;
-            if (role === 'MANAGER') {
-                pens = await pigPenService.getAllPigPens();
-            } else {
-                pens = await pigPenService.findByEmployeeId(id);
-            }
-
-            setPigPens(pens);
+            await animalService.exportAnimal(exportDialog.animalId);
+            // Refresh data after exporting
+            fetchData();
+            showNotification("Xuất chuồng thành công");
         } catch (err) {
-            console.error("Error fetching pig pens:", err);
-        }
-    };
-
-    // Search and filter functions
-    const handleSearch = async () => {
-        setSearchLoading(true);
-        try {
-            // Build search parameters
-            const params = {};
-            if (searchTerm) params.name = searchTerm;
-            if (filterStatus) params.status = filterStatus;
-            if (filterPenId) params.penId = filterPenId;
-            if (dateRange.from) params.entryDateFrom = dateRange.from;
-            if (dateRange.to) params.entryDateTo = dateRange.to;
-
-            // Nếu là EMPLOYEE, thêm giới hạn chỉ tìm trong chuồng mà họ chăm sóc
-            if (userRole !== 'MANAGER') {
-                // Lấy danh sách chuồng do nhân viên chăm sóc
-                const employeePens = await pigPenService.findByEmployeeId(employeeId);
-                const employeePenIds = employeePens.map(pen => pen.penId);
-
-                // Lọc kết quả search theo chuồng của nhân viên
-                let searchResults;
-
-                if (Object.keys(params).length === 0) {
-                    // Nếu không có tham số tìm kiếm, lấy tất cả động vật trong chuồng của nhân viên
-                    searchResults = [];
-                    for (const penId of employeePenIds) {
-                        const penAnimals = await animalService.getAnimalsByPenId(penId);
-                        searchResults.push(...penAnimals);
-                    }
-                } else {
-                    // Nếu có tham số tìm kiếm, tìm với các tham số đó
-                    searchResults = await animalService.searchAnimals(params);
-                    // Lọc chỉ những động vật thuộc chuồng của nhân viên
-                    searchResults = searchResults.filter(animal =>
-                        animal.pigPen && employeePenIds.includes(animal.pigPen.penId)
-                    );
-                }
-
-                setFilteredAnimals(searchResults);
-                if (searchResults.length === 0) {
-                    showNotification("No matching animals found", "info");
-                }
-            } else {
-                // Đối với MANAGER, tìm kiếm bình thường
-                if (Object.keys(params).length === 0) {
-                    setFilteredAnimals(animals);
-                } else {
-                    const searchResults = await animalService.searchAnimals(params);
-                    setFilteredAnimals(searchResults);
-                    if (searchResults.length === 0) {
-                        showNotification("No matching animals found", "info");
-                    }
-                }
-            }
-        } catch (error) {
-            console.error("Error searching animals:", error);
-            showNotification("Error searching animals", "error");
+            console.error("Lỗi khi xuất chuồng:", err);
+            showNotification("Lỗi khi xuất chuồng", "error");
         } finally {
-            setSearchLoading(false);
+            handleExportCancel();
         }
-    };
-
-    const handleSearchChange = (e) => {
-        setSearchTerm(e.target.value);
-    };
-
-    const handleFilterStatusChange = (e) => {
-        setFilterStatus(e.target.value);
-    };
-
-    const handleFilterPenChange = (e) => {
-        setFilterPenId(e.target.value);
-    };
-
-    const handleDateRangeChange = (e) => {
-        const { name, value } = e.target;
-        setDateRange(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleToggleAdvancedFilter = () => {
-        setShowAdvancedFilter(!showAdvancedFilter);
     };
 
     const handleResetFilters = () => {
-        setSearchTerm('');
-        setFilterStatus('');
-        setFilterPenId('');
-        setDateRange({ from: '', to: '' });
-        setFilteredAnimals(animals);
+        setNameFilter("");
+        setHealthStatusFilter("");
+        setRaisingStatusFilter("");
+        setPenIdFilter("");
     };
 
-    const handleKeyPress = (e) => {
-        if (e.key === 'Enter') {
-            handleSearch();
-        }
-    };
-
-    // Pagination handlers
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
     };
@@ -317,187 +274,163 @@ export default function AnimalManager() {
         setPage(0);
     };
 
-    // CRUD operation handlers
-    const handleDeleteClick = (id) => {
-        setDeleteDialog({ open: true, animalId: id });
-    };
-
-    const handleDeleteCancel = () => {
-        setDeleteDialog({ open: false, animalId: null });
-    };
-
-    const handleDeleteConfirm = async () => {
+    // Format date
+    const formatDate = (dateString) => {
+        if (!dateString) return "—";
         try {
-            await animalService.deleteAnimal(deleteDialog.animalId);
-            setAnimals((prev) => prev.filter((a) => a.pigId !== deleteDialog.animalId));
-            setFilteredAnimals((prev) => prev.filter((a) => a.pigId !== deleteDialog.animalId));
-            showNotification("Animal deleted successfully");
-        } catch (err) {
-            console.error("Error deleting animal:", err);
-            showNotification("Error deleting animal", "error");
-        } finally {
-            handleDeleteCancel();
+            return format(new Date(dateString), "dd/MM/yyyy");
+        } catch (error) {
+            return dateString;
         }
     };
 
-    // Export operation handlers
-    const handleExportClick = (id, name) => {
-        setExportDialog({
-            open: true,
-            animalId: id,
-            animalName: name
-        });
-    };
-
-    const handleExportCancel = () => {
-        setExportDialog({
-            open: false,
-            animalId: null,
-            animalName: ''
-        });
-    };
-
-    const handleExportConfirm = async () => {
-        try {
-            await animalService.exportAnimal(exportDialog.animalId);
-
-            // Refresh data after export
-            fetchAnimals(userRole, employeeId);
-            showNotification(`Xuất chuồng cá thể "${exportDialog.animalName}" thành công`);
-        } catch (err) {
-            console.error("Error exporting animal:", err);
-            showNotification("Lỗi khi xuất chuồng cá thể vật nuôi", "error");
-        } finally {
-            handleExportCancel();
-        }
-    };
-
-    // Helper functions
-    const formatDate = (dateStr) => {
-        if (!dateStr) return "—";
-        const date = new Date(dateStr);
-        return date.toLocaleDateString('vi-VN', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
-    };
-
+    // Get pen name
     const getPenName = (penId) => {
+        if (!penId) return "—";
         const pen = pigPens.find(p => p.penId === penId);
-        return pen ? pen.name : "—";
+        return pen ? pen.name : `Chuồng #${penId}`;
     };
 
-    // Check if animal can be exported (only active animals)
-    const canExport = (animal) => {
-        return animal.status === 'ACTIVE';
+    // Get health status chip
+    const getHealthStatusChip = (status) => {
+        switch (status) {
+            case "ACTIVE":
+                return <Chip label="Khỏe mạnh" color="success" size="small" />;
+            case "SICK":
+                return <Chip label="Bị bệnh" color="error" size="small" />;
+            default:
+                return <Chip label={status} size="small" />;
+        }
     };
 
-    // Prepare data for table
-    const paginatedAnimals = filteredAnimals.slice(
-        page * rowsPerPage,
-        page * rowsPerPage + rowsPerPage
-    );
+    // Get raising status chip
+    const getRaisingStatusChip = (status) => {
+        switch (status) {
+            case "RAISING":
+                return <Chip label="Đang nuôi" color="primary" size="small" />;
+            case "EXPORTED":
+                return <Chip label="Đã xuất" color="secondary" size="small" />;
+            default:
+                return <Chip label={status} size="small" />;
+        }
+    };
+
+    // Get displayed animals for current page
+    const displayedAnimals = filteredAnimals
+        .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
     return (
-        <Box sx={{ py: 2 }}>
-            {/* Title */}
-            <Stack direction="row" spacing={2} mb={3}>
-                <h1>Quản lý cá thể vật nuôi</h1>
-            </Stack>
+        <Box sx={{ p: 3 }}>
+            {/* Header */}
+            <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+                <IconButton
+                    onClick={() => navigate("/dashboard")}
+                    sx={{ mr: 2, bgcolor: "#f5f5f5" }}
+                >
+                    <ArrowBack />
+                </IconButton>
+                <Typography variant="h5" component="h1" sx={{ fontWeight: "bold" }}>
+                    Quản lý động vật
+                </Typography>
+                <Box sx={{ flexGrow: 1 }} />
+                <Button
+                    variant="contained"
+                    color="primary"
+                    startIcon={<Add />}
+                    onClick={handleCreateAnimal}
+                    sx={{
+                        backgroundColor: "#1E8449",
+                        "&:hover": {
+                            backgroundColor: "#14532d"
+                        }
+                    }}
+                >
+                    Thêm mới
+                </Button>
+            </Box>
 
-            {/* Search and filter container */}
-            <SearchContainer elevation={1} className="search-container">
-                <Grid container spacing={2} alignItems="center">
-                    <Grid item xs={12} md={5}>
+            {/* Thanh tìm kiếm và lọc */}
+            <StyledPaper sx={{ mb: 3, p: 2 }}>
+                <Grid container spacing={2}>
+                    <Grid item xs={12} md={6}>
                         <TextField
                             fullWidth
                             placeholder="Tìm kiếm theo tên..."
                             variant="outlined"
-                            value={searchTerm}
-                            onChange={handleSearchChange}
-                            onKeyPress={handleKeyPress}
+                            value={nameFilter}
+                            onChange={(e) => setNameFilter(e.target.value)}
                             InputProps={{
                                 startAdornment: (
                                     <InputAdornment position="start">
-                                        <Search color="action" />
+                                        <Search />
                                     </InputAdornment>
-                                ),
-                                sx: { borderRadius: 1 }
+                                )
                             }}
-                            size="small"
                         />
                     </Grid>
-                    <Grid item xs={6} md={2}>
+                    <Grid item xs={12} md={6} sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center" }}>
                         <Button
-                            fullWidth
-                            variant="contained"
-                            color="primary"
-                            startIcon={searchLoading ? <CircularProgress size={20} color="inherit" /> : <Search />}
-                            onClick={handleSearch}
-                            disabled={searchLoading}
-                            sx={{ height: '40px' }}
+                            variant="outlined"
+                            startIcon={<FilterAlt />}
+                            onClick={() => setShowFilters(!showFilters)}
+                            sx={{ mr: 1 }}
                         >
-                            Tìm kiếm
+                            {showFilters ? "Ẩn bộ lọc" : "Hiện bộ lọc"}
                         </Button>
-                    </Grid>
-                    <Grid item xs={6} md={5} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-                        <Tooltip title={showAdvancedFilter ? "Ẩn bộ lọc" : "Bộ lọc nâng cao"}>
-                            <Button
-                                variant="outlined"
-                                startIcon={showAdvancedFilter ? <FilterAltOff /> : <FilterAlt />}
-                                onClick={handleToggleAdvancedFilter}
-                                size="small"
-                                color="primary"
-                                className="filter-button"
-                            >
-                                {showAdvancedFilter ? 'Ẩn bộ lọc' : 'Lọc nâng cao'}
-                            </Button>
-                        </Tooltip>
-                        {(searchTerm || filterStatus || filterPenId || dateRange.from || dateRange.to) && (
+                        {(nameFilter || healthStatusFilter || raisingStatusFilter || penIdFilter) && (
                             <Button
                                 variant="text"
-                                color="error"
+                                color="inherit"
                                 onClick={handleResetFilters}
-                                size="small"
-                                startIcon={<Refresh />}
                             >
                                 Xóa bộ lọc
                             </Button>
                         )}
                     </Grid>
 
-                    {/* Advanced filter panel */}
-                    {showAdvancedFilter && (
-                        <Grid container item xs={12} spacing={2} className="advanced-search-panel open">
-                            <Grid item xs={12} md={3}>
-                                <FormControl fullWidth size="small">
-                                    <InputLabel id="filter-status-label">Trạng thái</InputLabel>
+                    {showFilters && (
+                        <>
+                            <Grid item xs={12} md={4} sx={{ mt: 2 }}>
+                                <FormControl fullWidth variant="outlined">
+                                    <InputLabel id="health-status-label">Trạng thái sức khỏe</InputLabel>
                                     <Select
-                                        labelId="filter-status-label"
-                                        value={filterStatus}
-                                        label="Trạng thái"
-                                        onChange={handleFilterStatusChange}
+                                        labelId="health-status-label"
+                                        value={healthStatusFilter}
+                                        onChange={(e) => setHealthStatusFilter(e.target.value)}
+                                        label="Trạng thái sức khỏe"
                                     >
                                         <MenuItem value="">Tất cả</MenuItem>
                                         <MenuItem value="ACTIVE">Khỏe mạnh</MenuItem>
                                         <MenuItem value="SICK">Bị bệnh</MenuItem>
-                                        <MenuItem value="UNVACCINATED">Chưa tiêm phòng</MenuItem>
-                                        <MenuItem value="EXPORTED">Đã xuất chuồng</MenuItem>
                                     </Select>
                                 </FormControl>
                             </Grid>
-                            <Grid item xs={12} md={3}>
-                                <FormControl fullWidth size="small">
-                                    <InputLabel id="filter-pen-label">Chuồng nuôi</InputLabel>
+                            <Grid item xs={12} md={4} sx={{ mt: 2 }}>
+                                <FormControl fullWidth variant="outlined">
+                                    <InputLabel id="raising-status-label">Trạng thái nuôi</InputLabel>
                                     <Select
-                                        labelId="filter-pen-label"
-                                        value={filterPenId}
-                                        label="Chuồng nuôi"
-                                        onChange={handleFilterPenChange}
+                                        labelId="raising-status-label"
+                                        value={raisingStatusFilter}
+                                        onChange={(e) => setRaisingStatusFilter(e.target.value)}
+                                        label="Trạng thái nuôi"
                                     >
                                         <MenuItem value="">Tất cả</MenuItem>
-                                        {pigPens.map((pen) => (
+                                        <MenuItem value="RAISING">Đang nuôi</MenuItem>
+                                        <MenuItem value="EXPORTED">Đã xuất</MenuItem>
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+                            <Grid item xs={12} md={4} sx={{ mt: 2 }}>
+                                <FormControl fullWidth variant="outlined">
+                                    <InputLabel id="pen-label">Chuồng nuôi</InputLabel>
+                                    <Select
+                                        labelId="pen-label"
+                                        value={penIdFilter}
+                                        onChange={(e) => setPenIdFilter(e.target.value)}
+                                        label="Chuồng nuôi"
+                                    >
+                                        <MenuItem value="">Tất cả</MenuItem>
+                                        {pigPens.map(pen => (
                                             <MenuItem key={pen.penId} value={pen.penId}>
                                                 {pen.name}
                                             </MenuItem>
@@ -505,349 +438,279 @@ export default function AnimalManager() {
                                     </Select>
                                 </FormControl>
                             </Grid>
-                            <Grid item xs={12} md={3}>
-                                <TextField
-                                    fullWidth
-                                    name="from"
-                                    label="Từ ngày"
-                                    type="date"
-                                    value={dateRange.from}
-                                    onChange={handleDateRangeChange}
-                                    InputLabelProps={{ shrink: true }}
-                                    size="small"
-                                />
-                            </Grid>
-                            <Grid item xs={12} md={3}>
-                                <TextField
-                                    fullWidth
-                                    name="to"
-                                    label="Đến ngày"
-                                    type="date"
-                                    value={dateRange.to}
-                                    onChange={handleDateRangeChange}
-                                    InputLabelProps={{ shrink: true }}
-                                    size="small"
-                                />
-                            </Grid>
-                        </Grid>
+                        </>
                     )}
                 </Grid>
-            </SearchContainer>
+            </StyledPaper>
 
-            {/* Counter and add button */}
-            <Typography variant="h6" component="h2" sx={{ mb: 2, fontWeight: 'bold' }}>
-                Tổng số cá thể: {filteredAnimals.length}
-                <div>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        startIcon={<Add />}
-                        onClick={() => setOpenCreateForm(true)}
-                        sx={{
-                            borderRadius: '4px',
-                            textTransform: 'uppercase',
-                            backgroundColor: '#1E8449',
-                            '&:hover': {
-                                backgroundColor: '#155d32'
-                            }
-                        }}
-                    >
-                        Thêm cá thể mới
-                    </Button>
-                </div>
-            </Typography>
+            {/* Danh sách động vật */}
+            <StyledPaper>
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+                    <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                        Danh sách động vật
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                        Tổng số: {filteredAnimals.length} cá thể
+                    </Typography>
+                </Box>
 
-            {/* Table with loading state */}
-            <TableContainer component={Paper}
-                            sx={{ borderRadius: '8px', overflow: 'hidden', boxShadow: 2, position: 'relative' }}
-                            className="table-container">
-                {loading && (
-                    <Box sx={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: 'rgba(255, 255, 255, 0.7)',
-                        zIndex: 1
-                    }}>
+                {loading ? (
+                    <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
                         <CircularProgress />
                     </Box>
-                )}
-                <Table sx={{ minWidth: 650 }} aria-label="animals table" className="animal-table">
-                    <TableHead>
-                        <TableRow>
-                            <StyledTableHeaderCell>ID</StyledTableHeaderCell>
-                            <StyledTableHeaderCell>Tên</StyledTableHeaderCell>
-                            <StyledTableHeaderCell>Chuồng nuôi</StyledTableHeaderCell>
-                            <StyledTableHeaderCell>Ngày nhập</StyledTableHeaderCell>
-                            <StyledTableHeaderCell>Ngày xuất</StyledTableHeaderCell>
-                            <StyledTableHeaderCell>Cân nặng</StyledTableHeaderCell>
-                            <StyledTableHeaderCell>Số lượng</StyledTableHeaderCell>
-                            <StyledTableHeaderCell>Trạng thái</StyledTableHeaderCell>
-                            <StyledTableHeaderCell align="center">Thao tác</StyledTableHeaderCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {paginatedAnimals.length > 0 ? (
-                            paginatedAnimals.map((animal, index) => (
-                                <TableRow
-                                    key={animal.pigId}
-                                    sx={{
-                                        backgroundColor: index % 2 === 0 ? "#f9f9f9" : "#ffffff",
-                                        '&:hover': { backgroundColor: '#f0f7ff' }
-                                    }}
-                                >
-                                    <StyledTableCell>{animal.pigId}</StyledTableCell>
-                                    <StyledTableCell>{animal.name}</StyledTableCell>
-                                    <StyledTableCell>{animal.pigPen ? animal.pigPen.name : "—"}</StyledTableCell>
-                                    <StyledTableCell>{formatDate(animal.entryDate)}</StyledTableCell>
-                                    <StyledTableCell>{formatDate(animal.exitDate) || "—"}</StyledTableCell>
-                                    <StyledTableCell>{animal.weight ? animal.weight.toFixed(1) : "—"}</StyledTableCell>
-                                    <StyledTableCell>{animal.quantity || "—"}</StyledTableCell>
-                                    <StyledTableCell>
-                                        <Box
-                                            component="span"
-                                            className={`status-badge ${statusMapping[animal.status]?.class || ''}`}
-                                        >
-                                            {statusMapping[animal.status]?.label || animal.status}
-                                        </Box>
-                                    </StyledTableCell>
-                                    <StyledTableCell align="center">
-                                        <Stack direction="row" spacing={1} justifyContent="center">
-                                            {animal.status !== 'EXPORTED' && (
-                                                <>
-                                                    <Tooltip title="Sửa">
-                                                        <ActionButton
-                                                            size="small"
-                                                            variant="contained"
-                                                            color="warning"
-                                                            onClick={() => {
-                                                                setSelectedAnimal(animal);
-                                                                setOpenUpdateForm(true);
-                                                            }}
-                                                            className="action-button"
-                                                        >
-                                                            <Edit fontSize="small" />
-                                                            <Box component="span"
-                                                                 sx={{ ml: 0.5, display: { xs: 'none', sm: 'inline' } }}>SỬA</Box>
-                                                        </ActionButton>
-                                                    </Tooltip>
-
-                                                    {canExport(animal) && (
-                                                        <Tooltip title="Xuất chuồng">
-                                                            <ActionButton
-                                                                size="small"
-                                                                variant="contained"
-                                                                color="info"
-                                                                onClick={() => handleExportClick(animal.pigId, animal.name)}
-                                                                className="action-button"
-                                                                sx={{
-                                                                    bgcolor: '#3498db',
-                                                                    '&:hover': { bgcolor: '#2980b9' }
-                                                                }}
-                                                            >
-                                                                <ExitToApp fontSize="small" />
-                                                                <Box component="span"
-                                                                     sx={{ ml: 0.5, display: { xs: 'none', sm: 'inline' } }}>XUẤT</Box>
-                                                            </ActionButton>
-                                                        </Tooltip>
-                                                    )}
-
-                                                    <Tooltip title="Xóa">
-                                                        <ActionButton
-                                                            size="small"
-                                                            variant="contained"
-                                                            color="error"
-                                                            onClick={() => handleDeleteClick(animal.pigId)}
-                                                            className="action-button"
-                                                        >
-                                                            <Delete fontSize="small" />
-                                                            <Box component="span"
-                                                                 sx={{ ml: 0.5, display: { xs: 'none', sm: 'inline' } }}>XÓA</Box>
-                                                        </ActionButton>
-                                                    </Tooltip>
-                                                </>
-                                            )}
-
-                                            {animal.status === 'EXPORTED' && (
-                                                <Typography variant="body2" color="text.secondary"
-                                                            sx={{
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                fontStyle: 'italic'
-                                                            }}>
-                                                    <ExitToApp fontSize="small" sx={{ mr: 0.5, color: 'gray' }}/>
-                                                    Đã xuất chuồng
-                                                </Typography>
-                                            )}
-                                        </Stack>
-                                    </StyledTableCell>
+                ) : (
+                    <TableContainer component={Paper}>
+                        <Table stickyHeader aria-label="sticky table">
+                            <TableHead>
+                                <TableRow>
+                                    <StyledTableCell>ID</StyledTableCell>
+                                    <StyledTableCell>Tên</StyledTableCell>
+                                    <StyledTableCell>Chuồng nuôi</StyledTableCell>
+                                    <StyledTableCell>Ngày nhập</StyledTableCell>
+                                    <StyledTableCell>Ngày xuất</StyledTableCell>
+                                    <StyledTableCell>Cân nặng (kg)</StyledTableCell>
+                                    <StyledTableCell>Số lượng</StyledTableCell>
+                                    <StyledTableCell>Sức khỏe</StyledTableCell>
+                                    <StyledTableCell>Trạng thái</StyledTableCell>
+                                    <StyledTableCell align="center">Thao tác</StyledTableCell>
                                 </TableRow>
-                            ))
-                        ) : !loading && (
-                            <TableRow>
-                                <TableCell colSpan={9} align="center" sx={{ py: 3 }}>
-                                    <Typography variant="body1" color="text.secondary">
-                                        Không có dữ liệu
-                                    </Typography>
-                                </TableCell>
-                            </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {displayedAnimals.length > 0 ? (
+                                    displayedAnimals.map((animal) => (
+                                        <TableRow key={animal.pigId} hover>
+                                            <TableCell>{animal.pigId}</TableCell>
+                                            <TableCell>{animal.name}</TableCell>
+                                            <TableCell>
+                                                {animal.pigPen ? animal.pigPen.name : "—"}
+                                            </TableCell>
+                                            <TableCell>{formatDate(animal.entryDate)}</TableCell>
+                                            <TableCell>{formatDate(animal.exitDate)}</TableCell>
+                                            <TableCell>{animal.weight}</TableCell>
+                                            <TableCell>{animal.quantity}</TableCell>
+                                            <TableCell>{getHealthStatusChip(animal.healthStatus)}</TableCell>
+                                            <TableCell>{getRaisingStatusChip(animal.raisingStatus)}</TableCell>
+                                            <TableCell align="center">
+                                                <IconButton
+                                                    aria-label="thao tác"
+                                                    size="small"
+                                                    onClick={(event) => handleActionMenuOpen(event, animal)}
+                                                >
+                                                    <MoreVert />
+                                                </IconButton>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={10} align="center">
+                                            {(nameFilter || healthStatusFilter || raisingStatusFilter || penIdFilter)
+                                                ? "Không tìm thấy động vật phù hợp với điều kiện tìm kiếm"
+                                                : "Không có dữ liệu"}
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                        {filteredAnimals.length > 0 && (
+                            <Box sx={{ p: 2 }}>
+                                <TablePagination
+                                    rowsPerPageOptions={[10, 25, 50]}
+                                    component="div"
+                                    count={filteredAnimals.length}
+                                    rowsPerPage={rowsPerPage}
+                                    page={page}
+                                    onPageChange={handleChangePage}
+                                    onRowsPerPageChange={handleChangeRowsPerPage}
+                                    labelDisplayedRows={({ from, to, count }) =>
+                                        `${from}-${to} của ${count}`
+                                    }
+                                    labelRowsPerPage="Hàng mỗi trang:"
+                                />
+                            </Box>
                         )}
-                    </TableBody>
-                </Table>
-            </TableContainer>
+                    </TableContainer>
+                )}
+            </StyledPaper>
 
-            {/* Pagination */}
-            <TablePagination
-                component="div"
-                count={filteredAnimals.length}
-                rowsPerPage={rowsPerPage}
-                page={page}
-                onPageChange={handleChangePage}
-                onRowsPerPageChange={handleChangeRowsPerPage}
-                rowsPerPageOptions={[10, 25, 50]}
-                labelRowsPerPage="Hiển thị:"
-                labelDisplayedRows={({ from, to, count }) => `${from}-${to} của ${count}`}
-            />
-
-            {/* Notification */}
-            <Snackbar
-                open={notification.open}
-                autoHideDuration={3000}
-                onClose={handleCloseNotification}
-                anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-            >
-                <Alert
-                    onClose={handleCloseNotification}
-                    severity={notification.severity}
-                    variant="filled"
-                    sx={{ width: '100%' }}
-                >
-                    {notification.message}
-                </Alert>
-            </Snackbar>
-
-            {/* Dialogs */}
+            {/* Form dialog thêm mới */}
             <Dialog
                 open={openCreateForm}
                 onClose={() => setOpenCreateForm(false)}
                 maxWidth="md"
                 fullWidth
-                PaperProps={{ sx: { maxWidth: '600px', borderRadius: '8px' } }}
             >
-                <DialogTitle sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    bgcolor: '#f5f5f5',
-                    borderBottom: '1px solid #e0e0e0'
-                }}>
-                    <Pets color="primary" />
-                    <Typography variant="h6" component="div">Thêm cá thể mới</Typography>
+                <DialogTitle sx={{ fontWeight: "bold" }}>
+                    Thêm động vật mới
                 </DialogTitle>
-                <DialogContent sx={{ p: 0 }}>
+                <DialogContent dividers>
                     <AnimalFormCreate
-                        onClose={(success) => {
+                        pigPens={emptyPens}
+                        onSuccess={() => {
                             setOpenCreateForm(false);
-                            if (success) {
-                                showNotification("Thêm cá thể thành công");
-                                fetchAnimals(userRole, employeeId);
-                            }
+                            setTimeout(() => {
+                                fetchData();
+                            }, 200); // Chờ 200ms
+                            showNotification("Thêm mới động vật thành công");
                         }}
+                        onCancel={() => setOpenCreateForm(false)}
                     />
                 </DialogContent>
             </Dialog>
 
+            {/* Form dialog cập nhật */}
             <Dialog
                 open={openUpdateForm}
                 onClose={() => setOpenUpdateForm(false)}
                 maxWidth="md"
                 fullWidth
-                PaperProps={{ sx: { maxWidth: '600px', borderRadius: '8px' } }}
             >
-                <DialogTitle sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    bgcolor: '#f5f5f5',
-                    borderBottom: '1px solid #e0e0e0'
-                }}>
-                    <Pets color="primary" />
-                    <Typography variant="h6" component="div">Cập nhật thông tin cá thể</Typography>
+                <DialogTitle sx={{ fontWeight: "bold" }}>
+                    Cập nhật thông tin động vật
                 </DialogTitle>
-                <DialogContent sx={{ p: 0 }}>
-                    <AnimalFormUpdate
-                        animalData={selectedAnimal}
-                        onClose={(success) => {
-                            setOpenUpdateForm(false);
-                            setSelectedAnimal(null);
-                            if (success) {
-                                showNotification("Cập nhật cá thể thành công");
-                                fetchAnimals(userRole, employeeId);
+                <DialogContent dividers>
+                    {selectedAnimal && (
+                        <AnimalFormUpdate
+                            animal={selectedAnimal}
+                            pigPens={
+                                selectedAnimal.pigPen
+                                    ? [
+                                        selectedAnimal.pigPen,
+                                        ...emptyPens.filter(
+                                            (pen) => pen.penId !== selectedAnimal.pigPen.penId
+                                        )
+                                    ]
+                                    : emptyPens
                             }
-                        }}
-                    />
+                            onSuccess={() => {
+                                setOpenUpdateForm(false);
+                                setSelectedAnimal(null);
+                                fetchData();
+                                showNotification("Cập nhật thông tin thành công");
+                            }}
+                            onCancel={() => {
+                                setOpenUpdateForm(false);
+                                setSelectedAnimal(null);
+                            }}
+                        />
+                    )}
                 </DialogContent>
             </Dialog>
 
+            {/* Dialog xác nhận xóa */}
             <Dialog
                 open={deleteDialog.open}
                 onClose={handleDeleteCancel}
-                aria-labelledby="alert-dialog-title"
-                aria-describedby="alert-dialog-description"
-                PaperProps={{ sx: { borderRadius: '8px' } }}
             >
-                <DialogTitle id="alert-dialog-title" sx={{ borderBottom: '1px solid #e0e0e0' }}>
-                    Xác nhận xóa
-                </DialogTitle>
-                <DialogContent sx={{ mt: 2 }}>
-                    <DialogContentText id="alert-dialog-description">
-                        Bạn có chắc chắn muốn xóa cá thể này không?
-                    </DialogContentText>
+                <DialogTitle>Xác nhận xóa</DialogTitle>
+                <DialogContent>
+                    <Typography>
+                        Bạn có chắc chắn muốn xóa cá thể động vật này không?
+                    </Typography>
                 </DialogContent>
-                <DialogActions sx={{ px: 3, py: 2 }}>
-                    <Button onClick={handleDeleteCancel} color="primary" variant="outlined">
+                <DialogActions>
+                    <Button onClick={handleDeleteCancel} color="inherit">
                         Hủy
                     </Button>
-                    <Button onClick={handleDeleteConfirm} color="error" variant="contained" autoFocus>
+                    <Button onClick={handleDeleteConfirm} color="error" variant="contained">
                         Xóa
                     </Button>
                 </DialogActions>
             </Dialog>
 
-            {/* Export Dialog */}
+            {/* Dialog xác nhận xuất chuồng */}
             <Dialog
                 open={exportDialog.open}
                 onClose={handleExportCancel}
-                aria-labelledby="export-dialog-title"
-                aria-describedby="export-dialog-description"
-                PaperProps={{ sx: { borderRadius: '8px' } }}
             >
-                <DialogTitle id="export-dialog-title" sx={{ borderBottom: '1px solid #e0e0e0' }}>
-                    Xác nhận xuất chuồng
-                </DialogTitle>
-                <DialogContent sx={{ mt: 2 }}>
-                    <DialogContentText id="export-dialog-description">
-                        Bạn có chắc chắn muốn xuất chuồng cá thể vật nuôi "{exportDialog.animalName}" không?
-                        <Typography variant="body2" sx={{ mt: 1, fontStyle: 'italic', color: 'text.secondary' }}>
-                            Khi xuất chuồng, cá thể này sẽ được đánh dấu là "Đã xuất" và không còn trong chuồng nuôi nữa.
-                        </Typography>
-                    </DialogContentText>
+                <DialogTitle>Xác nhận xuất chuồng</DialogTitle>
+                <DialogContent>
+                    <Typography>
+                        Bạn có chắc chắn muốn xuất chuồng cá thể động vật này không?
+                    </Typography>
+                    <Typography variant="body2" sx={{ mt: 1, color: "text.secondary" }}>
+                        Thao tác này sẽ đánh dấu động vật là đã xuất chuồng và ghi nhận ngày xuất là ngày hôm nay.
+                    </Typography>
                 </DialogContent>
-                <DialogActions sx={{ px: 3, py: 2 }}>
-                    <Button onClick={handleExportCancel} color="primary" variant="outlined">
+                <DialogActions>
+                    <Button onClick={handleExportCancel} color="inherit">
                         Hủy
                     </Button>
-                    <Button onClick={handleExportConfirm} color="info" variant="contained" autoFocus
-                            startIcon={<ExitToApp />}>
-                        Xác nhận xuất chuồng
+                    <Button onClick={handleExportConfirm} color="secondary" variant="contained">
+                        Xuất chuồng
                     </Button>
                 </DialogActions>
             </Dialog>
+
+            {/* Snackbar thông báo */}
+            <Snackbar
+                open={notification.open}
+                autoHideDuration={6000}
+                onClose={handleCloseNotification}
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+            >
+                <Alert
+                    onClose={handleCloseNotification}
+                    severity={notification.severity}
+                    variant="filled"
+                    sx={{ width: "100%" }}
+                >
+                    {notification.message}
+                </Alert>
+            </Snackbar>
+
+            {/* Menu thao tác */}
+            <Menu
+                anchorEl={actionMenu.anchorEl}
+                open={Boolean(actionMenu.anchorEl)}
+                onClose={handleActionMenuClose}
+                anchorOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'right',
+                }}
+                transformOrigin={{
+                    vertical: 'top',
+                    horizontal: 'right',
+                }}
+            >
+                <MenuItem
+                    onClick={() => {
+                        handleUpdateAnimal(actionMenu.animal);
+                        handleActionMenuClose();
+                    }}
+                >
+                    <ListItemIcon>
+                        <Edit fontSize="small" color="primary" />
+                    </ListItemIcon>
+                    <ListItemText>Chỉnh sửa</ListItemText>
+                </MenuItem>
+
+                {actionMenu.animal?.raisingStatus === "RAISING" && (
+                    <MenuItem
+                        onClick={() => {
+                            handleExportClick(actionMenu.animal?.pigId);
+                            handleActionMenuClose();
+                        }}
+                    >
+                        <ListItemIcon>
+                            <LocalShippingOutlined fontSize="small" color="secondary" />
+                        </ListItemIcon>
+                        <ListItemText>Xuất chuồng</ListItemText>
+                    </MenuItem>
+                )}
+
+                <MenuItem
+                    onClick={() => {
+                        handleDeleteClick(actionMenu.animal?.pigId);
+                        handleActionMenuClose();
+                    }}
+                >
+                    <ListItemIcon>
+                        <Delete fontSize="small" color="error" />
+                    </ListItemIcon>
+                    <ListItemText>Xóa</ListItemText>
+                </MenuItem>
+            </Menu>
         </Box>
     );
 }
