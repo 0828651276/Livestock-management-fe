@@ -225,22 +225,22 @@ export default function MedicalManager() {
     }
   };
 
-  // Chỉ cho phép tạo mới lịch vào đúng ngày hôm nay + 2
+  // Chỉ cho phép tạo mới lịch vào ngày >= hôm nay + 2
   const handleDateClick = (info) => {
     const today = new Date();
     today.setHours(0,0,0,0);
     const selectedDate = new Date(info.dateStr);
     selectedDate.setHours(0,0,0,0);
 
-    // Ngày cho phép tạo mới: hôm nay + 2
-    const allowedDate = new Date(today);
-    allowedDate.setDate(today.getDate() + 2);
+    // Ngày cho phép: từ hôm nay + 2 trở đi
+    const minDate = new Date(today);
+    minDate.setDate(today.getDate() + 2);
 
-    if (selectedDate.getTime() === allowedDate.getTime()) {
+    if (selectedDate >= minDate) {
       setSelectedAnimal({ defaultDate: info.dateStr });
       setOpenCreate(true);
     } else {
-      setSnackbar({ open: true, message: 'Chỉ được tạo lịch vào đúng ngày cách hôm nay 2 ngày!', severity: 'warning' });
+      setSnackbar({ open: true, message: 'Chỉ được tạo lịch vào ngày cách hôm nay 2 ngày trở đi!', severity: 'warning' });
     }
   };
 
