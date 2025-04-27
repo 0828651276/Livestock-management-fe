@@ -43,5 +43,14 @@ export const medicalService = {
         await axios.delete(`${API_URL}/${id}`, {
             headers: { Authorization: `Bearer ${token}` }
         });
+    },
+
+    // Get treatment history (medical records before today)
+    getTreatmentHistory: async () => {
+        const token = authService.getCurrentUser();
+        const response = await axios.get(`${API_URL}/history`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return response.data;
     }
 }; 
