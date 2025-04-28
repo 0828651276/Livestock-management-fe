@@ -64,6 +64,8 @@ export default function MedicalManager() {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [openCreate, setOpenCreate] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null });
+  const [treatmentHistory, setTreatmentHistory] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
   const navigate = useNavigate();
 
   // derive set of pigIds already scheduled
@@ -75,6 +77,7 @@ export default function MedicalManager() {
   useEffect(() => {
     fetchSickAnimals();
     fetchAllMedical();
+    fetchTreatmentHistory();
   }, []);
 
   const fetchSickAnimals = async () => {
@@ -98,6 +101,18 @@ export default function MedicalManager() {
       console.error(err);
     } finally {
       setLoadingMedicals(false);
+    }
+  };
+
+  const fetchTreatmentHistory = async () => {
+    setLoadingHistory(true);
+    try {
+      const data = await medicalService.getTreatmentHistory();
+      setTreatmentHistory(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingHistory(false);
     }
   };
 
@@ -187,16 +202,19 @@ export default function MedicalManager() {
     return method;
   };
 
-  // Hàm chuyển đổi dữ liệu medical thành event cho FullCalendar
+  // Hàm chuyển đổi dữ liệu medical thành event cho FullCalendar (ẩn các bản ghi đã nằm trong bảng lịch sử)
   const getCalendarEvents = (medicalRecords) => {
-    return medicalRecords.map(r => ({
-      id: r.id,
-      title: `${r.animal?.name || ''}`,
-      start: r.treatmentDate,
-      backgroundColor: r.treatmentMethod === 'INJECTION' ? '#1976d2' : '#43a047',
-      borderColor: r.treatmentMethod === 'INJECTION' ? '#1976d2' : '#43a047',
-      allDay: true
-    }));
+    const historyIds = new Set(treatmentHistory.map(r => r.id));
+    return medicalRecords
+      .filter(r => !historyIds.has(r.id)) // ẩn các record đã nằm trong lịch sử
+      .map(r => ({
+        id: r.id,
+        title: `${r.animal?.name || ''}`,
+        start: r.treatmentDate,
+        backgroundColor: r.treatmentMethod === 'INJECTION' ? '#1976d2' : '#43a047',
+        borderColor: r.treatmentMethod === 'INJECTION' ? '#1976d2' : '#43a047',
+        allDay: true
+      }));
   };
 
   // Sửa lại hàm handleEventClick: so sánh id kiểu string để chắc chắn khớp
@@ -207,23 +225,73 @@ export default function MedicalManager() {
     }
   };
 
-  // Thêm hàm xử lý khi click vào ngày trống trên calendar (lấy luôn ngày đó)
+  // Chỉ cho phép tạo mới lịch vào ngày >= hôm nay + 2
   const handleDateClick = (info) => {
     const today = new Date();
-    const selectedDate = new Date(info.dateStr);
     today.setHours(0,0,0,0);
+    const selectedDate = new Date(info.dateStr);
     selectedDate.setHours(0,0,0,0);
-    if (selectedDate >= today) {
+
+    // Ngày cho phép: từ hôm nay + 2 trở đi
+    const minDate = new Date(today);
+    minDate.setDate(today.getDate() + 2);
+
+    if (selectedDate >= minDate) {
       setSelectedAnimal({ defaultDate: info.dateStr });
       setOpenCreate(true);
+    } else {
+      setSnackbar({ open: true, message: 'Chỉ được tạo lịch vào ngày cách hôm nay 2 ngày trở đi!', severity: 'warning' });
     }
   };
 
-  // Hiển thị nút X xoá trên mỗi event
+  // Hàm kiểm tra có phải lịch hôm nay không
+  const isToday = (dateStr) => {
+    const today = new Date();
+    const date = new Date(dateStr);
+    return (
+      today.getFullYear() === date.getFullYear() &&
+      today.getMonth() === date.getMonth() &&
+      today.getDate() === date.getDate()
+    );
+  };
+
+  // Hàm xử lý tích hoàn thành: giữ nguyên treatmentDate
+  const handleCompleteToday = async (record) => {
+    if (!record) return;
+    try {
+      await medicalService.updateMedical(record.id, {
+        ...record,
+        animal: { pigId: record.animal?.pigId },
+        // giữ nguyên treatmentDate
+      });
+      setSnackbar({ open: true, message: 'Đã chuyển vào lịch sử chữa trị', severity: 'success' });
+      fetchAllMedical();
+      fetchTreatmentHistory();
+    } catch (err) {
+      setSnackbar({ open: true, message: 'Lỗi khi hoàn thành', severity: 'error' });
+    }
+  };
+
+  // Hiển thị nút X xoá và nút tích hoàn thành trên event hôm nay
   function renderEventContent(arg) {
+    const record = medicalRecords.find(r => String(r.id) === String(arg.event.id));
     return (
       <div style={{display: 'flex', alignItems: 'center'}}>
         <span style={{flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>{arg.event.title}</span>
+        {record && isToday(record.treatmentDate) && (
+          <IconButton
+            size="small"
+            color="success"
+            style={{marginLeft: 4, padding: 2}}
+            onClick={e => {
+              e.stopPropagation();
+              handleCompleteToday(record);
+            }}
+            title="Hoàn thành và chuyển vào lịch sử"
+          >
+            <Schedule fontSize="small" />
+          </IconButton>
+        )}
         <IconButton
           size="small"
           color="error"
@@ -254,7 +322,6 @@ export default function MedicalManager() {
           eventContent={renderEventContent}
         />
       </Box>
-
 
       {/* Create Form Dialog */}
       <CreateMedicalForm
@@ -327,6 +394,39 @@ export default function MedicalManager() {
           <Button onClick={handleDeleteConfirmed} color="error" variant="contained">Xóa</Button>
         </DialogActions>
       </Dialog>
+
+      {/* Bảng lịch sử chữa trị */}
+      <Box sx={{ mt: 6 }}>
+        <Typography variant="h6" gutterBottom>Lịch sử chữa trị</Typography>
+        <TableContainer component={Paper}>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <StyledTableCell>Ngày điều trị</StyledTableCell>
+                <StyledTableCell>Tên động vật</StyledTableCell>
+                <StyledTableCell>Phương pháp</StyledTableCell>
+                <StyledTableCell>Thú y</StyledTableCell>
+                <StyledTableCell>Ghi chú</StyledTableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {loadingHistory ? (
+                <TableRow><TableCell colSpan={5} align="center"><CircularProgress size={24} /></TableCell></TableRow>
+              ) : treatmentHistory.length === 0 ? (
+                <TableRow><TableCell colSpan={5} align="center">Không có dữ liệu</TableCell></TableRow>
+              ) : treatmentHistory.map((row) => (
+                <StyledTableRow key={row.id}>
+                  <StyledTableCell>{row.treatmentDate}</StyledTableCell>
+                  <StyledTableCell>{row.animal?.name || ''}</StyledTableCell>
+                  <StyledTableCell>{getMethodLabel(row.treatmentMethod)}</StyledTableCell>
+                  <StyledTableCell>{row.veterinarian}</StyledTableCell>
+                  <StyledTableCell>{row.notes}</StyledTableCell>
+                </StyledTableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Box>
 
       <Snackbar
         open={snackbar.open}
