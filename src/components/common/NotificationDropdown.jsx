@@ -5,10 +5,11 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { notificationService } from '../../services/NotificationService';
+import '../../styles/bell-shake.css';
 dayjs.extend(relativeTime);
 
 // Component hiển thị danh sách thông báo
-const NotificationDropdown = ({ notifications = [], onCreated }) => {
+const NotificationDropdown = ({ notifications = [], onCreated, hasUnread }) => {
     const [anchorEl, setAnchorEl] = useState(null);
     const [userRole, setUserRole] = useState('');
     const [employeeId, setEmployeeId] = useState('');
@@ -69,7 +70,7 @@ const NotificationDropdown = ({ notifications = [], onCreated }) => {
 
     return (
         <>
-            <IconButton color="inherit" onClick={handleOpen} sx={{ mr: 2 }}>
+            <IconButton color="inherit" onClick={handleOpen} sx={{ mr: 2 }} className={hasUnread ? 'bell-shake' : ''}>
                 <Badge badgeContent={unreadCount} color="error">
                     <NotificationsIcon />
                 </Badge>
