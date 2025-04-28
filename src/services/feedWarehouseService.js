@@ -101,7 +101,3 @@ export const getFilteredTransactions = async ({ transactionType, startDate, endD
         throw error;
     }
 };
-
-export default {
-    getFilteredTransactions
-};

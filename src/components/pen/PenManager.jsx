@@ -46,6 +46,12 @@ import { useNavigate } from "react-router-dom";
 import PigPenFormCreate from "./PenFormCreate.jsx";
 import CaretakersList from "./CaretakersList.jsx";
 import { styled } from '@mui/material/styles';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import RestaurantIcon from '@mui/icons-material/Restaurant';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
 
 // Styled components
 const ActionButton = styled(Button)(({ theme }) => ({
@@ -154,6 +160,8 @@ export default function PenManager() {
     const [searchLoading, setSearchLoading] = useState(false);
     const [userRole, setUserRole] = useState('');
     const [employeeId, setEmployeeId] = useState('');
+    // State cho menu thao tác từng pen
+    const [actionMenu, setActionMenu] = useState({ anchorEl: null, pen: null });
 
     const handleCloseNotification = () => {
         setNotification({...notification, open: false});
@@ -366,6 +374,13 @@ export default function PenManager() {
         }
     };
 
+    const handleActionMenuOpen = (event, pen) => {
+        setActionMenu({ anchorEl: event.currentTarget, pen });
+    };
+    const handleActionMenuClose = () => {
+        setActionMenu({ anchorEl: null, pen: null });
+    };
+
     const paginatedPigPens = filteredPigPens.slice(
         page * rowsPerPage,
         page * rowsPerPage + rowsPerPage
@@ -560,43 +575,9 @@ export default function PenManager() {
                                     </StyledTableCell>
                                     {userRole === 'MANAGER' ? (
                                         <StyledTableCell align="center">
-                                            <Stack direction="row" spacing={1} justifyContent="center">
-                                                <Tooltip title="Sửa">
-                                                    <ActionButton
-                                                        size="small"
-                                                        variant="contained"
-                                                        color="warning"
-                                                        onClick={() => {
-                                                            setSelectedPigPen(pen);
-                                                            setOpenUpdateForm(true);
-                                                        }}
-                                                        className="action-button"
-                                                    >
-                                                        <Edit fontSize="small"/>
-                                                        <Box component="span"
-                                                             sx={{
-                                                                 ml: 0.5,
-                                                                 display: {xs: 'none', sm: 'inline'}
-                                                             }}>SỬA</Box>
-                                                    </ActionButton>
-                                                </Tooltip>
-                                                <Tooltip title="Xóa">
-                                                    <ActionButton
-                                                        size="small"
-                                                        variant="contained"
-                                                        color="error"
-                                                        onClick={() => handleDeleteClick(pen.penId)}
-                                                        className="action-button"
-                                                    >
-                                                        <Delete fontSize="small"/>
-                                                        <Box component="span"
-                                                             sx={{
-                                                                 ml: 0.5,
-                                                                 display: {xs: 'none', sm: 'inline'}
-                                                             }}>XÓA</Box>
-                                                    </ActionButton>
-                                                </Tooltip>
-                                            </Stack>
+                                            <IconButton onClick={(e) => handleActionMenuOpen(e, pen)}>
+                                                <MoreVertIcon />
+                                            </IconButton>
                                         </StyledTableCell>
                                     ) : (
                                         <StyledTableCell align="center">
@@ -656,6 +637,38 @@ export default function PenManager() {
                         )}
                     </TableBody>
                 </Table>
+                {/* Menu thao tác cho pen */}
+                <Menu
+                    anchorEl={actionMenu.anchorEl}
+                    open={Boolean(actionMenu.anchorEl)}
+                    onClose={handleActionMenuClose}
+                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                >
+                    <MenuItem onClick={() => {
+                        setSelectedPigPen(actionMenu.pen);
+                        setOpenUpdateForm(true);
+                        handleActionMenuClose();
+                    }}>
+                        <ListItemIcon><Edit fontSize="small" color="primary" /></ListItemIcon>
+                        <ListItemText>Chỉnh sửa</ListItemText>
+                    </MenuItem>
+                    <MenuItem onClick={() => {
+                        // TODO: Xử lý logic cho ăn ở đây
+                        alert('Chức năng cho ăn!');
+                        handleActionMenuClose();
+                    }}>
+                        <ListItemIcon><RestaurantIcon fontSize="small" color="success" /></ListItemIcon>
+                        <ListItemText>Cho ăn</ListItemText>
+                    </MenuItem>
+                    <MenuItem onClick={() => {
+                        handleDeleteClick(actionMenu.pen.penId);
+                        handleActionMenuClose();
+                    }}>
+                        <ListItemIcon><Delete fontSize="small" color="error" /></ListItemIcon>
+                        <ListItemText>Xóa</ListItemText>
+                    </MenuItem>
+                </Menu>
             </TableContainer>
 
             {/* Pagination */}

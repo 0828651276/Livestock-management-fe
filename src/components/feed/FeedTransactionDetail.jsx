@@ -5,7 +5,7 @@ import {
     TableHead, TableRow, Box, CircularProgress, Alert,
     Stack, TextField, MenuItem, Button
 } from "@mui/material";
-import { getFilteredTransactions } from "../../services/feedWarehouseService.js";
+import { fetchTransactionsByFeedType, getFilteredTransactions } from "../../services/feedWarehouseService.js";
 import {styled} from "@mui/material/styles";
 
 const StyledTableCell = styled(TableCell)(() => ({
@@ -35,11 +35,22 @@ export default function FeedTransactionDetail() {
     const loadTransactions = async () => {
         setLoading(true);
         try {
-            const data = await getFilteredTransactions({
-                transactionType,
-                startDate,
-                endDate
-            });
+            let data;
+            if (startDate || endDate) {
+                data = await getFilteredTransactions({
+                    feedType,
+                    startDate,
+                    endDate
+                });
+            } else {
+                data = await fetchTransactionsByFeedType(feedType);
+            }
+
+            // Filter by transaction type in frontend
+            if (transactionType) {
+                data = data.filter(tran => tran.transactionType === transactionType);
+            }
+            
             setTransactions(data);
             setError(null);
         } catch (err) {
