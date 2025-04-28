@@ -1,0 +1,663 @@
+import React, { useEffect, useState } from 'react';
+import {
+    Box,
+    Typography,
+    Grid,
+    Paper,
+    Avatar,
+    Card,
+    CardContent,
+    Stack,
+    Chip,
+    Divider,
+    ButtonBase,
+    useTheme,
+    useMediaQuery,
+    CircularProgress,
+    TableContainer,
+    Table,
+    TableHead,
+    TableBody,
+    TableRow,
+    TableCell,
+    IconButton,
+    alpha
+} from '@mui/material';
+import { styled } from '@mui/material/styles';
+import {
+    Dashboard as DashboardIcon,
+    Pets as PetsIcon,
+    Restaurant as RestaurantIcon,
+    MedicalServices as MedicalServicesIcon,
+    LocalShipping as LocalShippingIcon,
+    Analytics as AnalyticsIcon,
+    Settings as SettingsIcon,
+    Notifications as NotificationsIcon,
+    CalendarMonth as CalendarMonthIcon,
+    BarChart as BarChartIcon,
+    Refresh as RefreshIcon,
+    ArrowForward as ArrowForwardIcon
+} from '@mui/icons-material';
+import { authService } from '../services/authService';
+import { pigPenService } from '../services/pigPenService';
+import { format } from 'date-fns';
+import TopMenu from "../components/layout/TopMenu.jsx";
+import Sidebar from "../components/layout/Sidebar.jsx";
+
+// Dashboard Styled Components
+const StyledCard = styled(Paper)(({ theme }) => ({
+    borderRadius: 16,
+    boxShadow: '0 4px 20px 0 rgba(0,0,0,0.05)',
+    transition: 'all 0.3s ease',
+    backgroundColor: 'white',
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+    '&:hover': {
+        transform: 'translateY(-4px)',
+        boxShadow: '0 8px 24px 0 rgba(0,0,0,0.1)',
+    },
+}));
+
+const FeatureIcon = styled(Avatar)(({ theme, color }) => ({
+    width: 70,
+    height: 70,
+    backgroundColor: color || theme.palette.primary.main,
+    margin: '0 auto 16px auto',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    '& .MuiSvgIcon-root': {
+        fontSize: 38,
+        color: 'white'
+    },
+    boxShadow: '0 4px 14px rgba(0,0,0,0.1)',
+    transition: 'all 0.3s ease',
+    '&:hover': {
+        transform: 'scale(1.05)'
+    }
+}));
+
+const StatCard = styled(Paper)(({ theme, color }) => ({
+    padding: theme.spacing(2),
+    borderRadius: 16,
+    backgroundColor: color || '#ffffff',
+    boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
+    height: '100%',
+    transition: 'all 0.3s ease',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    position: 'relative',
+    overflow: 'hidden',
+    '&:hover': {
+        boxShadow: '0 6px 20px rgba(0,0,0,0.08)',
+        transform: 'translateY(-3px)'
+    },
+}));
+
+const WelcomeBanner = styled(Paper)(({ theme }) => ({
+    padding: theme.spacing(3),
+    marginBottom: theme.spacing(4),
+    marginTop: theme.spacing(2),
+    borderRadius: 16,
+    background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+    color: 'white',
+    position: 'relative',
+    overflow: 'hidden',
+    boxShadow: '0 8px 20px rgba(0,0,0,0.1)',
+}));
+
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+    fontWeight: 'medium',
+    fontSize: '0.875rem',
+    padding: '12px 16px',
+    '&.tableHeader': {
+        backgroundColor: alpha(theme.palette.primary.main, 0.1),
+        color: theme.palette.primary.main,
+        fontWeight: 'bold',
+    }
+}));
+
+// Decorative circles for the banner
+const DecorativeCircle = styled(Box)(({ size, top, right, opacity }) => ({
+    position: 'absolute',
+    width: size,
+    height: size,
+    borderRadius: '50%',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    top: top,
+    right: right,
+    opacity: opacity
+}));
+
+function DashboardPage() {
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+    const [mobileOpen, setMobileOpen] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [activeMenu, setActiveMenu] = useState('dashboard');
+    const [user, setUser] = useState({ username: '' });
+    const [pigPensLoading, setPigPensLoading] = useState(true);
+    const [pigPens, setPigPens] = useState([]);
+    const [pigPensCount, setPigPensCount] = useState(0);
+    const [userInfo, setUserInfo] = useState({ username: "User" });
+    const [currentDate, setCurrentDate] = useState(new Date());
+
+    // Danh sách các chức năng chính
+    const features = [
+        {
+            id: 'pigs',
+            title: 'QUẢN LÝ ĐÀN',
+            icon: <PetsIcon fontSize="large" />,
+            color: '#FF6D28',
+            description: 'Quản lý thông tin đàn lợn, theo dõi tình trạng sức khỏe và phát triển'
+        },
+        {
+            id: 'food',
+            title: 'QUẢN LÝ THỨC ĂN',
+            icon: <RestaurantIcon fontSize="large" />,
+            color: '#28FFBF',
+            description: 'Theo dõi lượng thức ăn, dinh dưỡng và lịch cho ăn'
+        },
+        {
+            id: 'health',
+            title: 'QUẢN LÝ Y TẾ',
+            icon: <MedicalServicesIcon fontSize="large" />,
+            color: '#F94C66',
+            description: 'Lịch tiêm phòng, khám bệnh và điều trị cho đàn lợn'
+        },
+        {
+            id: 'export',
+            title: 'XUẤT CHUỒNG',
+            icon: <LocalShippingIcon fontSize="large" />,
+            color: '#3F72AF',
+            description: 'Quản lý quy trình xuất chuồng và thông tin vận chuyển'
+        },
+        {
+            id: 'analytics',
+            title: 'BÁO CÁO & THỐNG KÊ',
+            icon: <AnalyticsIcon fontSize="large" />,
+            color: '#884A39',
+            description: 'Phân tích dữ liệu hoạt động và hiệu quả kinh tế'
+        },
+        {
+            id: 'settings',
+            title: 'CÀI ĐẶT HỆ THỐNG',
+            icon: <SettingsIcon fontSize="large" />,
+            color: '#735CDD',
+            description: 'Cấu hình hệ thống, quản lý người dùng và phân quyền'
+        }
+    ];
+
+    // Hoạt động gần đây (dữ liệu mẫu)
+    const recentActivities = [
+        {
+            id: 1,
+            type: 'feed',
+            description: 'Cung cấp thức ăn cho khu vực A',
+            timestamp: '08:30 - 14/04/2025',
+            user: 'Nguyễn Văn A'
+        },
+        {
+            id: 2,
+            type: 'medical',
+            description: 'Tiêm vắc xin cho đàn lợn mới nhập',
+            timestamp: '14:45 - 13/04/2025',
+            user: 'Trần Thị B'
+        },
+        {
+            id: 3,
+            type: 'export',
+            description: 'Xuất chuồng 50 con lợn thịt',
+            timestamp: '10:15 - 12/04/2025',
+            user: 'Lê Minh C'
+        },
+        {
+            id: 4,
+            type: 'import',
+            description: 'Nhập 30 con lợn giống mới',
+            timestamp: '16:20 - 11/04/2025',
+            user: 'Phạm Văn D'
+        }
+    ];
+
+    // Lịch sắp tới (dữ liệu mẫu)
+    const upcomingEvents = [
+        {
+            id: 1,
+            title: 'Tiêm phòng đợt 2/2025',
+            date: '18/04/2025',
+            time: '08:00',
+            location: 'Khu vực B, C',
+            priority: 'high'
+        },
+        {
+            id: 2,
+            title: 'Kiểm tra chất lượng thức ăn',
+            date: '20/04/2025',
+            time: '09:30',
+            location: 'Kho thức ăn',
+            priority: 'medium'
+        },
+        {
+            id: 3,
+            title: 'Bảo trì hệ thống nước',
+            date: '22/04/2025',
+            time: '13:00',
+            location: 'Toàn trại',
+            priority: 'medium'
+        },
+        {
+            id: 4,
+            title: 'Đánh giá tăng trưởng tháng 4',
+            date: '30/04/2025',
+            time: '14:30',
+            location: 'Phòng họp',
+            priority: 'high'
+        }
+    ];
+
+    useEffect(() => {
+        // Kiểm tra xác thực và lấy thông tin người dùng
+        const checkAuth = async () => {
+            const token = authService.getCurrentUser();
+            if (!token) {
+                window.location.href = '/';
+            } else {
+                const info = authService.getUserInfo();
+                setUser(info || { username: "User" });
+                setLoading(false);
+                fetchPigPens();
+            }
+        };
+
+        checkAuth();
+
+        // Update current date every minute
+        const timer = setInterval(() => {
+            setCurrentDate(new Date());
+        }, 60000);
+
+        return () => clearInterval(timer);
+    }, []);
+
+    // Lấy danh sách chuồng từ backend
+    const fetchPigPens = async () => {
+        setPigPensLoading(true);
+        try {
+            const pigPensData = await pigPenService.getAllPigPens();
+            if (pigPensData && Array.isArray(pigPensData)) {
+                setPigPens(pigPensData);
+                setPigPensCount(pigPensData.length);
+            }
+        } catch (error) {
+            console.error('Lỗi khi lấy dữ liệu chuồng nuôi:', error);
+        } finally {
+            setPigPensLoading(false);
+        }
+    };
+
+    // Function để lấy màu ưu tiên
+    const getPriorityColor = (priority) => {
+        switch (priority) {
+            case 'high':
+                return '#F94C66';
+            case 'medium':
+                return '#FFA41B';
+            case 'low':
+                return '#28FFBF';
+            default:
+                return '#9E9E9E';
+        }
+    };
+
+    // Function để lấy icon cho hoạt động
+    const getActivityIcon = (type) => {
+        switch (type) {
+            case 'feed':
+                return <RestaurantIcon sx={{ color: '#28FFBF' }} />;
+            case 'medical':
+                return <MedicalServicesIcon sx={{ color: '#F94C66' }} />;
+            case 'export':
+                return <LocalShippingIcon sx={{ color: '#3F72AF' }} />;
+            case 'import':
+                return <PetsIcon sx={{ color: '#FF6D28' }} />;
+            default:
+                return <NotificationsIcon sx={{ color: '#9E9E9E' }} />;
+        }
+    };
+
+    // Hàm refresh dữ liệu
+    const handleRefreshData = () => {
+        fetchPigPens();
+    };
+
+    // Thống kê mẫu - số chuồng sẽ được cập nhật từ API
+    const statistics = [
+        {
+            title: 'TỔNG ĐÀN',
+            value: '1,245',
+            unit: 'con',
+            color: '#F1F8FE',
+            textColor: '#266DD3',
+            icon: <PetsIcon sx={{ color: '#266DD3' }} />,
+            change: '+5.8%'
+        },
+        {
+            title: 'SỐ CHUỒNG NUÔI',
+            value: pigPensCount.toString() || '0',
+            unit: 'chuồng',
+            color: '#E9FFF6',
+            textColor: '#16B364',
+            icon: <DashboardIcon sx={{ color: '#16B364' }} />,
+            change: pigPensLoading ? 'Đang tải...' : '+2'
+        },
+        {
+            title: 'LƯỢNG THỨC ĂN',
+            value: '4.2',
+            unit: 'tấn',
+            color: '#FFF8E8',
+            textColor: '#F79009',
+            icon: <RestaurantIcon sx={{ color: '#F79009' }} />,
+            change: '-8.5%'
+        },
+        {
+            title: 'NĂNG SUẤT',
+            value: '92.7',
+            unit: '%',
+            color: '#FFF5F5',
+            textColor: '#F04438',
+            icon: <BarChartIcon sx={{ color: '#F04438' }} />,
+            change: '+3.2%'
+        }
+    ];
+
+    const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
+    const handleMenuClick = (menuId) => setActiveMenu(menuId);
+
+    if (loading) {
+        return (
+            <Box sx={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center' }}>
+                <CircularProgress />
+            </Box>
+        );
+    }
+
+    return (
+        <Box sx={{ display: 'flex' }}>
+            <TopMenu drawerWidth={240} handleDrawerToggle={handleDrawerToggle} user={user} />
+            <Box component="nav" sx={{ width: { sm: 240 }, flexShrink: { sm: 0 } }}>
+                <Sidebar
+                    drawerWidth={240}
+                    mobileOpen={mobileOpen}
+                    handleDrawerToggle={handleDrawerToggle}
+                    activeMenu={activeMenu}
+                    setActiveMenu={setActiveMenu}
+                />
+            </Box>
+            <Box
+                component="main"
+                sx={{
+                    flexGrow: 1,
+                    p: 10,
+                    width: { sm: `calc(100% - 240px)` },
+                    minHeight: '100vh',
+                    backgroundColor: '#f5f5f5'
+                }}
+            >
+                <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
+                    {/* Welcome banner */}
+                    <WelcomeBanner>
+                        <DecorativeCircle size="180px" top="-90px" right="-30px" opacity={0.2} />
+                        <DecorativeCircle size="120px" top="20%" right="20%" opacity={0.1} />
+                        <DecorativeCircle size="80px" top="70%" right="10%" opacity={0.15} />
+
+                        <Grid container spacing={2} alignItems="center">
+                            <Grid item xs={12} md={8}>
+                                <Typography variant="h5" component="h1" fontWeight="bold" gutterBottom sx={{ mb: 1 }}>
+                                    Chào mừng trở lại, {userInfo.username}!
+                                </Typography>
+                                <Typography variant="body1" sx={{ opacity: 0.9, mb: 2 }}>
+                                    Trang tổng quan hiển thị thông tin về tình trạng trang trại. Kiểm tra các số liệu thống kê và lịch hoạt động sắp tới.
+                                </Typography>
+
+                                <Chip
+                                    label="Xem thêm thống kê chi tiết"
+                                    color="default"
+                                    clickable
+                                    variant="outlined"
+                                    icon={<ArrowForwardIcon />}
+                                    sx={{
+                                        bgcolor: 'rgba(255,255,255,0.2)',
+                                        color: 'white',
+                                        border: 'none',
+                                        mt: 1,
+                                        '&:hover': {
+                                            bgcolor: 'rgba(255,255,255,0.3)',
+                                        }
+                                    }}
+                                />
+                            </Grid>
+                            <Grid item xs={12} md={4} sx={{ display: { xs: 'none', md: 'block' }, textAlign: 'right' }}>
+                                <Box sx={{ position: 'relative' }}>
+                                    <CalendarMonthIcon sx={{ fontSize: 60, opacity: 0.9, mb: 1 }} />
+                                    <Typography variant="h6" sx={{ fontWeight: 'medium' }}>
+                                        {currentDate.toLocaleDateString('vi-VN', {
+                                            weekday: 'long',
+                                            day: 'numeric',
+                                            month: 'long',
+                                            year: 'numeric'
+                                        })}
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                                        {currentDate.toLocaleTimeString('vi-VN', {
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        })}
+                                    </Typography>
+                                </Box>
+                            </Grid>
+                        </Grid>
+                    </WelcomeBanner>
+
+                    {/* Statistics */}
+                    <Box sx={{ mb: 4 }}>
+                        <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+                            Tổng quan trang trại
+                            <IconButton
+                                size="small"
+                                onClick={handleRefreshData}
+                                sx={{ ml: 1, bgcolor: alpha(theme.palette.primary.main, 0.1) }}
+                            >
+                                <RefreshIcon fontSize="small" />
+                            </IconButton>
+                        </Typography>
+                        <Grid container spacing={3}>
+                            {statistics.map((stat, index) => (
+                                <Grid item xs={12} sm={6} md={3} key={index}>
+                                    <StatCard color={stat.color}>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                            <Box>
+                                                <Typography variant="caption" fontWeight="bold" sx={{ color: stat.textColor, opacity: 0.7 }}>
+                                                    {stat.title}
+                                                </Typography>
+                                                <Typography variant="h4" sx={{ color: stat.textColor, fontWeight: 'bold', mt: 1, mb: 0.5 }}>
+                                                    {stat.value} <Typography component="span" variant="body2">{stat.unit}</Typography>
+                                                </Typography>
+                                                <Typography variant="caption" sx={{ color: stat.textColor, opacity: 0.8 }}>
+                                                    {stat.change.startsWith('+')
+                                                        ? <span style={{ color: '#16B364' }}>{stat.change}</span>
+                                                        : stat.change.startsWith('-')
+                                                            ? <span style={{ color: '#F04438' }}>{stat.change}</span>
+                                                            : stat.change
+                                                    }
+                                                    {' '}so với tháng trước
+                                                </Typography>
+                                            </Box>
+                                            <Avatar
+                                                variant="rounded"
+                                                sx={{
+                                                    bgcolor: alpha(stat.textColor, 0.1),
+                                                    width: 48,
+                                                    height: 48,
+                                                    borderRadius: 2
+                                                }}
+                                            >
+                                                {stat.icon}
+                                            </Avatar>
+                                        </Box>
+                                    </StatCard>
+                                </Grid>
+                            ))}
+                        </Grid>
+                    </Box>
+
+                    {/* Main features */}
+                    <Box sx={{ mb: 4 }}>
+                        <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+                            Chức năng chính
+                        </Typography>
+                        <Grid container spacing={3}>
+                            {features.map((feature) => (
+                                <Grid item xs={12} sm={6} md={4} key={feature.id}>
+                                    <ButtonBase sx={{ width: '100%', textAlign: 'left', borderRadius: 4 }}>
+                                        <StyledCard>
+                                            <CardContent sx={{ p: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+                                                <FeatureIcon color={feature.color}>
+                                                    {feature.icon}
+                                                </FeatureIcon>
+                                                <Typography variant="h6" fontWeight="bold" sx={{ mb: 1 }}>
+                                                    {feature.title}
+                                                </Typography>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    {feature.description}
+                                                </Typography>
+                                            </CardContent>
+                                        </StyledCard>
+                                    </ButtonBase>
+                                </Grid>
+                            ))}
+                        </Grid>
+                    </Box>
+
+                    {/* Recent Activities and Upcoming Events */}
+                    <Grid container spacing={3}>
+                        {/* Recent activities */}
+                        <Grid item xs={12} md={6}>
+                            <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+                                Hoạt động gần đây
+                            </Typography>
+                            <StyledCard>
+                                <CardContent sx={{ p: 0 }}>
+                                    <TableContainer>
+                                        <Table>
+                                            <TableHead>
+                                                <TableRow>
+                                                    <StyledTableCell className="tableHeader">Hoạt động</StyledTableCell>
+                                                    <StyledTableCell className="tableHeader">Người thực hiện</StyledTableCell>
+                                                    <StyledTableCell className="tableHeader" align="right">Thời gian</StyledTableCell>
+                                                </TableRow>
+                                            </TableHead>
+                                            <TableBody>
+                                                {recentActivities.map((activity) => (
+                                                    <TableRow key={activity.id} hover>
+                                                        <StyledTableCell>
+                                                            <Stack direction="row" spacing={2} alignItems="center">
+                                                                <Avatar sx={{
+                                                                    bgcolor: 'background.default',
+                                                                    width: 36,
+                                                                    height: 36
+                                                                }}>
+                                                                    {getActivityIcon(activity.type)}
+                                                                </Avatar>
+                                                                <Typography variant="body2">{activity.description}</Typography>
+                                                            </Stack>
+                                                        </StyledTableCell>
+                                                        <StyledTableCell>{activity.user}</StyledTableCell>
+                                                        <StyledTableCell align="right">
+                                                            <Typography variant="caption" color="text.secondary">
+                                                                {activity.timestamp}
+                                                            </Typography>
+                                                        </StyledTableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    </TableContainer>
+                                </CardContent>
+                            </StyledCard>
+                        </Grid>
+
+                        {/* Upcoming events */}
+                        <Grid item xs={12} md={6}>
+                            <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+                                Lịch sắp tới
+                            </Typography>
+                            <StyledCard>
+                                <CardContent sx={{ p: 0 }}>
+                                    <TableContainer>
+                                        <Table>
+                                            <TableHead>
+                                                <TableRow>
+                                                    <StyledTableCell className="tableHeader">Sự kiện</StyledTableCell>
+                                                    <StyledTableCell className="tableHeader">Địa điểm</StyledTableCell>
+                                                    <StyledTableCell className="tableHeader" align="right">Thời gian</StyledTableCell>
+                                                </TableRow>
+                                            </TableHead>
+                                            <TableBody>
+                                                {upcomingEvents.map((event) => (
+                                                    <TableRow key={event.id} hover>
+                                                        <StyledTableCell>
+                                                            <Stack direction="row" spacing={2} alignItems="center">
+                                                                <Box sx={{
+                                                                    width: 36,
+                                                                    height: 36,
+                                                                    display: 'flex',
+                                                                    flexDirection: 'column',
+                                                                    justifyContent: 'center',
+                                                                    alignItems: 'center',
+                                                                    borderRadius: 1,
+                                                                    bgcolor: alpha(getPriorityColor(event.priority), 0.1),
+                                                                    borderLeft: `3px solid ${getPriorityColor(event.priority)}`
+                                                                }}>
+                                                                    <Typography variant="caption" fontWeight="bold">
+                                                                        {event.date.split('/')[0]}
+                                                                    </Typography>
+                                                                    <Typography variant="caption" fontSize="0.7rem" color="text.secondary">
+                                                                        Th{event.date.split('/')[1]}
+                                                                    </Typography>
+                                                                </Box>
+                                                                <Typography variant="body2">{event.title}</Typography>
+                                                            </Stack>
+                                                        </StyledTableCell>
+                                                        <StyledTableCell>{event.location}</StyledTableCell>
+                                                        <StyledTableCell align="right">
+                                                            <Chip
+                                                                label={event.time}
+                                                                size="small"
+                                                                sx={{
+                                                                    bgcolor: alpha(getPriorityColor(event.priority), 0.1),
+                                                                    color: getPriorityColor(event.priority),
+                                                                    fontWeight: 'medium',
+                                                                    fontSize: '0.7rem'
+                                                                }}
+                                                            />
+                                                        </StyledTableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    </TableContainer>
+                                </CardContent>
+                            </StyledCard>
+                        </Grid>
+                    </Grid>
+                </Box>
+            </Box>
+        </Box>
+    );
+}
+
+export default DashboardPage;

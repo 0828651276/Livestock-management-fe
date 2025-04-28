@@ -121,7 +121,7 @@ const TopMenu = ({drawerWidth, handleDrawerToggle, user}) => {
                 </Typography>
                 {/* Chỉ hiển thị nút thông báo nếu là STAFF, không phải MANAGER */}
                 {userRole === 'STAFF' && (
-                    <NotificationDropdown notifications={notifications} onCreated={reloadNotifications} />
+                    <NotificationDropdown notifications={notifications} onCreated={reloadNotifications} hasUnread={notifications.some(n => !(n.isRead || n.read || n.is_read === true || n.isRead === 'true' || n.read === 'true' || n.is_read === 'true'))} />
                 )}
                 <Box onClick={handleUserMenuOpen} sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                     <IconButton>
