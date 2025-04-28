@@ -13,10 +13,13 @@ import {
     deleteVaccination,
 } from '../../services/VaccinationService';
 import VaccinationForm from './VaccinationForm';
+import VaccinationUpdateForm from './VaccinationUpdateForm';
 
 export default function VaccinationList() {
     const [vaccinations, setVaccinations] = useState([]);
     const [dialogOpen, setDialogOpen] = useState(false);
+    const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
+    const [selectedVaccination, setSelectedVaccination] = useState(null);
     const [form, setForm] = useState({ id: null, date: '', vaccineType: '', note: '', pen: { id: '' } });
     const [loading, setLoading] = useState(false);
     const [notification, setNotification] = useState({
@@ -46,32 +49,24 @@ export default function VaccinationList() {
         loadData();
     }, []);
 
-    const openDialog = (item = null) => {
-        if (item) {
-            setForm({ ...item, pen: { id: item.pen?.id || '' } });
-        } else {
-            setForm({ id: null, date: '', vaccineType: '', note: '', pen: { id: '' } });
-        }
+    const openDialog = () => {
+        setForm({ id: null, date: '', vaccineType: '', note: '', pen: { id: '' } });
         setDialogOpen(true);
+    };
+
+    const openUpdateDialog = (vaccination) => {
+        setSelectedVaccination(vaccination);
+        setUpdateDialogOpen(true);
     };
 
     const handleSave = async () => {
         try {
-            if (form.id) {
-                await updateVaccination(form.id, form);
-                setNotification({
-                    open: true,
-                    message: 'Cập nhật lịch tiêm phòng thành công',
-                    severity: 'success'
-                });
-            } else {
-                await createVaccination(form);
-                setNotification({
-                    open: true,
-                    message: 'Thêm lịch tiêm phòng thành công',
-                    severity: 'success'
-                });
-            }
+            await createVaccination(form);
+            setNotification({
+                open: true,
+                message: 'Thêm lịch tiêm phòng thành công',
+                severity: 'success'
+            });
             setDialogOpen(false);
             loadData();
         } catch (err) {
@@ -123,7 +118,7 @@ export default function VaccinationList() {
                     Lịch Tiêm Phòng
                 </Typography>
 
-                <Button variant="contained" onClick={() => openDialog()} sx={{ mb: 2 }}>
+                <Button variant="contained" onClick={openDialog} sx={{ mb: 2 }}>
                     ➕ Thêm Lịch Tiêm
                 </Button>
 
@@ -155,7 +150,7 @@ export default function VaccinationList() {
                                         <TableCell>{v.note}</TableCell>
                                         <TableCell>{v.pen?.id}</TableCell>
                                         <TableCell>
-                                            <IconButton onClick={() => openDialog(v)}><Edit /></IconButton>
+                                            <IconButton onClick={() => openUpdateDialog(v)}><Edit /></IconButton>
                                             <IconButton onClick={() => handleDelete(v.id)}><Delete /></IconButton>
                                         </TableCell>
                                     </TableRow>
@@ -169,9 +164,9 @@ export default function VaccinationList() {
                     </Table>
                 </TableContainer>
 
-                {/* Form thêm/sửa */}
+                {/* Form thêm mới */}
                 <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth>
-                    <DialogTitle>{form.id ? 'Cập nhật' : 'Thêm'} Lịch Tiêm</DialogTitle>
+                    <DialogTitle>Thêm Lịch Tiêm</DialogTitle>
                     <VaccinationForm
                         form={form}
                         setForm={setForm}
@@ -179,6 +174,22 @@ export default function VaccinationList() {
                         onCancel={() => setDialogOpen(false)}
                     />
                 </Dialog>
+
+                {/* Form cập nhật */}
+                <VaccinationUpdateForm
+                    open={updateDialogOpen}
+                    vaccination={selectedVaccination}
+                    onSuccess={() => {
+                        setUpdateDialogOpen(false);
+                        loadData();
+                        setNotification({
+                            open: true,
+                            message: 'Cập nhật lịch tiêm phòng thành công',
+                            severity: 'success'
+                        });
+                    }}
+                    onCancel={() => setUpdateDialogOpen(false)}
+                />
 
                 {/* Thông báo */}
                 <Snackbar

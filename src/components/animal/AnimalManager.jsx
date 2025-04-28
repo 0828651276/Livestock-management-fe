@@ -585,7 +585,7 @@ export default function AnimalManager() {
                 </DialogTitle>
                 <DialogContent dividers>
                     <AnimalFormCreate
-                        pigPens={emptyPens}
+                        pigPens={pigPens}
                         onSuccess={() => {
                             setOpenCreateForm(false);
                             setTimeout(() => {

@@ -422,11 +422,18 @@ const AnimalFormUpdate = ({ animal, pigPens, onSuccess, onCancel }) => {
                                                 label="Chuồng nuôi"
                                                 size="medium"
                                             >
-                                                {pigPens?.map((pen) => (
-                                                    <MenuItem key={pen.penId} value={pen.penId}>
-                                                        {pen.name} - {pen.status === "EMPTY" ? "Trống" : "Đang sử dụng"}
-                                                    </MenuItem>
-                                                ))}
+                                                {pigPens && pigPens.length > 0 ? (
+                                                    // Only show active pens
+                                                    pigPens
+                                                        .filter(pen => pen && pen.status === "ACTIVE")
+                                                        .map((pen) => (
+                                                            <MenuItem key={pen.penId} value={pen.penId}>
+                                                                {pen.name}
+                                                            </MenuItem>
+                                                        ))
+                                                ) : (
+                                                    <MenuItem disabled>Không có chuồng nuôi</MenuItem>
+                                                )}
                                             </Select>
                                             {errors.penId && <FormHelperText>{errors.penId}</FormHelperText>}
                                         </FormControl>

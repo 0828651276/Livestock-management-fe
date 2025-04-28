@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     Box,
     TextField,
@@ -41,6 +41,24 @@ const AnimalFormCreate = ({ pigPens, onSuccess, onCancel }) => {
     const [formData, setFormData] = useState(initialFormState);
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
+    const [pensWithAnimals, setPensWithAnimals] = useState([]);
+
+    // Fetch pens that already have animals
+    useEffect(() => {
+        const fetchPensWithAnimals = async () => {
+            try {
+                const allAnimals = await animalService.getAll();
+                const activePensWithAnimals = allAnimals
+                    .filter(animal => animal.raisingStatus === "RAISING" && animal.pigPen)
+                    .map(animal => animal.pigPen.penId);
+                setPensWithAnimals(activePensWithAnimals);
+            } catch (error) {
+                console.error("Error fetching animals:", error);
+            }
+        };
+
+        fetchPensWithAnimals();
+    }, []);
 
     /**
      * Validates the form data
@@ -372,9 +390,11 @@ const AnimalFormCreate = ({ pigPens, onSuccess, onCancel }) => {
                                                 size="medium"
                                             >
                                                 {pigPens && pigPens.length > 0 ? (
-                                                    // Only show active pens
+                                                    // Only show active pens that don't have animals
                                                     pigPens
-                                                        .filter(pen => pen.status === "ACTIVE")
+                                                        .filter(pen => pen && 
+                                                            pen.status === "ACTIVE" && 
+                                                            !pensWithAnimals.includes(pen.penId))
                                                         .map((pen) => (
                                                             <MenuItem key={pen.penId} value={pen.penId}>
                                                                 {pen.name}
