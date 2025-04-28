@@ -4,16 +4,9 @@ import {
     Typography,
     Paper,
     Grid,
-    Container,
     Avatar,
-    List,
-    ListItem,
-    ListItemIcon,
-    ListItemText,
-    IconButton,
     Card,
     CardContent,
-    Chip,
     Table,
     TableHead,
     TableBody,
@@ -25,33 +18,11 @@ import {
 import { styled } from '@mui/material/styles';
 import PetsIcon from '@mui/icons-material/Pets';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
-import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
-import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import SettingsIcon from '@mui/icons-material/Settings';
-import AnalyticsIcon from '@mui/icons-material/Analytics';
 import HouseIcon from '@mui/icons-material/House';
-import BarChartIcon from '@mui/icons-material/BarChart';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import NotificationsIcon from '@mui/icons-material/Notifications';
 import { animalService } from '../services/animalService';
 import { pigPenService } from '../services/pigPenService';
 import { medicalService } from '../services/medicalService';
 import { fetchFeedInventory } from '../services/feedWarehouseService';
-
-const FeatureIcon = styled(Avatar)(({ theme, color }) => ({
-    width: 60,
-    height: 60,
-    backgroundColor: color || theme.palette.primary.main,
-    margin: '0 auto 16px auto',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    '& .MuiSvgIcon-root': {
-        fontSize: 30,
-        color: 'white'
-    },
-    boxShadow: '0 4px 14px rgba(0,0,0,0.15)'
-}));
 
 const StatCard = styled(Paper)(({ theme, color }) => ({
     padding: theme.spacing(2.5),
@@ -83,7 +54,7 @@ const StyledTableHeadCell = styled(TableCell)(({ theme }) => ({
     textTransform: 'uppercase',
     letterSpacing: 1,
 }));
-const StyledTableRow = styled(TableRow)(({ theme }) => ({
+const StyledTableRow = styled(TableRow)(() => ({
     '&:hover': {
         background: '#f5f7fa',
     },
@@ -95,7 +66,7 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
         borderBottom: 'none',
     },
 }));
-const StyledTableCell = styled(TableCell)(({ theme }) => ({
+const StyledTableCell = styled(TableCell)(() => ({
     border: 'none',
     fontSize: 15,
     color: '#333',
@@ -103,50 +74,7 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
     paddingBottom: 10,
 }));
 
-const features = [
-    {
-        id: 'pigs',
-        title: 'QUẢN LÝ ĐÀN',
-        icon: <PetsIcon fontSize="large" />,
-        color: '#FF6D28',
-        description: 'Quản lý thông tin đàn lợn, tình trạng sức khỏe và phát triển'
-    },
-    {
-        id: 'food',
-        title: 'QUẢN LÝ THỨC ĂN',
-        icon: <RestaurantIcon fontSize="large" />,
-        color: '#28FFBF',
-        description: 'Theo dõi lượng thức ăn, dinh dưỡng và lịch cho ăn'
-    },
-    {
-        id: 'health',
-        title: 'QUẢN LÝ Y TẾ',
-        icon: <MedicalServicesIcon fontSize="large" />,
-        color: '#F94C66',
-        description: 'Lịch tiêm phòng, khám bệnh và điều trị cho đàn lợn'
-    },
-    {
-        id: 'export',
-        title: 'XUẤT CHUỒNG',
-        icon: <LocalShippingIcon fontSize="large" />,
-        color: '#3F72AF',
-        description: 'Quản lý quy trình xuất chuồng và thông tin vận chuyển'
-    },
-    {
-        id: 'analytics',
-        title: 'BÁO CÁO & THỐNG KÊ',
-        icon: <AnalyticsIcon fontSize="large" />,
-        color: '#884A39',
-        description: 'Phân tích dữ liệu hoạt động và hiệu quả kinh tế'
-    },
-    {
-        id: 'settings',
-        title: 'CÀI ĐẶT HỆ THỐNG',
-        icon: <SettingsIcon fontSize="large" />,
-        color: '#735CDD',
-        description: 'Cấu hình hệ thống, quản lý người dùng và phân quyền'
-    }
-];
+
 
 function Home() {
     const [animalCount, setAnimalCount] = useState(null);
@@ -243,104 +171,6 @@ function Home() {
         }
     ];
 
-    const recentActivities = [
-        {
-            id: 1,
-            type: 'feed',
-            description: 'Cung cấp thức ăn cho khu vực A',
-            timestamp: '08:30 - 14/04/2025',
-            user: 'Nguyễn Văn A'
-        },
-        {
-            id: 2,
-            type: 'medical',
-            description: 'Tiêm vắc xin cho đàn lợn mới nhập',
-            timestamp: '14:45 - 13/04/2025',
-            user: 'Trần Thị B'
-        },
-        {
-            id: 3,
-            type: 'export',
-            description: 'Xuất chuồng 50 con lợn thịt',
-            timestamp: '10:15 - 12/04/2025',
-            user: 'Lê Minh C'
-        },
-        {
-            id: 4,
-            type: 'import',
-            description: 'Nhập 30 con lợn giống mới',
-            timestamp: '16:20 - 11/04/2025',
-            user: 'Phạm Văn D'
-        }
-    ];
-
-    const upcomingEvents = [
-        {
-            id: 1,
-            title: 'Tiêm phòng đợt 2/2025',
-            date: '18/04/2025',
-            time: '08:00',
-            location: 'Khu vực B, C',
-            priority: 'high'
-        },
-        {
-            id: 2,
-            title: 'Kiểm tra chất lượng thức ăn',
-            date: '20/04/2025',
-            time: '09:30',
-            location: 'Kho thức ăn',
-            priority: 'medium'
-        },
-        {
-            id: 3,
-            title: 'Bảo trì hệ thống nước',
-            date: '22/04/2025',
-            time: '13:00',
-            location: 'Toàn trại',
-            priority: 'medium'
-        },
-        {
-            id: 4,
-            title: 'Đánh giá tăng trưởng tháng 4',
-            date: '30/04/2025',
-            time: '14:30',
-            location: 'Phòng họp',
-            priority: 'high'
-        }
-    ];
-
-    const getPriorityColor = (priority) => {
-        switch (priority) {
-            case 'high':
-                return '#F94C66';
-            case 'medium':
-                return '#FFA41B';
-            case 'low':
-                return '#28FFBF';
-            default:
-                return '#9E9E9E';
-        }
-    };
-
-    const getActivityIcon = (type) => {
-        switch (type) {
-            case 'feed':
-                return <RestaurantIcon sx={{ color: '#28FFBF' }} />;
-            case 'medical':
-                return <MedicalServicesIcon sx={{ color: '#F94C66' }} />;
-            case 'export':
-                return <LocalShippingIcon sx={{ color: '#3F72AF' }} />;
-            case 'import':
-                return <PetsIcon sx={{ color: '#FF6D28' }} />;
-            default:
-                return <NotificationsIcon sx={{ color: '#9E9E9E' }} />;
-        }
-    };
-
-    const handleFeatureClick = (featureId) => {
-        console.log(`Chức năng ${featureId} được chọn`);
-    };
-
     // Helper: split records
     const today = new Date();
     const historyRecords = medicalRecords.filter(r => {
@@ -354,7 +184,7 @@ function Home() {
 
     return (
         <Box sx={{ flexGrow: 1, backgroundColor: '#F5F7FA', minHeight: '100vh', py: 4 }}>
-            <Container maxWidth="lg">
+            <Box sx={{ maxWidth: 1200, mx: 'auto', width: '100%' }}>
                 {/* Welcome banner */}
                 <Paper
                     elevation={0}
@@ -402,19 +232,7 @@ function Home() {
                                 Trang tổng quan hiển thị thông tin về tình trạng trang trại. Kiểm tra các số liệu thống kê và lịch hoạt động sắp tới.
                             </Typography>
                         </Grid>
-                        <Grid item xs={12} md={4} sx={{ display: { xs: 'none', md: 'block' } }}>
-                            <Box sx={{ textAlign: 'right' }}>
-                                <CalendarMonthIcon sx={{ fontSize: 60, opacity: 0.9 }} />
-                                <Typography variant="h6" sx={{ mt: 1 }}>
-                                    {new Date().toLocaleDateString('vi-VN', {
-                                        weekday: 'long',
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric'
-                                    })}
-                                </Typography>
-                            </Box>
-                        </Grid>
+
                     </Grid>
                 </Paper>
 
@@ -454,41 +272,8 @@ function Home() {
                     ))}
                 </Grid>
 
-                {/* Main features */}
-                <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
-                    Chức năng chính
-                </Typography>
-                <Grid container spacing={3} sx={{ mb: 4 }}>
-                    {features.map((feature) => (
-                        <Grid item xs={12} sm={6} md={4} key={feature.id}>
-                            <Paper
-                                elevation={3}
-                                sx={{
-                                    p: 3,
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    cursor: 'pointer',
-                                    transition: '0.2s',
-                                    '&:hover': { transform: 'scale(1.03)' }
-                                }}
-                                onClick={() => handleFeatureClick(feature.id)}
-                            >
-                                <FeatureIcon color={feature.color}>{feature.icon}</FeatureIcon>
-                                <Typography variant="h6" fontWeight="bold" sx={{ mb: 1, mt: 2 }}>
-                                    {feature.title}
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
-                                    {feature.description}
-                                </Typography>
-                            </Paper>
-                        </Grid>
-                    ))}
-                </Grid>
-            </Container>
-            {/* Medical tables always side by side */}
-            <Container maxWidth={false} sx={{ px: { xs: 1, md: 4 }, mt: 0, mb: 0 }}>
-                <Grid container spacing={3} sx={{ mt: 0 }}>
+                {/* Medical tables always side by side */}
+                <Grid container spacing={3}>
                     <Grid item xs={12} md={6}>
                         <Card sx={{
                             borderRadius: 3,
@@ -496,10 +281,11 @@ function Home() {
                             height: '100%',
                             display: 'flex',
                             flexDirection: 'column',
-                            justifyContent: 'flex-start'
+                            justifyContent: 'flex-start',
+                            width: '100%'
                         }}>
                             <CardContent>
-                                <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1, mt: 2 }}>
+                                <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1, mt: 2, textAlign: 'center' }}>
                                     Lịch sử chữa trị
                                 </Typography>
                                 {medicalLoading ? (
@@ -542,10 +328,11 @@ function Home() {
                             height: '100%',
                             display: 'flex',
                             flexDirection: 'column',
-                            justifyContent: 'flex-start'
+                            justifyContent: 'flex-start',
+                            width: '100%'
                         }}>
                             <CardContent>
-                                <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1, mt: 2 }}>
+                                <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1, mt: 2, textAlign: 'center' }}>
                                     Lịch chữa trị sắp tới
                                 </Typography>
                                 {medicalLoading ? (
@@ -582,7 +369,7 @@ function Home() {
                         </Card>
                     </Grid>
                 </Grid>
-            </Container>
+            </Box>
         </Box>
     );
 }
