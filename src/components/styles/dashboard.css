@@ -1,0 +1,189 @@
+/* dashboard.css - Styles for the improved Dashboard */
+
+/* Animation for dashboard elements */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Animations for notifications bell */
+@keyframes bell-shake {
+    0% { transform: rotate(0deg);}
+    20% { transform: rotate(-15deg);}
+    40% { transform: rotate(10deg);}
+    60% { transform: rotate(-10deg);}
+    80% { transform: rotate(5deg);}
+    100% { transform: rotate(0deg);}
+}
+.bell-shake {
+    animation: bell-shake 0.7s linear infinite;
+}
+
+/* Styling for the Dashboard elements */
+.dashboard-welcome-banner {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.dashboard-stats {
+    animation: fadeInUp 0.6s ease-out;
+    animation-delay: 0.1s;
+    animation-fill-mode: both;
+}
+
+.dashboard-features {
+    animation: fadeInUp 0.6s ease-out;
+    animation-delay: 0.2s;
+    animation-fill-mode: both;
+}
+
+.dashboard-activities {
+    animation: fadeInUp 0.6s ease-out;
+    animation-delay: 0.3s;
+    animation-fill-mode: both;
+}
+
+.dashboard-events {
+    animation: fadeInUp 0.6s ease-out;
+    animation-delay: 0.4s;
+    animation-fill-mode: both;
+}
+
+/* Hover effects for cards */
+.feature-card:hover .feature-icon {
+    animation: pulse 1s infinite;
+}
+
+/* Custom scrollbars for tables */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(30, 132, 73, 0.6);
+    border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(30, 132, 73, 0.8);
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .responsive-table {
+        overflow-x: auto;
+    }
+
+    .mobile-hidden {
+        display: none;
+    }
+
+    .mobile-stack {
+        flex-direction: column;
+    }
+}
+
+/* Theme colors */
+:root {
+    --primary-color: #1E8449;
+    --primary-light: #E9FFF6;
+    --primary-dark: #14532d;
+    --accent-color: #FF6D28;
+    --success-color: #16B364;
+    --warning-color: #F79009;
+    --error-color: #F04438;
+    --info-color: #266DD3;
+    --background-light: #F5F7FA;
+    --text-primary: #111827;
+    --text-secondary: #6B7280;
+}
+
+/* Table hover effect */
+.hover-row:hover {
+    background-color: rgba(30, 132, 73, 0.05) !important;
+    transition: background-color 0.2s ease;
+}
+
+/* Status chips */
+.status-chip {
+    font-weight: 500;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+}
+
+.status-chip-active {
+    background-color: rgba(22, 179, 100, 0.1);
+    color: #16B364;
+}
+
+.status-chip-inactive {
+    background-color: rgba(240, 68, 56, 0.1);
+    color: #F04438;
+}
+
+/* Improved sidebar items */
+.sidebar-item {
+    transition: all 0.2s ease;
+    margin-bottom: 0.5rem;
+    border-radius: 8px;
+}
+
+.sidebar-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-item.active {
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+.sidebar-item.active .sidebar-icon,
+.sidebar-item.active .sidebar-text {
+    font-weight: bold;
+}
+
+.sidebar-icon {
+    color: white;
+    margin-right: 16px;
+}
+
+.sidebar-text {
+    color: white;
+}
+
+/* Button effects */
+.action-button {
+    transition: all 0.3s ease;
+}
+
+.action-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.action-button:active {
+    transform: translateY(0);
+}

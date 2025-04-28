@@ -282,19 +282,19 @@ const PigPenFormUpdate = ({ onClose, pigPenData }) => {
                     className={errors.closedDate ? "field-error" : ""}
                 />
 
-                <TextField
-                    label="Số lượng"
-                    name="quantity"
-                    type="number"
-                    value={pigPen.quantity}
-                    onChange={handleChange}
-                    required
-                    error={!!errors.quantity}
-                    helperText={errors.quantity}
-                    InputProps={{ inputProps: { min: 0 } }}
-                    sx={{ "& .MuiInputBase-input": { py: 1.5 } }}
-                    className={errors.quantity ? "field-error" : ""}
-                />
+                {/*<TextField*/}
+                {/*    label="Số lượng"*/}
+                {/*    name="quantity"*/}
+                {/*    type="number"*/}
+                {/*    value={pigPen.quantity}*/}
+                {/*    onChange={handleChange}*/}
+                {/*    required*/}
+                {/*    error={!!errors.quantity}*/}
+                {/*    helperText={errors.quantity}*/}
+                {/*    InputProps={{ inputProps: { min: 0 } }}*/}
+                {/*    sx={{ "& .MuiInputBase-input": { py: 1.5 } }}*/}
+                {/*    className={errors.quantity ? "field-error" : ""}*/}
+                {/*/>*/}
 
                 <Box sx={{ mb: 2 }}>
                     <FormControl fullWidth>
