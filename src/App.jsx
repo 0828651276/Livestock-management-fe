@@ -20,7 +20,6 @@ import VaccinationList from "./components/vaccination/VaccinationList.jsx";
 import FeedWarehousePage from "./pages/feed/FeedWarehousePage.jsx";
 import FeedTransactionDetail from "./components/feed/FeedTransactionDetail.jsx";
 import FeedHistoryList from "./components/feed/FeedHistoryList.jsx";
-import PenFeedHistory from "./components/feed/PenFeedHistory.jsx";
 
 // Tạo theme tùy chỉnh
 const theme = createTheme({
@@ -58,6 +57,10 @@ const RoleBasedRoute = ({element, requiredRole}) => {
 
     return element;
 };
+
+function PenFeedHistory() {
+    return null;
+}
 
 function App() {
     const [loading, setLoading] = useState(true);

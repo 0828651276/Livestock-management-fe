@@ -164,7 +164,11 @@ export default function PenManager() {
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [loading, setLoading] = useState(false);
     const [searchLoading, setSearchLoading] = useState(false);
-    const [userRole, setUserRole] = useState('');
+    // Lấy role và chuẩn hóa về chữ thường
+    const [userRole, setUserRole] = useState(() => {
+        const role = localStorage.getItem('role') || '';
+        return role.toLowerCase();
+    });
     const [employeeId, setEmployeeId] = useState('');
     // State cho menu thao tác từng pen
     const [actionMenu, setActionMenu] = useState({anchorEl: null, pen: null});
@@ -258,11 +262,11 @@ export default function PenManager() {
     useEffect(() => {
         const role = localStorage.getItem('role');
         const id = localStorage.getItem('employeeId');
-        setUserRole(role);
+        setUserRole(role.toLowerCase());
         setEmployeeId(id);
 
         // Gọi hàm fetch dữ liệu
-        fetchPigPens(role, id);
+        fetchPigPens(role.toLowerCase(), id);
         fetchFeedData();
     }, []);
 
@@ -271,7 +275,7 @@ export default function PenManager() {
         try {
             let res;
             // Nếu là MANAGER, lấy tất cả chuồng
-            if (role === 'MANAGER') {
+            if (role === 'manager') {
                 res = await pigPenService.getAllPigPens();
             }
             // Nếu là STAFF, chỉ lấy chuồng mà nhân viên đó chăm sóc
@@ -382,7 +386,7 @@ export default function PenManager() {
             if (dateRange.startDate || dateRange.endDate) {
                 // Dựa trên vai trò để quyết định tìm tất cả hay chỉ tìm theo caretaker
                 let res;
-                if (userRole === 'MANAGER') {
+                if (userRole === 'manager') {
                     res = await pigPenService.searchByDateRange(
                         dateRange.startDate,
                         dateRange.endDate
@@ -412,7 +416,7 @@ export default function PenManager() {
             // Tìm theo tên
             else if (searchTerm) {
                 let res;
-                if (userRole === 'MANAGER') {
+                if (userRole === 'manager') {
                     res = await pigPenService.searchByName(searchTerm);
                 } else {
                     // Tìm theo tên trong phạm vi chuồng nhân viên chăm sóc
@@ -694,7 +698,7 @@ export default function PenManager() {
                     <TableHead>
                         <TableRow>
                             <StyledTableHeaderCell>Tên chuồng</StyledTableHeaderCell>
-                            {userRole === 'MANAGER' && (
+                            {userRole === 'manager' && (
                                 <StyledTableHeaderCell>Người chăm sóc</StyledTableHeaderCell>
                             )}
                             <StyledTableHeaderCell>Đang nuôi</StyledTableHeaderCell>
@@ -725,7 +729,7 @@ export default function PenManager() {
                                     }}
                                 >
                                     <StyledTableCell sx={{fontWeight: 'medium'}}>{pen.name}</StyledTableCell>
-                                    {userRole === 'MANAGER' && (
+                                    {userRole === 'manager' && (
                                         <StyledTableCell>
                                             <CaretakersList
                                                 caretakers={pen.caretakers}/>
@@ -748,62 +752,19 @@ export default function PenManager() {
                                             size="small"
                                         />
                                     </StyledTableCell>
-                                    {userRole === 'MANAGER' ? (
-                                        <StyledTableCell align="center">
-                                            <IconButton onClick={(e) => handleActionMenuOpen(e, pen)}>
-                                                <MoreVertIcon/>
-                                            </IconButton>
-                                        </StyledTableCell>
-                                    ) : (
-                                        <StyledTableCell align="center">
-                                            <Stack direction="row" spacing={1} justifyContent="center">
-                                                {pen.caretakers?.some(caretaker => caretaker.employeeId === employeeId) && (
-                                                    <>
-                                                        <Tooltip title="Sửa">
-                                                            <ActionButton
-                                                                size="small"
-                                                                variant="contained"
-                                                                color="warning"
-                                                                onClick={() => {
-                                                                    setSelectedPigPen(pen);
-                                                                    setOpenUpdateForm(true);
-                                                                }}
-                                                                className="action-button"
-                                                            >
-                                                                <Edit fontSize="small"/>
-                                                                <Box component="span"
-                                                                     sx={{
-                                                                         ml: 0.5,
-                                                                         display: {xs: 'none', sm: 'inline'}
-                                                                     }}>SỬA</Box>
-                                                            </ActionButton>
-                                                        </Tooltip>
-                                                        <Tooltip title="Rời chuồng">
-                                                            <ActionButton
-                                                                size="small"
-                                                                variant="contained"
-                                                                color="error"
-                                                                onClick={() => handleLeavePenClick(pen.penId, pen.name)}
-                                                                className="action-button"
-                                                            >
-                                                                <ExitToApp fontSize="small"/>
-                                                                <Box component="span"
-                                                                     sx={{
-                                                                         ml: 0.5,
-                                                                         display: {xs: 'none', sm: 'inline'}
-                                                                     }}>RỜI</Box>
-                                                            </ActionButton>
-                                                        </Tooltip>
-                                                    </>
-                                                )}
-                                            </Stack>
-                                        </StyledTableCell>
-                                    )}
+                                    <StyledTableCell align="center">
+                                        <IconButton
+                                            onClick={(event) => handleActionMenuOpen(event, pen)}
+                                            size="small"
+                                        >
+                                            <MoreVertIcon />
+                                        </IconButton>
+                                    </StyledTableCell>
                                 </TableRow>
                             ))
                         ) : !loading && (
                             <TableRow>
-                                <TableCell colSpan={userRole === 'MANAGER' ? 9 : 8} align="center" sx={{py: 3}}>
+                                <TableCell colSpan={userRole === 'manager' ? 9 : 8} align="center" sx={{py: 3}}>
                                     <Typography variant="body1" color="text.secondary">
                                         Không có dữ liệu
                                     </Typography>
@@ -836,14 +797,15 @@ export default function PenManager() {
                         <ListItemIcon><HistoryIcon fontSize="small" color="primary"/></ListItemIcon>
                         <ListItemText>Lịch sử cho ăn</ListItemText>
                     </MenuItem>
-                    <MenuItem onClick={() => {
-                        // Tự động cho ăn
-                        handleAutoFeed(actionMenu.pen);
-                        handleActionMenuClose();
-                    }}>
-                        <ListItemIcon><RestaurantIcon fontSize="small" color="success"/></ListItemIcon>
-                        <ListItemText>Cho ăn</ListItemText>
-                    </MenuItem>
+                    {userRole === 'staff' && (
+                        <MenuItem onClick={() => {
+                            handleAutoFeed(actionMenu.pen);
+                            handleActionMenuClose();
+                        }}>
+                            <ListItemIcon><RestaurantIcon fontSize="small" color="success"/></ListItemIcon>
+                            <ListItemText>Cho ăn</ListItemText>
+                        </MenuItem>
+                    )}
                     <MenuItem onClick={() => {
                         handleDeleteClick(actionMenu.pen.penId);
                         handleActionMenuClose();
