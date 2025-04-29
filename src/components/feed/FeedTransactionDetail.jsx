@@ -5,7 +5,7 @@ import {
     TableHead, TableRow, Box, CircularProgress, Alert,
     Stack, TextField, MenuItem, Button
 } from "@mui/material";
-import { fetchTransactionsByFeedType, getFilteredTransactions } from "../../services/feedWarehouseService.js";
+import { getFilteredTransactions } from "../../services/feedWarehouseService.js";
 import {styled} from "@mui/material/styles";
 
 const StyledTableCell = styled(TableCell)(() => ({
@@ -35,23 +35,14 @@ export default function FeedTransactionDetail() {
     const loadTransactions = async () => {
         setLoading(true);
         try {
-            let data;
-            if (startDate || endDate) {
-                data = await getFilteredTransactions({
-                    feedType,
-                    startDate,
-                    endDate
-                });
-            } else {
-                data = await fetchTransactionsByFeedType(feedType);
-            }
-
-            // Filter by transaction type in frontend
-            if (transactionType) {
-                data = data.filter(tran => tran.transactionType === transactionType);
-            }
-            
-            setTransactions(data);
+            const data = await getFilteredTransactions({
+                feedType,
+                transactionType,
+                startDate,
+                endDate
+            });
+            const filtered = data.filter(tran => tran.feedType === feedType);
+            setTransactions(filtered);
             setError(null);
         } catch (err) {
             setError("Không thể tải dữ liệu giao dịch");
@@ -109,8 +100,8 @@ export default function FeedTransactionDetail() {
                         <MenuItem value="IMPORT">Nhập</MenuItem>
                         <MenuItem value="EXPORT">Xuất</MenuItem>
                     </TextField>
-                    <Button 
-                        variant="contained" 
+                    <Button
+                        variant="contained"
                         onClick={handleFilter}
                         sx={{ minWidth: 100 }}
                     >
@@ -126,6 +117,7 @@ export default function FeedTransactionDetail() {
                             <StyledTableHeaderCell align="center">Ngày giao dịch</StyledTableHeaderCell>
                             <StyledTableHeaderCell align="center">Loại giao dịch</StyledTableHeaderCell>
                             <StyledTableHeaderCell align="center">Số lượng (kg)</StyledTableHeaderCell>
+                            <StyledTableHeaderCell align="center">Chuồng</StyledTableHeaderCell>
                             <StyledTableHeaderCell align="center">Ghi chú</StyledTableHeaderCell>
                         </TableRow>
                     </TableHead>
@@ -138,12 +130,15 @@ export default function FeedTransactionDetail() {
                                         {tran.transactionType === "IMPORT" ? "Nhập kho" : "Xuất kho"}
                                     </StyledTableCell>
                                     <StyledTableCell align="center">{tran.quantity}</StyledTableCell>
+                                    <StyledTableCell align="center">
+                                        {tran.transactionType === "EXPORT" ? (tran.barnName || tran.barn || "-") : "-"}
+                                    </StyledTableCell>
                                     <StyledTableCell align="center">{tran.note || "-"}</StyledTableCell>
                                 </TableRow>
                             ))
                         ) : (
                             <TableRow>
-                                <StyledTableCell colSpan={4} align="center">
+                                <StyledTableCell colSpan={5} align="center">
                                     Không có giao dịch nào
                                 </StyledTableCell>
                             </TableRow>

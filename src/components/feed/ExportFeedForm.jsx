@@ -31,19 +31,14 @@ const ExportFeedForm = ({ onClose, onSuccess }) => {
                 setUserRole(role);
                 setEmployeeId(id);
 
-                // Lấy danh sách chuồng nuôi dựa trên vai trò
-                let pens;
-                if (role === 'MANAGER') {
-                    pens = await pigPenService.getAllPigPens();
-                } else {
-                    pens = await pigPenService.findByEmployeeId(id);
-                }
+                // Lấy danh sách chuồng nuôi kèm tên vật nuôi (giống feedlan)
+                const pens = await pigPenService.fetchPigPensWithAnimal();
                 setPigPens(pens);
 
                 // Lấy danh sách loại thức ăn từ kho
                 const inventoryData = await fetchFeedInventory();
                 setInventory(inventoryData);
-                
+
                 const types = inventoryData.map(item => ({
                     id: item.id,
                     name: item.feedType
@@ -63,7 +58,7 @@ const ExportFeedForm = ({ onClose, onSuccess }) => {
     // Hàm kiểm tra số lượng
     const checkQuantity = (quantity) => {
         if (!formData.feedName || !quantity) return;
-        
+
         const selectedFeed = inventory.find(item => item.feedType === formData.feedName);
         if (selectedFeed) {
             if (parseInt(quantity) > selectedFeed.remainingQuantity) {
@@ -91,7 +86,7 @@ const ExportFeedForm = ({ onClose, onSuccess }) => {
     // Hàm xử lý submit form
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         // Kiểm tra lại số lượng trước khi submit
         const selectedFeed = inventory.find(item => item.feedType === formData.feedName);
         if (selectedFeed && parseInt(formData.quantity) > selectedFeed.remainingQuantity) {
@@ -184,7 +179,7 @@ const ExportFeedForm = ({ onClose, onSuccess }) => {
                             >
                                 {pigPens.map((pen) => (
                                     <MenuItem key={pen.penId} value={pen.penId}>
-                                        {pen.name}
+                                        {pen.penName} - {pen.animalNames}
                                     </MenuItem>
                                 ))}
                             </Select>
