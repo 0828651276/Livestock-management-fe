@@ -23,6 +23,7 @@ import { animalService } from '../services/animalService';
 import { pigPenService } from '../services/pigPenService';
 import { medicalService } from '../services/medicalService';
 import { fetchFeedInventory } from '../services/feedWarehouseService';
+import Pagination from '@mui/material/Pagination';
 
 const StatCard = styled(Paper)(({ theme, color }) => ({
     padding: theme.spacing(2.5),
@@ -84,6 +85,13 @@ function Home() {
     const [medicalLoading, setMedicalLoading] = useState(true);
     const [feedAmount, setFeedAmount] = useState(null);
     const [feedLoading, setFeedLoading] = useState(true);
+    const [historyPage, setHistoryPage] = useState(1);
+    const [schedulePage, setSchedulePage] = useState(1);
+    const rowsPerPage = 4;
+
+    // Lấy thông tin user từ localStorage (key 'employee')
+    const user = JSON.parse(localStorage.getItem('employee') || '{}');
+    const fullName = user.fullName || 'Admin';
 
     useEffect(() => {
         const fetchData = async () => {
@@ -181,6 +189,9 @@ function Home() {
         const date = new Date(r.treatmentDate);
         return (r.status === 'scheduled' || date >= today);
     });
+    // Phân trang
+    const paginatedHistory = historyRecords.slice((historyPage - 1) * rowsPerPage, historyPage * rowsPerPage);
+    const paginatedSchedule = scheduleRecords.slice((schedulePage - 1) * rowsPerPage, schedulePage * rowsPerPage);
 
     return (
         <Box sx={{ flexGrow: 1, backgroundColor: '#F5F7FA', minHeight: '100vh', py: 4 }}>
@@ -226,7 +237,7 @@ function Home() {
                     <Grid container spacing={2} alignItems="center">
                         <Grid item xs={12} md={8}>
                             <Typography variant="h5" component="h1" fontWeight="bold" gutterBottom>
-                                Chào mừng trở lại, Admin!
+                                Chào mừng trở lại!
                             </Typography>
                             <Typography variant="body1" sx={{ opacity: 0.9, mb: 2 }}>
                                 Trang tổng quan hiển thị thông tin về tình trạng trang trại. Kiểm tra các số liệu thống kê và lịch hoạt động sắp tới.
@@ -299,7 +310,7 @@ function Home() {
                                                 <StyledTableRow>
                                                     <StyledTableHeadCell>NGÀY ĐIỀU TRỊ</StyledTableHeadCell>
                                                     <StyledTableHeadCell>TÊN ĐỘNG VẬT</StyledTableHeadCell>
-                                                    <StyledTableHeadCell>THÚ Y</StyledTableHeadCell>
+                                                    <StyledTableHeadCell>ĐỊA CHỈ</StyledTableHeadCell>
                                                 </StyledTableRow>
                                             </TableHead>
                                             <TableBody>
@@ -307,7 +318,7 @@ function Home() {
                                                     <StyledTableRow>
                                                         <StyledTableCell colSpan={3} align="center">Không có dữ liệu</StyledTableCell>
                                                     </StyledTableRow>
-                                                ) : historyRecords.map((rec, idx) => (
+                                                ) : paginatedHistory.map((rec, idx) => (
                                                     <StyledTableRow key={rec.id || idx}>
                                                         <StyledTableCell>{rec.treatmentDate || '-'}</StyledTableCell>
                                                         <StyledTableCell>{rec.animal?.name || '-'}</StyledTableCell>
@@ -317,6 +328,16 @@ function Home() {
                                             </TableBody>
                                         </Table>
                                     </StyledTableContainer>
+                                )}
+                                {/* Pagination cho lịch sử chữa trị */}
+                                {historyRecords.length > rowsPerPage && (
+                                    <Pagination
+                                        count={Math.ceil(historyRecords.length / rowsPerPage)}
+                                        page={historyPage}
+                                        onChange={(_, value) => setHistoryPage(value)}
+                                        color="primary"
+                                        sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}
+                                    />
                                 )}
                             </CardContent>
                         </Card>
@@ -346,7 +367,7 @@ function Home() {
                                                 <StyledTableRow>
                                                     <StyledTableHeadCell>NGÀY ĐIỀU TRỊ</StyledTableHeadCell>
                                                     <StyledTableHeadCell>TÊN ĐỘNG VẬT</StyledTableHeadCell>
-                                                    <StyledTableHeadCell>THÚ Y</StyledTableHeadCell>
+                                                    <StyledTableHeadCell>ĐỊA CHỈ</StyledTableHeadCell>
                                                 </StyledTableRow>
                                             </TableHead>
                                             <TableBody>
@@ -354,7 +375,7 @@ function Home() {
                                                     <StyledTableRow>
                                                         <StyledTableCell colSpan={3} align="center">Không có dữ liệu</StyledTableCell>
                                                     </StyledTableRow>
-                                                ) : scheduleRecords.map((rec, idx) => (
+                                                ) : paginatedSchedule.map((rec, idx) => (
                                                     <StyledTableRow key={rec.id || idx}>
                                                         <StyledTableCell>{rec.treatmentDate || '-'}</StyledTableCell>
                                                         <StyledTableCell>{rec.animal?.name || '-'}</StyledTableCell>
@@ -364,6 +385,16 @@ function Home() {
                                             </TableBody>
                                         </Table>
                                     </StyledTableContainer>
+                                )}
+                                {/* Pagination cho lịch chữa trị sắp tới */}
+                                {scheduleRecords.length > rowsPerPage && (
+                                    <Pagination
+                                        count={Math.ceil(scheduleRecords.length / rowsPerPage)}
+                                        page={schedulePage}
+                                        onChange={(_, value) => setSchedulePage(value)}
+                                        color="primary"
+                                        sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}
+                                    />
                                 )}
                             </CardContent>
                         </Card>

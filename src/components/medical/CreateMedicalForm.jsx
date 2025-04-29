@@ -111,7 +111,7 @@ const CreateMedicalForm = ({ open, animal, animals = [], onCreate, onCancel }) =
             <MenuItem value="ORAL">Uống thuốc</MenuItem>
           </TextField>
           <TextField
-            label="Thú y"
+            label="Địa chỉ"
             name="veterinarian"
             value={form.veterinarian}
             onChange={handleChange}

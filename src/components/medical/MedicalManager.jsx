@@ -362,7 +362,7 @@ export default function MedicalManager() {
               <MenuItem value="ORAL">Uống thuốc</MenuItem>
             </TextField>
             <TextField
-              label="Thú y"
+              label="Địa chỉ"
               name="veterinarian"
               value={formData.veterinarian}
               onChange={e => setFormData(prev => ({ ...prev, veterinarian: e.target.value }))}
@@ -405,7 +405,7 @@ export default function MedicalManager() {
                 <StyledTableCell>Ngày điều trị</StyledTableCell>
                 <StyledTableCell>Tên động vật</StyledTableCell>
                 <StyledTableCell>Phương pháp</StyledTableCell>
-                <StyledTableCell>Thú y</StyledTableCell>
+                <StyledTableCell>Địa chỉ</StyledTableCell>
                 <StyledTableCell>Ghi chú</StyledTableCell>
               </TableRow>
             </TableHead>

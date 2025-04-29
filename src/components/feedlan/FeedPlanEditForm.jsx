@@ -1,7 +1,7 @@
 import React, {useState, useEffect} from 'react';
 import {TextField, Button, Grid, Select, MenuItem, InputLabel, FormControl, Box, Alert} from '@mui/material';
 import {fetchFeedInventory} from '../../services/feedWarehouseService';
-import {pigPenService} from '../../services/pigPenService';
+import {pigPenService, fetchPigPensWithAnimal} from '../../services/pigPenService';
 import {updateFeedPlan} from "../../services/feedPlanService";
 
 const FeedPlanEditForm = ({onClose, onSuccess, initialData}) => {
@@ -22,18 +22,9 @@ const FeedPlanEditForm = ({onClose, onSuccess, initialData}) => {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                const role = localStorage.getItem('role');
-                const employeeId = localStorage.getItem('employeeId');
-
-                // Lấy danh sách chuồng nuôi
-                let pens;
-                if (role === 'MANAGER') {
-                    pens = await pigPenService.getAllPigPens();
-                } else {
-                    pens = await pigPenService.findByEmployeeId(employeeId);
-                }
+                // Lấy danh sách chuồng nuôi kèm tên động vật (chỉ dùng API mới)
+                const pens = await fetchPigPensWithAnimal();
                 setPigPens(pens);
-
                 // Lấy danh sách loại thức ăn
                 const inventoryData = await fetchFeedInventory();
                 const types = inventoryData.map(item => ({
@@ -48,7 +39,6 @@ const FeedPlanEditForm = ({onClose, onSuccess, initialData}) => {
                 setLoading(false);
             }
         };
-
         fetchData();
     }, []);
 
@@ -140,7 +130,7 @@ const FeedPlanEditForm = ({onClose, onSuccess, initialData}) => {
                             >
                                 {pigPens.map((pen) => (
                                     <MenuItem key={pen.penId} value={pen.penId}>
-                                        {pen.name}
+                                        {pen.penName} - {pen.animalNames}
                                     </MenuItem>
                                 ))}
                             </Select>

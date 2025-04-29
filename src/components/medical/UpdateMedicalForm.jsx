@@ -89,7 +89,7 @@ const UpdateMedicalForm = ({ open, medical, animals, onSuccess, onCancel }) => {
                         <MenuItem value="ORAL">Cho uống</MenuItem>
                     </TextField>
                     <TextField
-                        label="Thú y"
+                        label="Địa chỉ"
                         name="veterinarian"
                         value={form.veterinarian}
                         onChange={handleChange}
