@@ -5,34 +5,34 @@ import {
     DialogContent,
     DialogActions,
     TextField,
-    MenuItem,
     Button,
+    MenuItem,
     Box
 } from '@mui/material';
-import { medicalService } from '../../services/medicalService';
+import { vaccinationService } from '../../services/VaccinationService';
 
 /**
- * Component for updating medical treatment records
+ * Component for updating vaccination records
  */
-const UpdateMedicalForm = ({ open, medical, onSuccess, onCancel }) => {
+const UpdateVaccinationForm = ({ open, vaccination, onSuccess, onCancel }) => {
     const [form, setForm] = useState({
-        treatmentDate: '',
-        treatmentMethod: 'INJECTION',
-        veterinarian: '',
-        notes: ''
+        date: '',
+        vaccine: '',
+        note: '',
+        status: 'SCHEDULED'
     });
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        if (medical && open) {
+        if (vaccination && open) {
             setForm({
-                treatmentDate: medical.treatmentDate || '',
-                treatmentMethod: medical.treatmentMethod || 'INJECTION',
-                veterinarian: medical.veterinarian || '',
-                notes: medical.notes || ''
+                date: vaccination.date || '',
+                vaccine: vaccination.vaccine || '',
+                note: vaccination.note || '',
+                status: vaccination.status || 'SCHEDULED'
             });
         }
-    }, [medical, open]);
+    }, [vaccination, open]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -40,21 +40,19 @@ const UpdateMedicalForm = ({ open, medical, onSuccess, onCancel }) => {
     };
 
     const handleSubmit = async () => {
-        if (!medical || !medical.id) return;
-
+        if (!vaccination || !vaccination.id) return;
         setLoading(true);
         try {
-            await medicalService.updateMedical(medical.id, {
-                animal: { pigId: medical.animal.pigId },
-                treatmentDate: form.treatmentDate,
-                treatmentMethod: form.treatmentMethod,
-                veterinarian: form.veterinarian,
-                notes: form.notes
+            await vaccinationService.updateMedical(vaccination.id, {
+                animal: { pigId: vaccination.animal.pigId },
+                date: form.date,
+                vaccine: form.vaccine,
+                note: form.note,
+                status: form.status
             });
-
             onSuccess();
         } catch (err) {
-            console.error('Error updating medical record:', err);
+            console.error('Error updating vaccination record:', err);
         } finally {
             setLoading(false);
         }
@@ -63,42 +61,31 @@ const UpdateMedicalForm = ({ open, medical, onSuccess, onCancel }) => {
     return (
         <Dialog open={open} onClose={onCancel} maxWidth="sm" fullWidth>
             <DialogTitle>
-                Cập nhật điều trị
-                {medical?.animal && ` - ${medical.animal.name}`}
+                Cập nhật tiêm phòng
+                {vaccination?.animal && ` - ${vaccination.animal.name}`}
             </DialogTitle>
             <DialogContent>
                 <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
                     <TextField
-                        label="Ngày điều trị"
+                        label="Ngày tiêm phòng"
                         type="date"
-                        name="treatmentDate"
-                        value={form.treatmentDate}
+                        name="date"
+                        value={form.date}
                         onChange={handleChange}
                         InputLabelProps={{ shrink: true }}
                         fullWidth
                     />
                     <TextField
-                        select
-                        label="Phương pháp"
-                        name="treatmentMethod"
-                        value={form.treatmentMethod}
-                        onChange={handleChange}
-                        fullWidth
-                    >
-                        <MenuItem value="INJECTION">Tiêm</MenuItem>
-                        <MenuItem value="ORAL">Cho uống</MenuItem>
-                    </TextField>
-                    <TextField
-                        label="Địa chỉ"
-                        name="veterinarian"
-                        value={form.veterinarian}
+                        label="Loại vắc xin"
+                        name="vaccine"
+                        value={form.vaccine}
                         onChange={handleChange}
                         fullWidth
                     />
                     <TextField
                         label="Ghi chú"
-                        name="notes"
-                        value={form.notes}
+                        name="note"
+                        value={form.note}
                         onChange={handleChange}
                         fullWidth
                         multiline
@@ -120,4 +107,4 @@ const UpdateMedicalForm = ({ open, medical, onSuccess, onCancel }) => {
     );
 };
 
-export default UpdateMedicalForm;
+export default UpdateVaccinationForm; 

@@ -89,10 +89,6 @@ function Home() {
     const [schedulePage, setSchedulePage] = useState(1);
     const rowsPerPage = 4;
 
-    // Lấy thông tin user từ localStorage (key 'employee')
-    const user = JSON.parse(localStorage.getItem('employee') || '{}');
-    const fullName = user.fullName || 'Admin';
-
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);

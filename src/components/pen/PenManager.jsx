@@ -131,7 +131,6 @@ const AnimalNamesList = ({ penId }) => {
 };
 
 export default function PenManager() {
-    const navigate = useNavigate();
     const [pigPens, setPigPens] = useState([]);
     const [filteredPigPens, setFilteredPigPens] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');

@@ -11,7 +11,6 @@ import {
     MenuItem
 } from "@mui/material";
 import { animalService } from "../../services/animalService";
-import { pigPenService } from "../../services/pigPenService";
 import "../styles/FormValidation.css";
 import { validateAnimalForm } from "../../utils/validateUtils";
 
@@ -28,7 +27,6 @@ const initialState = {
 const ExportedAnimalFormUpdate = ({ onClose, animalData }) => {
     const [animal, setAnimal] = useState(initialState);
     const [loading, setLoading] = useState(false);
-    const [pigPens, setPigPens] = useState([]);
     const [errors, setErrors] = useState({});
     const [serverError, setServerError] = useState("");
 
