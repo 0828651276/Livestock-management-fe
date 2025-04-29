@@ -45,10 +45,28 @@ export const medicalService = {
         });
     },
 
-    // Get treatment history (medical records before today)
-    getTreatmentHistory: async () => {
+    // Lấy medical records theo status
+    getByStatus: async (status) => {
         const token = authService.getCurrentUser();
-        const response = await axios.get(`${API_URL}/history`, {
+        const response = await axios.get(`${API_URL}/status/${status}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return response.data;
+    },
+
+    // Lấy medical records theo animal và status
+    getByAnimalAndStatus: async (pigId, status) => {
+        const token = authService.getCurrentUser();
+        const response = await axios.get(`${API_URL}/animal/${pigId}/status/${status}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return response.data;
+    },
+
+    // Lấy medical records theo animal
+    getByAnimal: async (pigId) => {
+        const token = authService.getCurrentUser();
+        const response = await axios.get(`${API_URL}/animal/${pigId}`, {
             headers: { Authorization: `Bearer ${token}` }
         });
         return response.data;

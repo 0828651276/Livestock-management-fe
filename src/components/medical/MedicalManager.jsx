@@ -21,7 +21,7 @@ import {
   Snackbar,
   Alert
 } from '@mui/material';
-import { Edit, Delete, Schedule } from '@mui/icons-material';
+import { Edit, Delete, Schedule, CheckCircle } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
 import { tableCellClasses } from '@mui/material/TableCell';
 import { animalService } from '../../services/animalService';
@@ -64,20 +64,22 @@ export default function MedicalManager() {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [openCreate, setOpenCreate] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, id: null });
+  const [scheduledRecords, setScheduledRecords] = useState([]);
   const [treatmentHistory, setTreatmentHistory] = useState([]);
+  const [loadingScheduled, setLoadingScheduled] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const navigate = useNavigate();
 
   // derive set of pigIds already scheduled
   const scheduledSet = React.useMemo(
-    () => new Set(medicalRecords.map(r => r.animal.pigId)),
-    [medicalRecords]
+      () => new Set(medicalRecords.map(r => r.animal.pigId)),
+      [medicalRecords]
   );
 
   useEffect(() => {
-    fetchSickAnimals();
-    fetchAllMedical();
+    fetchScheduledRecords();
     fetchTreatmentHistory();
+    fetchSickAnimals();
   }, []);
 
   const fetchSickAnimals = async () => {
@@ -92,22 +94,22 @@ export default function MedicalManager() {
     }
   };
 
-  const fetchAllMedical = async () => {
-    setLoadingMedicals(true);
+  const fetchScheduledRecords = async () => {
+    setLoadingScheduled(true);
     try {
-      const data = await medicalService.getAllMedical();
-      setMedicalRecords(data);
+      const data = await medicalService.getByStatus('SCHEDULED');
+      setScheduledRecords(data);
     } catch (err) {
       console.error(err);
     } finally {
-      setLoadingMedicals(false);
+      setLoadingScheduled(false);
     }
   };
 
   const fetchTreatmentHistory = async () => {
     setLoadingHistory(true);
     try {
-      const data = await medicalService.getTreatmentHistory();
+      const data = await medicalService.getByStatus('COMPLETED');
       setTreatmentHistory(data);
     } catch (err) {
       console.error(err);
@@ -127,9 +129,8 @@ export default function MedicalManager() {
     try {
       await medicalService.createMedical(data);
       setSnackbar({ open: true, message: 'Đặt lịch thành công', severity: 'success' });
-      setOpenCreate(false); // Đảm bảo đóng form tạo mới
-      const all = await medicalService.getAllMedical();
-      setMedicalRecords(all);
+      setOpenCreate(false);
+      fetchScheduledRecords();
     } catch (err) {
       console.error(err);
       setSnackbar({ open: true, message: 'Lỗi khi đặt lịch', severity: 'error' });
@@ -166,9 +167,10 @@ export default function MedicalManager() {
         notes: formData.notes
       });
       setSnackbar({ open: true, message: 'Cập nhật thành công', severity: 'success' });
-      setOpenUpdate(false);      // Đóng dialog
-      setCurrentRecord(null);    // Reset record
-      fetchAllMedical();
+      setOpenUpdate(false);
+      setCurrentRecord(null);
+      fetchScheduledRecords();
+      fetchTreatmentHistory();
     } catch (err) {
       console.error(err);
       setSnackbar({ open: true, message: 'Lỗi khi cập nhật', severity: 'error' });
@@ -184,9 +186,9 @@ export default function MedicalManager() {
     try {
       await medicalService.deleteMedical(deleteDialog.id);
       setSnackbar({ open: true, message: 'Xóa thành công', severity: 'success' });
-      fetchAllMedical();
-      if (selectedAnimal) handleSchedule(selectedAnimal);
-      setOpenCreate(false); // Đảm bảo đóng form tạo mới nếu đang mở
+      fetchScheduledRecords();
+      fetchTreatmentHistory();
+      setOpenCreate(false);
     } catch (err) {
       console.error(err);
       setSnackbar({ open: true, message: 'Lỗi khi xóa', severity: 'error' });
@@ -202,24 +204,21 @@ export default function MedicalManager() {
     return method;
   };
 
-  // Hàm chuyển đổi dữ liệu medical thành event cho FullCalendar (ẩn các bản ghi đã nằm trong bảng lịch sử)
-  const getCalendarEvents = (medicalRecords) => {
-    const historyIds = new Set(treatmentHistory.map(r => r.id));
-    return medicalRecords
-      .filter(r => !historyIds.has(r.id)) // ẩn các record đã nằm trong lịch sử
-      .map(r => ({
-        id: r.id,
-        title: `${r.animal?.name || ''}`,
-        start: r.treatmentDate,
-        backgroundColor: r.treatmentMethod === 'INJECTION' ? '#1976d2' : '#43a047',
-        borderColor: r.treatmentMethod === 'INJECTION' ? '#1976d2' : '#43a047',
-        allDay: true
-      }));
+  // Sử dụng scheduledRecords cho FullCalendar
+  const getCalendarEvents = (scheduledRecords) => {
+    return scheduledRecords.map(r => ({
+      id: r.id,
+      title: `${r.animal?.name || ''}`,
+      start: r.treatmentDate,
+      backgroundColor: r.treatmentMethod === 'INJECTION' ? '#1976d2' : '#43a047',
+      borderColor: r.treatmentMethod === 'INJECTION' ? '#1976d2' : '#43a047',
+      allDay: true
+    }));
   };
 
-  // Sửa lại hàm handleEventClick: so sánh id kiểu string để chắc chắn khớp
+  // Khi click vào event trên FullCalendar, mở dialog cập nhật
   const handleEventClick = (clickInfo) => {
-    const record = medicalRecords.find(r => String(r.id) === String(clickInfo.event.id));
+    const record = scheduledRecords.find(r => String(r.id) === String(clickInfo.event.id));
     if (record) {
       handleOpenUpdate(record);
     }
@@ -249,9 +248,9 @@ export default function MedicalManager() {
     const today = new Date();
     const date = new Date(dateStr);
     return (
-      today.getFullYear() === date.getFullYear() &&
-      today.getMonth() === date.getMonth() &&
-      today.getDate() === date.getDate()
+        today.getFullYear() === date.getFullYear() &&
+        today.getMonth() === date.getMonth() &&
+        today.getDate() === date.getDate()
     );
   };
 
@@ -262,182 +261,182 @@ export default function MedicalManager() {
       await medicalService.updateMedical(record.id, {
         ...record,
         animal: { pigId: record.animal?.pigId },
-        // giữ nguyên treatmentDate
+        status: 'COMPLETED',
       });
       setSnackbar({ open: true, message: 'Đã chuyển vào lịch sử chữa trị', severity: 'success' });
-      fetchAllMedical();
+      fetchScheduledRecords();
       fetchTreatmentHistory();
     } catch (err) {
       setSnackbar({ open: true, message: 'Lỗi khi hoàn thành', severity: 'error' });
     }
   };
 
-  // Hiển thị nút X xoá và nút tích hoàn thành trên event hôm nay
+  // Hiển thị nút tích hoàn thành trên event hôm nay
   function renderEventContent(arg) {
-    const record = medicalRecords.find(r => String(r.id) === String(arg.event.id));
+    const record = scheduledRecords.find(r => String(r.id) === String(arg.event.id));
     return (
-      <div style={{display: 'flex', alignItems: 'center'}}>
-        <span style={{flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>{arg.event.title}</span>
-        {record && isToday(record.treatmentDate) && (
+        <div style={{display: 'flex', alignItems: 'center'}}>
+          <span style={{flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>{arg.event.title}</span>
+          {record && isToday(record.treatmentDate) && (
+              <IconButton
+                  size="small"
+                  color="success"
+                  style={{marginLeft: 4, padding: 2}}
+                  onClick={e => {
+                    e.stopPropagation();
+                    handleCompleteToday(record);
+                  }}
+                  title="Hoàn thành và chuyển vào lịch sử"
+              >
+                <CheckCircle fontSize="small" />
+              </IconButton>
+          )}
           <IconButton
-            size="small"
-            color="success"
-            style={{marginLeft: 4, padding: 2}}
-            onClick={e => {
-              e.stopPropagation();
-              handleCompleteToday(record);
-            }}
-            title="Hoàn thành và chuyển vào lịch sử"
+              size="small"
+              color="error"
+              style={{marginLeft: 4, padding: 2}}
+              onClick={e => {
+                e.stopPropagation();
+                confirmDeleteRecord(arg.event.id);
+              }}
           >
-            <Schedule fontSize="small" />
+            <Delete fontSize="small" />
           </IconButton>
-        )}
-        <IconButton
-          size="small"
-          color="error"
-          style={{marginLeft: 4, padding: 2}}
-          onClick={e => {
-            e.stopPropagation();
-            confirmDeleteRecord(arg.event.id);
-          }}
-        >
-          <Delete fontSize="small" />
-        </IconButton>
-      </div>
+        </div>
     );
   }
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h5" gutterBottom>Medical Manager</Typography>
-      <Box sx={{ mb: 4 }}>
-        <FullCalendar
-          plugins={[dayGridPlugin, interactionPlugin]}
-          initialView="dayGridMonth"
-          locale="vi"
-          events={getCalendarEvents(medicalRecords)}
-          height={550}
-          eventClick={handleEventClick}
-          dateClick={handleDateClick}
-          eventContent={renderEventContent}
+      <Box sx={{ p: 3 }}>
+        <Typography variant="h5" gutterBottom>Medical Manager</Typography>
+        <Box sx={{ mb: 4 }}>
+          <FullCalendar
+              plugins={[dayGridPlugin, interactionPlugin]}
+              initialView="dayGridMonth"
+              locale="vi"
+              events={getCalendarEvents(scheduledRecords)}
+              height={550}
+              eventClick={handleEventClick}
+              dateClick={handleDateClick}
+              eventContent={renderEventContent}
+          />
+        </Box>
+
+        {/* Create Form Dialog */}
+        <CreateMedicalForm
+            open={openCreate}
+            animal={selectedAnimal}
+            animals={animals}
+            onCreate={handleCreateRecord}
+            onCancel={handleCloseCreate}
         />
+
+        {/* Update Dialog */}
+        <Dialog open={openUpdate} onClose={handleCloseUpdate} maxWidth="sm" fullWidth>
+          <DialogTitle>Cập nhật điều trị</DialogTitle>
+          <DialogContent>
+            <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+              <TextField
+                  label="Tên động vật"
+                  value={currentRecord?.animal?.name || ''}
+                  disabled
+                  fullWidth
+              />
+              <TextField
+                  label="Ngày điều trị"
+                  type="date"
+                  name="treatmentDate"
+                  value={formData.treatmentDate}
+                  onChange={e => setFormData(prev => ({ ...prev, treatmentDate: e.target.value }))}
+                  InputLabelProps={{ shrink: true }}
+              />
+              <TextField
+                  select
+                  label="Phương pháp"
+                  name="treatmentMethod"
+                  value={formData.treatmentMethod}
+                  onChange={e => setFormData(prev => ({ ...prev, treatmentMethod: e.target.value }))}
+              >
+                <MenuItem value="INJECTION">Tiêm</MenuItem>
+                <MenuItem value="ORAL">Uống thuốc</MenuItem>
+              </TextField>
+              <TextField
+                  label="Địa chỉ"
+                  name="veterinarian"
+                  value={formData.veterinarian}
+                  onChange={e => setFormData(prev => ({ ...prev, veterinarian: e.target.value }))}
+              />
+              <TextField
+                  label="Ghi chú"
+                  name="notes"
+                  multiline
+                  rows={3}
+                  value={formData.notes}
+                  onChange={e => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+              />
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseUpdate}>Hủy</Button>
+            <Button onClick={handleUpdateRecord} variant="contained">Lưu</Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Dialog xác nhận xóa lịch chữa trị */}
+        <Dialog open={deleteDialog.open} onClose={() => setDeleteDialog({ open: false, id: null })}>
+          <DialogTitle>Xác nhận xóa</DialogTitle>
+          <DialogContent>
+            <Typography>Bạn có chắc chắn muốn xóa lịch chữa trị này không?</Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setDeleteDialog({ open: false, id: null })} color="inherit">Hủy</Button>
+            <Button onClick={handleDeleteConfirmed} color="error" variant="contained">Xóa</Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Bảng lịch sử chữa trị */}
+        <Box sx={{ mt: 6 }}>
+          <Typography variant="h6" gutterBottom>Lịch sử chữa trị</Typography>
+          <TableContainer component={Paper}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <StyledTableCell>Ngày điều trị</StyledTableCell>
+                  <StyledTableCell>Tên động vật</StyledTableCell>
+                  <StyledTableCell>Phương pháp</StyledTableCell>
+                  <StyledTableCell>Địa chỉ</StyledTableCell>
+                  <StyledTableCell>Ghi chú</StyledTableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {loadingHistory ? (
+                    <TableRow><TableCell colSpan={5} align="center"><CircularProgress size={24} /></TableCell></TableRow>
+                ) : treatmentHistory.length === 0 ? (
+                    <TableRow><TableCell colSpan={5} align="center">Không có dữ liệu</TableCell></TableRow>
+                ) : treatmentHistory.map((row) => (
+                    <StyledTableRow key={row.id}>
+                      <StyledTableCell>{row.treatmentDate}</StyledTableCell>
+                      <StyledTableCell>{row.animal?.name || ''}</StyledTableCell>
+                      <StyledTableCell>{getMethodLabel(row.treatmentMethod)}</StyledTableCell>
+                      <StyledTableCell>{row.veterinarian}</StyledTableCell>
+                      <StyledTableCell>{row.notes}</StyledTableCell>
+                    </StyledTableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Box>
+
+        <Snackbar
+            open={snackbar.open}
+            autoHideDuration={3000}
+            onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+            anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        >
+          <Alert severity={snackbar.severity} onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}>
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
       </Box>
-
-      {/* Create Form Dialog */}
-      <CreateMedicalForm
-        open={openCreate}
-        animal={selectedAnimal}
-        animals={animals}
-        onCreate={handleCreateRecord}
-        onCancel={handleCloseCreate}
-      />
-
-      {/* Update Dialog */}
-      <Dialog open={openUpdate} onClose={handleCloseUpdate} maxWidth="sm" fullWidth>
-        <DialogTitle>Cập nhật điều trị</DialogTitle>
-        <DialogContent>
-          <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-            <TextField
-              label="Tên động vật"
-              value={currentRecord?.animal?.name || ''}
-              disabled
-              fullWidth
-            />
-            <TextField
-              label="Ngày điều trị"
-              type="date"
-              name="treatmentDate"
-              value={formData.treatmentDate}
-              onChange={e => setFormData(prev => ({ ...prev, treatmentDate: e.target.value }))}
-              InputLabelProps={{ shrink: true }}
-            />
-            <TextField
-              select
-              label="Phương pháp"
-              name="treatmentMethod"
-              value={formData.treatmentMethod}
-              onChange={e => setFormData(prev => ({ ...prev, treatmentMethod: e.target.value }))}
-            >
-              <MenuItem value="INJECTION">Tiêm</MenuItem>
-              <MenuItem value="ORAL">Uống thuốc</MenuItem>
-            </TextField>
-            <TextField
-              label="Địa chỉ"
-              name="veterinarian"
-              value={formData.veterinarian}
-              onChange={e => setFormData(prev => ({ ...prev, veterinarian: e.target.value }))}
-            />
-            <TextField
-              label="Ghi chú"
-              name="notes"
-              multiline
-              rows={3}
-              value={formData.notes}
-              onChange={e => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseUpdate}>Hủy</Button>
-          <Button onClick={handleUpdateRecord} variant="contained">Lưu</Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Dialog xác nhận xóa lịch chữa trị */}
-      <Dialog open={deleteDialog.open} onClose={() => setDeleteDialog({ open: false, id: null })}>
-        <DialogTitle>Xác nhận xóa</DialogTitle>
-        <DialogContent>
-          <Typography>Bạn có chắc chắn muốn xóa lịch chữa trị này không?</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteDialog({ open: false, id: null })} color="inherit">Hủy</Button>
-          <Button onClick={handleDeleteConfirmed} color="error" variant="contained">Xóa</Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Bảng lịch sử chữa trị */}
-      <Box sx={{ mt: 6 }}>
-        <Typography variant="h6" gutterBottom>Lịch sử chữa trị</Typography>
-        <TableContainer component={Paper}>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <StyledTableCell>Ngày điều trị</StyledTableCell>
-                <StyledTableCell>Tên động vật</StyledTableCell>
-                <StyledTableCell>Phương pháp</StyledTableCell>
-                <StyledTableCell>Địa chỉ</StyledTableCell>
-                <StyledTableCell>Ghi chú</StyledTableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {loadingHistory ? (
-                <TableRow><TableCell colSpan={5} align="center"><CircularProgress size={24} /></TableCell></TableRow>
-              ) : treatmentHistory.length === 0 ? (
-                <TableRow><TableCell colSpan={5} align="center">Không có dữ liệu</TableCell></TableRow>
-              ) : treatmentHistory.map((row) => (
-                <StyledTableRow key={row.id}>
-                  <StyledTableCell>{row.treatmentDate}</StyledTableCell>
-                  <StyledTableCell>{row.animal?.name || ''}</StyledTableCell>
-                  <StyledTableCell>{getMethodLabel(row.treatmentMethod)}</StyledTableCell>
-                  <StyledTableCell>{row.veterinarian}</StyledTableCell>
-                  <StyledTableCell>{row.notes}</StyledTableCell>
-                </StyledTableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Box>
-
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-      >
-        <Alert severity={snackbar.severity} onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </Box>
   );
 }
