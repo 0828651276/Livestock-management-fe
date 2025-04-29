@@ -2,8 +2,6 @@ import React, { useEffect, useState } from "react";
 import { pigPenService } from "../../services/pigPenService";
 import { animalService } from "../../services/animalService";
 import { getFilteredTransactions } from "../../services/feedWarehouseService";
-import { feedHistoryService } from "../../services/feedHistoryService";
-import { feedPlanService } from "../../services/feedPlanService";
 import "../styles/PenManager.css";
 import {
     Button,
@@ -56,8 +54,6 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
-import FeedHistoryForm from "../feed/FeedHistoryForm";
-import HistoryIcon from '@mui/icons-material/History';
 
 // Styled components
 const ActionButton = styled(Button)(({ theme }) => ({
@@ -171,9 +167,6 @@ export default function PenManager() {
     // State for feed data
     const [feedExports, setFeedExports] = useState({});
     const [feedLoading, setFeedLoading] = useState(false);
-    const [openFeedHistoryForm, setOpenFeedHistoryForm] = useState(false);
-    const [selectedPenForFeed, setSelectedPenForFeed] = useState(null);
-    const [feedingInProgress, setFeedingInProgress] = useState(false);
 
     const handleCloseNotification = () => {
         setNotification({...notification, open: false});
@@ -185,74 +178,6 @@ export default function PenManager() {
             message,
             severity
         });
-    };
-
-    const handleAutoFeed = async (pen) => {
-        if (!pen || feedingInProgress) return;
-        
-        setFeedingInProgress(true);
-        try {
-            // Lấy thông tin khẩu phần ăn hàng ngày của chuồng
-            const feedPlanData = await feedPlanService.getPenDailyFeedPlan(pen.penId);
-            
-            if (!feedPlanData || !Array.isArray(feedPlanData) || feedPlanData.length === 0) {
-                showNotification("Không tìm thấy khẩu phần ăn cho chuồng này", "error");
-                return;
-            }
-            
-            // Lấy danh sách động vật trong chuồng
-            const animalsResponse = await animalService.getAnimalsByPenId(pen.penId);
-            const animals = Array.isArray(animalsResponse) ? animalsResponse : 
-                           (animalsResponse.content || []);
-            
-            if (!animals || animals.length === 0) {
-                showNotification("Không có động vật trong chuồng này", "error");
-                return;
-            }
-            
-            // Tạo lịch sử cho ăn cho mỗi động vật trong chuồng
-            const currentTime = new Date().toISOString();
-            const feedPromises = animals.map(animal => {
-                // Tìm khẩu phần phù hợp với loại động vật
-                const feedPlan = feedPlanData.find(plan => 
-                    plan.animalTypeId === animal.animalTypeId || 
-                    plan.animalType?.id === animal.animalTypeId
-                );
-                
-                if (!feedPlan) {
-                    console.warn(`Không tìm thấy khẩu phần phù hợp cho động vật ${animal.name}`);
-                    return null;
-                }
-                
-                // Tạo dữ liệu lịch sử cho ăn
-                const feedHistoryData = {
-                    pigPenId: pen.penId,
-                    animalId: animal.id,
-                    feedPlanId: feedPlan.id,
-                    feedAmount: feedPlan.amount || 0,
-                    feedingTime: currentTime,
-                    notes: `Tự động cho ăn theo khẩu phần hàng ngày`
-                };
-                
-                // Gọi API tạo lịch sử cho ăn
-                return feedHistoryService.createFeedHistory(feedHistoryData);
-            }).filter(Boolean); // Loại bỏ các promise null
-            
-            if (feedPromises.length === 0) {
-                showNotification("Không thể tạo lịch sử cho ăn do không tìm thấy khẩu phần phù hợp", "error");
-                return;
-            }
-            
-            // Chờ tất cả các promise hoàn thành
-            await Promise.all(feedPromises);
-            
-            showNotification(`Đã tạo lịch sử cho ăn cho ${feedPromises.length} động vật trong chuồng ${pen.name}`, "success");
-        } catch (error) {
-            console.error("Lỗi khi tự động tạo lịch sử cho ăn:", error);
-            showNotification("Không thể tạo lịch sử cho ăn: " + (error.message || "Lỗi không xác định"), "error");
-        } finally {
-            setFeedingInProgress(false);
-        }
     };
 
     useEffect(() => {
@@ -829,16 +754,8 @@ export default function PenManager() {
                         <ListItemText>Chỉnh sửa</ListItemText>
                     </MenuItem>
                     <MenuItem onClick={() => {
-                        // Navigate to feed history for this pen
-                        navigate(`/dashboard/feed-history/pen/${actionMenu.pen.penId}`);
-                        handleActionMenuClose();
-                    }}>
-                        <ListItemIcon><HistoryIcon fontSize="small" color="primary"/></ListItemIcon>
-                        <ListItemText>Lịch sử cho ăn</ListItemText>
-                    </MenuItem>
-                    <MenuItem onClick={() => {
-                        // Tự động cho ăn
-                        handleAutoFeed(actionMenu.pen);
+                        // Navigate to feed management for this pen
+                        navigate("/dashboard/feedwarehouse");
                         handleActionMenuClose();
                     }}>
                         <ListItemIcon><RestaurantIcon fontSize="small" color="success"/></ListItemIcon>
@@ -1001,35 +918,6 @@ export default function PenManager() {
                         Xác nhận rời
                     </Button>
                 </DialogActions>
-            </Dialog>
-
-            <Dialog
-                open={openFeedHistoryForm}
-                onClose={() => setOpenFeedHistoryForm(false)}
-                maxWidth="md"
-                fullWidth
-                PaperProps={{sx: {maxWidth: '600px', borderRadius: '8px'}}}
-            >
-                <DialogTitle sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    bgcolor: '#f5f5f5',
-                    borderBottom: '1px solid #e0e0e0'
-                }}>
-                    <RestaurantIcon color="primary"/>
-                    <Typography variant="h6" component="div">Tạo lịch sử cho ăn</Typography>
-                </DialogTitle>
-                <DialogContent sx={{p: 0}}>
-                    <FeedHistoryForm
-                        open={openFeedHistoryForm}
-                        onClose={() => setOpenFeedHistoryForm(false)}
-                        pigPen={selectedPenForFeed}
-                        onSuccess={() => {
-                            showNotification("Tạo lịch sử cho ăn thành công", "success");
-                        }}
-                    />
-                </DialogContent>
             </Dialog>
         </Box>
     );

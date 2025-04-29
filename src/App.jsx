@@ -19,6 +19,8 @@ import MedicalManager from "./components/medical/MedicalManager.jsx";
 import VaccinationList from "./components/vaccination/VaccinationList.jsx";
 import FeedWarehousePage from "./pages/feed/FeedWarehousePage.jsx";
 import FeedTransactionDetail from "./components/feed/FeedTransactionDetail.jsx";
+import FeedHistoryList from "./components/feed/FeedHistoryList.jsx";
+import PenFeedHistory from "./components/feed/PenFeedHistory.jsx";
 
 // Tạo theme tùy chỉnh
 const theme = createTheme({
@@ -100,6 +102,10 @@ function App() {
                         {/* Route mới cho quản lý điều trị y tế */}
                         <Route path="vaccinations" element={<VaccinationList/>}/>
                         <Route path="medical" element={<MedicalManager/>}/>
+                        
+                        {/* Routes mới cho lịch sử cho ăn */}
+                        <Route path="feed-history" element={<RoleBasedRoute element={<FeedHistoryList/>} requiredRole="MANAGER"/>}/>
+                        <Route path="feed-history/pen/:penId" element={<PenFeedHistory/>}/>
                     </Route>
                 </Routes>
             </ThemeProvider>
