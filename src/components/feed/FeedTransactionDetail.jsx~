@@ -6,7 +6,7 @@ import {
     Stack, TextField, MenuItem, Button
 } from "@mui/material";
 import { getFilteredTransactions } from "../../services/feedWarehouseService.js";
-import { styled } from "@mui/material/styles";
+import {styled} from "@mui/material/styles";
 
 const StyledTableCell = styled(TableCell)(() => ({
     padding: '12px 16px',
@@ -41,14 +41,10 @@ export default function FeedTransactionDetail() {
                 startDate,
                 endDate
             });
-            // Đảm bảo chỉ lọc theo feedType nếu nó được cung cấp
-            const filtered = feedType
-                ? data.filter(tran => tran.feedType === feedType)
-                : data;
+            const filtered = data.filter(tran => tran.feedType === feedType);
             setTransactions(filtered);
             setError(null);
         } catch (err) {
-            console.error("Lỗi khi tải dữ liệu giao dịch:", err);
             setError("Không thể tải dữ liệu giao dịch");
         } finally {
             setLoading(false);
@@ -61,17 +57,6 @@ export default function FeedTransactionDetail() {
 
     const handleFilter = () => {
         loadTransactions();
-    };
-
-    // Hàm trợ giúp hiển thị tên chuồng
-    const getPenName = (transaction) => {
-        if (transaction.transactionType !== "EXPORT") return "-";
-
-        // Kiểm tra các trường có thể chứa tên chuồng theo thứ tự ưu tiên
-        return transaction.barnName ||
-            transaction.penName ||
-            (transaction.pigPen && transaction.pigPen.name) ||
-            "-";
     };
 
     if (loading) return <Box textAlign="center" mt={4}><CircularProgress /></Box>;
@@ -146,7 +131,7 @@ export default function FeedTransactionDetail() {
                                     </StyledTableCell>
                                     <StyledTableCell align="center">{tran.quantity}</StyledTableCell>
                                     <StyledTableCell align="center">
-                                        {getPenName(tran)}
+                                        {tran.transactionType === "EXPORT" ? (tran.barnName || tran.barn || "-") : "-"}
                                     </StyledTableCell>
                                     <StyledTableCell align="center">{tran.note || "-"}</StyledTableCell>
                                 </TableRow>
