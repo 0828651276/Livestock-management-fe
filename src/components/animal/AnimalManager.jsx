@@ -311,13 +311,6 @@ export default function AnimalManager() {
         }
     };
 
-    // Get pen name
-    const getPenName = (penId) => {
-        if (!penId) return "—";
-        const pen = pigPens.find(p => p.penId === penId);
-        return pen ? pen.name : `Chuồng #${penId}`;
-    };
-
     // Hàm xác định trạng thái sức khỏe động vật (có đặt lịch chữa trị hay chưa)
     const getCustomHealthStatus = (animal) => {
         if (animal.healthStatus === "SICK") {

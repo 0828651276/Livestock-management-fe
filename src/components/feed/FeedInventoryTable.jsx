@@ -47,10 +47,6 @@ export default function FeedInventoryManager() {
         setUserRole(role);
     }, []);
 
-    const goToDetailPage = (feedType) => {
-        navigate(`/feed-transactions/${encodeURIComponent(feedType)}`);
-    };
-
     const fetchInventory = async () => {
         try {
             const data = await fetchFeedInventory();

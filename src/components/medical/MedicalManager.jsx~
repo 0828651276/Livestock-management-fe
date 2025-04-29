@@ -65,6 +65,16 @@ export default function MedicalManager() {
   const [treatmentHistory, setTreatmentHistory] = useState([]);
   const [loadingScheduled, setLoadingScheduled] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
+<<<<<<< HEAD
+  const navigate = useNavigate();
+
+  // derive set of pigIds already scheduled
+  const scheduledSet = React.useMemo(
+      () => new Set(medicalRecords.map(r => r.animal.pigId)),
+      [medicalRecords]
+  );
+=======
+>>>>>>> 51fe65406f93fd5d4d70dd0528c342ad1b47c5d6
 
   useEffect(() => {
     fetchScheduledRecords();

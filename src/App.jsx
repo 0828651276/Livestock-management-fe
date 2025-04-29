@@ -16,8 +16,8 @@ import FeedInventoryTable from "./components/feed/FeedInventoryTable.jsx";
 import FeedSummaryTable from "./components/feedlan/FeedSummaryTable.jsx";
 import NotificationManager from "./components/common/NotificationManager.jsx";
 import MedicalManager from "./components/medical/MedicalManager.jsx";
-import VaccinationList from "./components/vaccination/VaccinationList.jsx";
 import FeedTransactionDetail from "./components/feed/FeedTransactionDetail.jsx";
+import VaccinationMannager from "./components/vaccination/VaccinationManager.jsx";
 
 // Tạo theme tùy chỉnh
 const theme = createTheme({
@@ -55,10 +55,6 @@ const RoleBasedRoute = ({element, requiredRole}) => {
 
     return element;
 };
-
-function PenFeedHistory() {
-    return null;
-}
 
 function App() {
     const [loading, setLoading] = useState(true);
@@ -101,9 +97,9 @@ function App() {
                         <Route path="feed-inventory/:feedType" element={<FeedTransactionDetail />} />
 
                         {/* Route mới cho quản lý điều trị y tế */}
-                        <Route path="vaccinations" element={<VaccinationList/>}/>
+                        <Route path="vaccinations" element={<VaccinationMannager/>}/>
                         <Route path="medical" element={<MedicalManager/>}/>
-                        
+
                         {/* Routes mới cho lịch sử cho ăn */}
                     </Route>
                 </Routes>

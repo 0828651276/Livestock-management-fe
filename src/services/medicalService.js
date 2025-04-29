@@ -71,4 +71,4 @@ export const medicalService = {
         });
         return response.data;
     }
-}; 
+};

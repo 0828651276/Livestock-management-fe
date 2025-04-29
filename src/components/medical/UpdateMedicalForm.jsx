@@ -14,7 +14,7 @@ import { medicalService } from '../../services/medicalService';
 /**
  * Component for updating medical treatment records
  */
-const UpdateMedicalForm = ({ open, medical, animals, onSuccess, onCancel }) => {
+const UpdateMedicalForm = ({ open, medical, onSuccess, onCancel }) => {
     const [form, setForm] = useState({
         treatmentDate: '',
         treatmentMethod: 'INJECTION',
