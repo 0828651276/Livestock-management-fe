@@ -179,6 +179,12 @@ const Sidebar = ({drawerWidth, activeMenu, setActiveMenu}) => {
                                 >
                                     <ListItemText primary="Quản lý khẩu phần ăn"/>
                                 </ListItem>
+                                <ListItem
+                                    onClick={() => handleMenuClick('feed-history')}
+                                    sx={{...menuItemStyle, pl: 4}}
+                                >
+                                    <ListItemText primary="Lịch sử cho ăn"/>
+                                </ListItem>
                             </List>
                         </Collapse>
                         <ListItem onClick={toggleMenuHospital} sx={{...menuItemStyle, backgroundColor: '#222'}}>
