@@ -68,7 +68,7 @@ const CreateMedicalForm = ({ open, animal, animals = [], onCreate, onCancel }) =
   return (
     <Dialog open={open} onClose={onCancel} maxWidth="sm" fullWidth>
       <DialogTitle>
-        Đặt lịch điều trị
+        Đặt lịch khám chữa bệnh
       </DialogTitle>
       <DialogContent>
         <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>

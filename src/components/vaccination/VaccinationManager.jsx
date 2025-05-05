@@ -256,7 +256,7 @@ export default function VaccinationManager() {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h5" gutterBottom>Vaccination Manager</Typography>
+      <Typography variant="h4" gutterBottom>Lịch Tiêm Phòng</Typography>
       <Box sx={{ mb: 4 }}>
         <FullCalendar
           plugins={[dayGridPlugin, interactionPlugin]}

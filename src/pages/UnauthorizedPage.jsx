@@ -1,4 +1,3 @@
-// src/pages/UnauthorizedPage.jsx
 import React from 'react';
 import { Box, Typography, Button, Paper } from '@mui/material';
 import { Link } from 'react-router-dom';

@@ -248,7 +248,7 @@ export default function MedicalManager() {
         animal: { pigId: record.animal?.pigId },
         status: 'COMPLETED',
       });
-      setSnackbar({ open: true, message: 'Đã chuyển vào lịch sử chữa trị', severity: 'success' });
+      setSnackbar({ open: true, message: 'Đã chuyển vào lịch sử khám chữa bệnh', severity: 'success' });
       fetchScheduledRecords();
       fetchTreatmentHistory();
     } catch (err) {
@@ -293,7 +293,7 @@ export default function MedicalManager() {
 
   return (
       <Box sx={{ p: 3 }}>
-        <Typography variant="h5" gutterBottom>Medical Manager</Typography>
+        <Typography variant="h4" gutterBottom>Lịch Khám Chữa Bệnh</Typography>
         <Box sx={{ mb: 4 }}>
           <FullCalendar
               plugins={[dayGridPlugin, interactionPlugin]}
@@ -318,7 +318,7 @@ export default function MedicalManager() {
 
         {/* Update Dialog */}
         <Dialog open={openUpdate} onClose={handleCloseUpdate} maxWidth="sm" fullWidth>
-          <DialogTitle>Cập nhật điều trị</DialogTitle>
+          <DialogTitle>Cập nhật lịch khám chữa bệnh</DialogTitle>
           <DialogContent>
             <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
               <TextField
@@ -381,7 +381,7 @@ export default function MedicalManager() {
 
         {/* Bảng lịch sử chữa trị */}
         <Box sx={{ mt: 6 }}>
-          <Typography variant="h6" gutterBottom>Lịch sử chữa trị</Typography>
+          <Typography variant="h6" gutterBottom>Lịch sử khám chữa bệnh</Typography>
           <TableContainer component={Paper}>
             <Table size="small">
               <TableHead>

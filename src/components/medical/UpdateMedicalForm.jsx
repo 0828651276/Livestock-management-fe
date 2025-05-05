@@ -63,7 +63,7 @@ const UpdateMedicalForm = ({ open, medical, onSuccess, onCancel }) => {
     return (
         <Dialog open={open} onClose={onCancel} maxWidth="sm" fullWidth>
             <DialogTitle>
-                Cập nhật điều trị
+                Cập nhật lịch khám chữa bệnh
                 {medical?.animal && ` - ${medical.animal.name}`}
             </DialogTitle>
             <DialogContent>

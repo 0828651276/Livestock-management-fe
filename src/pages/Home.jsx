@@ -350,7 +350,7 @@ function Home() {
                         }}>
                             <CardContent>
                                 <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1, mt: 2, textAlign: 'center' }}>
-                                    Lịch chữa trị sắp tới
+                                    Lịch khám chữa bệnh sắp tới
                                 </Typography>
                                 {medicalLoading ? (
                                     <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>

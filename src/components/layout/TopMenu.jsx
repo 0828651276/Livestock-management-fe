@@ -1,4 +1,3 @@
-// components/layout/TopMenu.jsx
 import React, {useEffect, useState} from 'react';
 import {
     AppBar, Toolbar, IconButton, Typography, Box,
