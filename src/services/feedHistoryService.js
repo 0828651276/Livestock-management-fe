@@ -7,22 +7,20 @@ export const feedHistoryService = {
     createFeedHistory: async (feedHistoryData) => {
         try {
             const token = authService.getCurrentUser();
-            // Lấy employeeId từ token
-            const tokenData = JSON.parse(atob(token.split('.')[1]));
-            const employeeId = tokenData.employeeId;
+            const employeeId = localStorage.getItem('employeeId');
             
             // Validate required fields
             if (!feedHistoryData.pigPenId || !feedHistoryData.feedPlanId || !feedHistoryData.feedingTime || !feedHistoryData.dailyFood) {
                 throw new Error('Missing required fields for feed history');
             }
 
-            // Ensure numeric fields are numbers and include employeeId
+            // Ensure numeric fields are numbers
             const requestData = {
                 ...feedHistoryData,
                 pigPenId: Number(feedHistoryData.pigPenId),
                 feedPlanId: Number(feedHistoryData.feedPlanId),
                 dailyFood: Number(feedHistoryData.dailyFood),
-                createdById: employeeId
+                createdById: Number(employeeId)
             };
 
             console.log('Request URL:', API_URL);
@@ -51,6 +49,22 @@ export const feedHistoryService = {
                 });
                 throw new Error(error.response.data || 'Error creating feed history');
             }
+            throw error;
+        }
+    },
+
+    getFeedHistoryByPenId: async (penId) => {
+        try {
+            const token = authService.getCurrentUser();
+            const response = await axios.get(`${API_URL}/pigpens/${penId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Lỗi khi lấy lịch sử cho ăn theo chuồng:', error);
             throw error;
         }
     },
