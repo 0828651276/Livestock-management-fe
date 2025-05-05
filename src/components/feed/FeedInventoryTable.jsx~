@@ -160,7 +160,7 @@ export default function FeedInventoryManager() {
                         >
                             Nhập kho
                         </Button>
-                        {/* <Button
+                        <Button
                             variant="contained"
                             color="secondary"
                             startIcon={<Download />}
@@ -168,7 +168,7 @@ export default function FeedInventoryManager() {
                             sx={{ fontWeight: 'bold', textTransform: 'uppercase' }}
                         >
                             Xuất kho
-                        </Button> */}
+                        </Button>
                     </Stack>
                 </Box>
             )}

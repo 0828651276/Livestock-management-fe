@@ -54,11 +54,6 @@ const FeedHistoryList = () => {
             dataIndex: 'feedingTime',
             key: 'feedingTime',
             render: (text) => moment(text).format('DD/MM/YYYY HH:mm:ss')
-        },
-        {
-            title: 'Người cho ăn',
-            dataIndex: 'createdByName',
-            key: 'createdByName',
         }
     ];
 
