@@ -7,7 +7,9 @@ import {
   TextField,
   MenuItem,
   Button,
-  Box
+  Box,
+  Typography,
+  Alert
 } from '@mui/material';
 
 const CreateVaccinationForm = ({ open, animal, animals = [], onCreate, onCancel }) => {
@@ -19,6 +21,7 @@ const CreateVaccinationForm = ({ open, animal, animals = [], onCreate, onCancel 
     status: 'SCHEDULED'
   };
   const [form, setForm] = useState(initial);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (open) {
@@ -30,6 +33,7 @@ const CreateVaccinationForm = ({ open, animal, animals = [], onCreate, onCancel 
         note: '',
         status: 'SCHEDULED'
       }));
+      setError('');
     }
   }, [animal, open]);
 
@@ -49,10 +53,37 @@ const CreateVaccinationForm = ({ open, animal, animals = [], onCreate, onCancel 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name]: value }));
+    
+    // Kiểm tra trạng thái sức khỏe nếu đang thay đổi con vật
+    if (name === 'animal') {
+      const selectedAnimal = animals.find(a => a.pigId === value);
+      if (selectedAnimal) {
+        if (selectedAnimal.healthStatus === 'SICK') {
+          setError('Không thể đặt lịch tiêm cho động vật đang bị bệnh');
+        } else if (selectedAnimal.medicalStatus === 'SCHEDULED') {
+          setError('Không thể đặt lịch tiêm cho động vật đã có lịch chữa trị');
+        } else {
+          setError('');
+        }
+      }
+    }
   };
 
   const handleSubmit = () => {
     if (!form.animal) return;
+    
+    // Kiểm tra lại trạng thái sức khỏe trước khi submit
+    const selectedAnimal = animals.find(a => a.pigId === form.animal);
+    if (selectedAnimal) {
+      if (selectedAnimal.healthStatus === 'SICK') {
+        setError('Không thể đặt lịch tiêm cho động vật đang bị bệnh');
+        return;
+      } else if (selectedAnimal.medicalStatus === 'SCHEDULED') {
+        setError('Không thể đặt lịch tiêm cho động vật đã có lịch chữa trị');
+        return;
+      }
+    }
+    
     onCreate({
       animal: { pigId: form.animal },
       date: form.date,
@@ -64,12 +95,45 @@ const CreateVaccinationForm = ({ open, animal, animals = [], onCreate, onCancel 
 
   const isFromAnimalManager = !!(animal && animal.pigId);
 
+  // Kiểm tra xem động vật đã chọn có trạng thái sức khỏe phù hợp không
+  const checkAnimalStatus = () => {
+    if (isFromAnimalManager && animal) {
+      const selectedAnimal = animals.find(a => a.pigId === animal.pigId);
+      if (selectedAnimal) {
+        if (selectedAnimal.healthStatus === 'SICK') {
+          setError('Không thể đặt lịch tiêm cho động vật đang bị bệnh');
+        } else if (selectedAnimal.medicalStatus === 'SCHEDULED') {
+          setError('Không thể đặt lịch tiêm cho động vật đã có lịch chữa trị');
+        } else {
+          setError('');
+        }
+      }
+    }
+  };
+
+  // Kiểm tra khi mở form
+  useEffect(() => {
+    if (open) {
+      checkAnimalStatus();
+    }
+  }, [open, animal]);
+
+  // Lọc danh sách động vật chỉ hiển thị những con khỏe mạnh
+  const healthyAnimals = animals.filter(a => 
+    a.healthStatus !== 'SICK' && a.medicalStatus !== 'SCHEDULED'
+  );
+
   return (
     <Dialog open={open} onClose={onCancel} maxWidth="sm" fullWidth>
       <DialogTitle>
         Đặt lịch tiêm phòng
       </DialogTitle>
       <DialogContent>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
         <Box component="form" sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
           {!isFromAnimalManager && (
             <TextField
@@ -80,8 +144,9 @@ const CreateVaccinationForm = ({ open, animal, animals = [], onCreate, onCancel 
               onChange={handleChange}
               fullWidth
               required
+              error={!!error}
             >
-              {animals.map(a => (
+              {healthyAnimals.map(a => (
                 <MenuItem key={a.pigId} value={a.pigId}>{a.name}</MenuItem>
               ))}
             </TextField>
@@ -117,10 +182,16 @@ const CreateVaccinationForm = ({ open, animal, animals = [], onCreate, onCancel 
       </DialogContent>
       <DialogActions>
         <Button onClick={onCancel}>Hủy</Button>
-        <Button onClick={handleSubmit} variant="contained">Lưu</Button>
+        <Button 
+          onClick={handleSubmit} 
+          variant="contained" 
+          disabled={!!error || !form.animal || !form.date || !form.vaccine}
+        >
+          Lưu
+        </Button>
       </DialogActions>
     </Dialog>
   );
 };
 
-export default CreateVaccinationForm; 
+export default CreateVaccinationForm;
