@@ -18,6 +18,7 @@ import NotificationManager from "./components/common/NotificationManager.jsx";
 import MedicalManager from "./components/medical/MedicalManager.jsx";
 import FeedTransactionDetail from "./components/feed/FeedTransactionDetail.jsx";
 import VaccinationMannager from "./components/vaccination/VaccinationManager.jsx";
+import FeedHistoryList from "./components/feed/FeedHistoryList.jsx";
 
 // Tạo theme tùy chỉnh
 const theme = createTheme({
@@ -100,7 +101,8 @@ function App() {
                         <Route path="vaccinations" element={<VaccinationMannager/>}/>
                         <Route path="medical" element={<MedicalManager/>}/>
 
-                        {/* Routes mới cho lịch sử cho ăn */}
+                        {/* Route mới cho lịch sử cho ăn */}
+                        <Route path="feed-history" element={<FeedHistoryList />} />
                     </Route>
                 </Routes>
             </ThemeProvider>

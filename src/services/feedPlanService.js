@@ -5,7 +5,18 @@ const API_URL = 'http://localhost:8080/api/plan';
 
 export const feedPlanService = {
     createFeedPlan: async (feedPlan) => {
-        return axios.post(`${API_URL}`, feedPlan);
+        try {
+            const token = authService.getCurrentUser();
+            const response = await axios.post(API_URL, feedPlan, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Lỗi khi tạo khẩu phần ăn:', error);
+            throw error;
+        }
     },
 
     updateFeedPlan: async (feedPlanId, feedPlan) => {
@@ -25,14 +36,14 @@ export const feedPlanService = {
     getAllFeedPlans: async () => {
         try {
             const token = authService.getCurrentUser();
-            const res = await axios.get(`${API_URL}`, {
+            const response = await axios.get(API_URL, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
-            return res.data;
+            return response.data;
         } catch (error) {
-            console.error('Lỗi khi lấy danh sách khẩu phần ăn:', error);
+            console.error('Lỗi khi lấy danh sách khẩu phần:', error);
             throw error;
         }
     },
@@ -56,25 +67,34 @@ export const feedPlanService = {
     getPenDailyFeedPlan: async (penId) => {
         try {
             const token = authService.getCurrentUser();
-            const res = await axios.get(`${API_URL}/pen/${penId}`, {
+            const response = await axios.get(`${API_URL}/pen/${penId}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
-            return res.data;
+            return response.data;
         } catch (error) {
-            console.error(`Lỗi khi lấy khẩu phần ăn hàng ngày cho chuồng ${penId}:`, error);
+            console.error('Lỗi khi lấy khẩu phần ăn hàng ngày cho chuồng:', error);
             throw error;
         }
     },
 
     searchByPenName: async (penName) => {
-        const response = await axios.get(`${API_URL}/search`, {
-            params: {
-                penName: penName
-            }
-        });
-        return response.data;
+        try {
+            const token = authService.getCurrentUser();
+            const response = await axios.get(`${API_URL}/search`, {
+                params: {
+                    penName: penName
+                },
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Lỗi khi tìm kiếm khẩu phần theo tên chuồng:', error);
+            throw error;
+        }
     }
 };
 
