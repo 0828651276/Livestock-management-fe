@@ -525,7 +525,7 @@ export default function AnimalManager() {
                                     <StyledTableCell>Chuồng nuôi</StyledTableCell>
                                     <StyledTableCell>Ngày nhập</StyledTableCell>
                                     <StyledTableCell>Ngày xuất</StyledTableCell>
-                                    <StyledTableCell>Cân nặng (kg)</StyledTableCell>
+                                    <StyledTableCell>Cân nặng (kg/con)</StyledTableCell>
                                     <StyledTableCell>Số lượng</StyledTableCell>
                                     <StyledTableCell>Sức khỏe</StyledTableCell>
                                     <StyledTableCell>Trạng thái</StyledTableCell>
@@ -594,8 +594,8 @@ export default function AnimalManager() {
             <Dialog
                 open={openCreateForm}
                 onClose={() => setOpenCreateForm(false)}
-                maxWidth="md"
-                fullWidth
+                maxWidth="sm"
+                fullWidth={false}
             >
                 <DialogTitle sx={{fontWeight: "bold"}}>
                     Thêm vật nuôi mới
@@ -619,13 +619,13 @@ export default function AnimalManager() {
             <Dialog
                 open={openUpdateForm}
                 onClose={() => setOpenUpdateForm(false)}
-                maxWidth="md"
+                maxWidth="sm"
                 fullWidth
             >
                 <DialogTitle sx={{fontWeight: "bold"}}>
-                    Cập nhật thông tin động vật
+                    Cập nhật thông tin vật nuôi
                 </DialogTitle>
-                <DialogContent dividers>
+                <DialogContent dividers sx={{ p: 2 }}>
                     {selectedAnimal && (
                         <AnimalFormUpdate
                             animal={selectedAnimal}

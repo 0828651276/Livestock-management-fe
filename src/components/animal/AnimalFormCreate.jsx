@@ -172,7 +172,7 @@ const AnimalFormCreate = ({ pigPens, onSuccess, onCancel }) => {
                             <TextField
                                 fullWidth
                                 required
-                                label="Tên động vật"
+                                label="Tên vật nuôi"
                                 name="name"
                                 value={formData.name}
                                 onChange={handleInputChange}

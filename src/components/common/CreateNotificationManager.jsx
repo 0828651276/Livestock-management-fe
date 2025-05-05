@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
     Dialog,
     DialogTitle,
@@ -15,8 +15,8 @@ import {
     Chip,
     OutlinedInput
 } from '@mui/material';
-import { notificationService } from '../../services/NotificationService';
-import { pigPenService } from '../../services/pigPenService';
+import {notificationService} from '../../services/NotificationService';
+import {pigPenService} from '../../services/pigPenService';
 
 // Cấu hình cho dropdown multi-select
 const ITEM_HEIGHT = 48;
@@ -30,7 +30,7 @@ const MenuProps = {
     },
 };
 
-const CreateNotificationForm = ({ open, onClose, onCreated }) => {
+const CreateNotificationForm = ({open, onClose, onCreated}) => {
     const [content, setContent] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -58,7 +58,7 @@ const CreateNotificationForm = ({ open, onClose, onCreated }) => {
     };
 
     const handlePigPensChange = (event) => {
-        const { value } = event.target;
+        const {value} = event.target;
         setSelectedPigPens(value);
     };
 
@@ -71,17 +71,12 @@ const CreateNotificationForm = ({ open, onClose, onCreated }) => {
             return;
         }
 
-        if (selectedPigPens.length === 0) {
-            setError('Vui lòng chọn ít nhất một chuồng nuôi');
-            return;
-        }
-
         setLoading(true);
         try {
             // Tạo đối tượng thông báo với danh sách chuồng
             const notificationData = {
                 content,
-                pigPens: selectedPigPens.map(penId => ({ penId }))
+                pigPens: selectedPigPens.map(penId => ({penId}))
             };
 
             await notificationService.add(notificationData);
@@ -109,7 +104,7 @@ const CreateNotificationForm = ({ open, onClose, onCreated }) => {
             <DialogTitle>Thêm mới thông báo</DialogTitle>
             <form onSubmit={handleSubmit}>
                 <DialogContent>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 2 }}>
+                    <Box sx={{display: 'flex', flexDirection: 'column', gap: 2, mb: 2}}>
                         <TextField
                             label="Nội dung thông báo"
                             value={content}
@@ -121,38 +116,37 @@ const CreateNotificationForm = ({ open, onClose, onCreated }) => {
                         />
 
                         {/* Dropdown chọn chuồng nuôi */}
-                        <FormControl fullWidth required>
-                            <InputLabel id="pigpens-label">Chuồng nuôi</InputLabel>
-                            <Select
-                                labelId="pigpens-label"
-                                multiple
-                                value={selectedPigPens}
-                                onChange={handlePigPensChange}
-                                input={<OutlinedInput label="Chuồng nuôi" />}
-                                renderValue={(selected) => (
-                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                        {selected.map((value) => {
-                                            const pen = pigPens.find(p => p.penId === value);
-                                            return (
-                                                <Chip
-                                                    key={value}
-                                                    label={pen ? pen.name : value}
-                                                    color="primary"
-                                                    variant="outlined"
-                                                />
-                                            );
-                                        })}
-                                    </Box>
-                                )}
-                                MenuProps={MenuProps}
-                            >
-                                {pigPens.map((pen) => (
-                                    <MenuItem key={pen.penId} value={pen.penId}>
-                                        {pen.name}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
+                        <InputLabel id="pigpens-label">Chuồng nuôi</InputLabel>
+                        <Select
+                            labelId="pigpens-label"
+                            multiple
+                            value={selectedPigPens}
+                            onChange={handlePigPensChange}
+                            input={<OutlinedInput label="Chuồng nuôi"/>}
+                            renderValue={(selected) => (
+                                <Box sx={{display: 'flex', flexWrap: 'wrap', gap: 0.5}}>
+                                    {selected.map((value) => {
+                                        const pen = pigPens.find(p => p.penId === value);
+                                        return (
+                                            <Chip
+                                                key={value}
+                                                label={pen ? pen.name : value}
+                                                color="primary"
+                                                variant="outlined"
+                                            />
+                                        );
+                                    })}
+                                </Box>
+                            )}
+                            MenuProps={MenuProps}
+                        >
+                            {pigPens.map((pen) => (
+                                <MenuItem key={pen.penId} value={pen.penId}>
+                                    {pen.name}
+                                </MenuItem>
+                            ))}
+                        </Select>
+
                     </Box>
 
                     {error && <Alert severity="error">{error}</Alert>}
@@ -162,7 +156,6 @@ const CreateNotificationForm = ({ open, onClose, onCreated }) => {
                     <Button
                         type="submit"
                         variant="contained"
-                        disabled={loading || !content.trim() || selectedPigPens.length === 0}
                     >
                         {loading ? 'Đang xử lý...' : 'Thêm'}
                     </Button>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
     Dialog,
     DialogTitle,
@@ -16,8 +16,8 @@ import {
     OutlinedInput,
     Typography
 } from '@mui/material';
-import { notificationService } from '../../services/NotificationService';
-import { pigPenService } from '../../services/pigPenService';
+import {notificationService} from '../../services/NotificationService';
+import {pigPenService} from '../../services/pigPenService';
 
 // Cấu hình cho dropdown multi-select
 const ITEM_HEIGHT = 48;
@@ -31,7 +31,7 @@ const MenuProps = {
     },
 };
 
-const UpdateNotificationForm = ({ open, onClose, notification, onUpdated }) => {
+const UpdateNotificationForm = ({open, onClose, notification, onUpdated}) => {
     const [content, setContent] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -69,7 +69,7 @@ const UpdateNotificationForm = ({ open, onClose, notification, onUpdated }) => {
     };
 
     const handlePigPensChange = (event) => {
-        const { value } = event.target;
+        const {value} = event.target;
         setSelectedPigPens(value);
     };
 
@@ -82,11 +82,6 @@ const UpdateNotificationForm = ({ open, onClose, notification, onUpdated }) => {
             return;
         }
 
-        if (selectedPigPens.length === 0) {
-            setError('Vui lòng chọn ít nhất một chuồng nuôi');
-            return;
-        }
-
         setLoading(true);
         try {
             // Chuẩn bị đối tượng thông báo cập nhật
@@ -95,7 +90,7 @@ const UpdateNotificationForm = ({ open, onClose, notification, onUpdated }) => {
                 content,
                 // Đặt trạng thái read về false
                 read: false,
-                pigPens: selectedPigPens.map(penId => ({ penId }))
+                pigPens: selectedPigPens.map(penId => ({penId}))
             };
 
             await notificationService.update(notification.id, updatedNotification);
@@ -119,7 +114,7 @@ const UpdateNotificationForm = ({ open, onClose, notification, onUpdated }) => {
             <DialogTitle>Cập nhật thông báo</DialogTitle>
             <form onSubmit={handleSubmit}>
                 <DialogContent>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 2 }}>
+                    <Box sx={{display: 'flex', flexDirection: 'column', gap: 2, mb: 2}}>
                         <TextField
                             label="Nội dung thông báo"
                             value={content}
@@ -131,42 +126,41 @@ const UpdateNotificationForm = ({ open, onClose, notification, onUpdated }) => {
                         />
 
                         {/* Dropdown chọn chuồng nuôi */}
-                        <FormControl fullWidth required>
-                            <InputLabel id="pigpens-update-label">Chuồng nuôi</InputLabel>
-                            <Select
-                                labelId="pigpens-update-label"
-                                multiple
-                                value={selectedPigPens}
-                                onChange={handlePigPensChange}
-                                input={<OutlinedInput label="Chuồng nuôi" />}
-                                renderValue={(selected) => (
-                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                        {selected.map((value) => {
-                                            const pen = pigPens.find(p => p.penId === value);
-                                            return (
-                                                <Chip
-                                                    key={value}
-                                                    label={pen ? pen.name : value}
-                                                    color="primary"
-                                                    variant="outlined"
-                                                />
-                                            );
-                                        })}
-                                    </Box>
-                                )}
-                                MenuProps={MenuProps}
-                            >
-                                {pigPens.map((pen) => (
-                                    <MenuItem key={pen.penId} value={pen.penId}>
-                                        {pen.name}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
+                        <InputLabel id="pigpens-update-label">Chuồng nuôi</InputLabel>
+                        <Select
+                            labelId="pigpens-update-label"
+                            multiple
+                            value={selectedPigPens}
+                            onChange={handlePigPensChange}
+                            input={<OutlinedInput label="Chuồng nuôi"/>}
+                            renderValue={(selected) => (
+                                <Box sx={{display: 'flex', flexWrap: 'wrap', gap: 0.5}}>
+                                    {selected.map((value) => {
+                                        const pen = pigPens.find(p => p.penId === value);
+                                        return (
+                                            <Chip
+                                                key={value}
+                                                label={pen ? pen.name : value}
+                                                color="primary"
+                                                variant="outlined"
+                                            />
+                                        );
+                                    })}
+                                </Box>
+                            )}
+                            MenuProps={MenuProps}
+                        >
+                            {pigPens.map((pen) => (
+                                <MenuItem key={pen.penId} value={pen.penId}>
+                                    {pen.name}
+                                </MenuItem>
+                            ))}
+                        </Select>
 
                         {/* Thông báo về việc reset trạng thái đã đọc */}
-                        <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                            * Lưu ý: Cập nhật thông báo sẽ reset trạng thái đã đọc và tất cả nhân viên sẽ nhận được thông báo lại.
+                        <Typography variant="caption" color="text.secondary" sx={{fontStyle: 'italic'}}>
+                            * Lưu ý: Cập nhật thông báo sẽ reset trạng thái đã đọc và tất cả nhân viên sẽ nhận được
+                            thông báo lại.
                         </Typography>
                     </Box>
 
@@ -177,7 +171,6 @@ const UpdateNotificationForm = ({ open, onClose, notification, onUpdated }) => {
                     <Button
                         type="submit"
                         variant="contained"
-                        disabled={loading || !content.trim() || selectedPigPens.length === 0}
                     >
                         {loading ? 'Đang xử lý...' : 'Cập nhật'}
                     </Button>

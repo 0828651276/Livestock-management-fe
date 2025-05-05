@@ -169,28 +169,6 @@ export default function NotificationManager() {
     const formatDate = (dateStr) => {
         if (!dateStr) return "";
         const date = new Date(dateStr);
-        const today = new Date();
-
-        // Same day, show time only
-        if (date.toDateString() === today.toDateString()) {
-            return date.toLocaleTimeString('vi-VN', {
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        }
-
-        // Within a week, show day of week and time
-        const oneWeekAgo = new Date();
-        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-        if (date > oneWeekAgo) {
-            return date.toLocaleDateString('vi-VN', {
-                weekday: 'long',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        }
-
-        // Otherwise full date
         return date.toLocaleDateString('vi-VN', {
             day: '2-digit',
             month: '2-digit',
@@ -199,6 +177,7 @@ export default function NotificationManager() {
             minute: '2-digit'
         });
     };
+
 
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
@@ -354,10 +333,8 @@ export default function NotificationManager() {
                 <Table sx={{ minWidth: 650 }} aria-label="notifications table" className="notification-table">
                     <TableHead>
                         <TableRow>
-                            <StyledTableHeaderCell>ID</StyledTableHeaderCell>
                             <StyledTableHeaderCell>Nội dung</StyledTableHeaderCell>
                             <StyledTableHeaderCell>Thời gian đăng</StyledTableHeaderCell>
-                            <StyledTableHeaderCell>Trạng thái</StyledTableHeaderCell>
                             <StyledTableHeaderCell align="center">Hành động</StyledTableHeaderCell>
                         </TableRow>
                     </TableHead>
@@ -371,7 +348,6 @@ export default function NotificationManager() {
                                         '&:hover': { backgroundColor: '#f0f7ff' },
                                     }}
                                 >
-                                    <StyledTableCell>{notif.id}</StyledTableCell>
                                     <StyledTableCell sx={{ maxWidth: '400px' }}>
                                         <Typography
                                             variant="body2"
@@ -387,13 +363,6 @@ export default function NotificationManager() {
                                         </Typography>
                                     </StyledTableCell>
                                     <StyledTableCell>{formatDate(notif.postedAt)}</StyledTableCell>
-                                    <StyledTableCell>
-                                        <Chip
-                                            label={notif.read ? "Đã đọc" : "Chưa đọc"}
-                                            color={notif.read ? "default" : "primary"}
-                                            size="small"
-                                        />
-                                    </StyledTableCell>
                                     <StyledTableCell align="center">
                                         <Stack direction="row" spacing={1} justifyContent="center">
                                             <Tooltip title="Sửa">

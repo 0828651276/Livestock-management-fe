@@ -2,7 +2,8 @@ import React, { useEffect, useState, useCallback } from 'react';
 import {
     Table, TableHead, TableBody, TableRow, TableCell, Paper, TableContainer,
     Typography, CircularProgress, Alert, Box, IconButton, TextField, Button,
-    Stack, Snackbar, Dialog, DialogTitle, DialogContent, InputAdornment
+    Stack, Snackbar, Dialog, DialogTitle, DialogContent, InputAdornment,
+    TablePagination
 } from '@mui/material';
 import { Edit as EditIcon, Add, Search } from '@mui/icons-material';
 import { getDailyFeedSummary, searchByPenName } from '../../services/feedPlanService';
@@ -37,12 +38,14 @@ const FeedSummaryTable = () => {
     const [notification, setNotification] = useState({ open: false, message: '', severity: 'success' });
     const [userRole, setUserRole] = useState('');
 
-    // Lấy role từ localStorage
+    // Phân trang
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
+
     useEffect(() => {
         setUserRole(localStorage.getItem('role') || '');
     }, []);
 
-    // Hàm load dữ liệu
     const fetchData = useCallback(async () => {
         try {
             setLoading(true);
@@ -62,7 +65,6 @@ const FeedSummaryTable = () => {
         fetchData();
     }, [fetchData]);
 
-    // Tìm kiếm theo tên chuồng
     const handleSearch = async (value) => {
         const keyword = value.trim();
         if (!keyword) {
@@ -73,7 +75,7 @@ const FeedSummaryTable = () => {
         try {
             const data = await searchByPenName(keyword);
             const result = data.map(plan => ({
-                id: plan.feedPlanId, // Giữ lại ID để cập nhật
+                id: plan.feedPlanId,
                 pigPenId: plan.pigPen?.id,
                 penName: plan.pigPen?.name,
                 feedType: plan.feedType,
@@ -86,11 +88,11 @@ const FeedSummaryTable = () => {
         }
     };
 
-
     const handlePenNameChange = (e) => {
         const value = e.target.value;
         setPenName(value);
         handleSearch(value);
+        setPage(0); // reset về trang đầu khi tìm kiếm
     };
 
     const handleEdit = (item) => {
@@ -98,10 +100,18 @@ const FeedSummaryTable = () => {
         setOpenEditForm(true);
     };
 
-
     const handleSuccess = (message) => {
         fetchData();
         setNotification({ open: true, message, severity: 'success' });
+    };
+
+    const handleChangePage = (event, newPage) => {
+        setPage(newPage);
+    };
+
+    const handleChangeRowsPerPage = (event) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPage(0);
     };
 
     if (loading) {
@@ -146,7 +156,8 @@ const FeedSummaryTable = () => {
                             flexShrink: 0,
                             fontWeight: 'bold',
                             textTransform: 'uppercase'
-                        }}                    >
+                        }}
+                    >
                         Tìm kiếm
                     </Button>
                 </Stack>
@@ -190,31 +201,42 @@ const FeedSummaryTable = () => {
                                 </StyledTableCell>
                             </TableRow>
                         ) : (
-                            filteredSummaries.map(item => (
-                                <TableRow key={`${item.pigPenId}-${item.feedType}`}>
-                                    <StyledTableCell>{item.penName}</StyledTableCell>
-                                    <StyledTableCell>{item.feedType}</StyledTableCell>
-                                    <StyledTableCell>{item.totalDailyFood}</StyledTableCell>
-                                    <StyledTableCell>
-                                        {userRole === 'MANAGER' && (
-                                            <IconButton
-                                                onClick={() => handleEdit(item)}
-                                                color="primary"
-                                                size="small"
-                                            >
-                                                <EditIcon />
-                                            </IconButton>
-                                        )}
-                                    </StyledTableCell>
-                                </TableRow>
-                            ))
+                            filteredSummaries
+                                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                                .map(item => (
+                                    <TableRow key={`${item.pigPenId}-${item.feedType}`}>
+                                        <StyledTableCell>{item.penName}</StyledTableCell>
+                                        <StyledTableCell>{item.feedType}</StyledTableCell>
+                                        <StyledTableCell>{item.totalDailyFood}</StyledTableCell>
+                                        <StyledTableCell>
+                                            {userRole === 'MANAGER' && (
+                                                <IconButton
+                                                    onClick={() => handleEdit(item)}
+                                                    color="primary"
+                                                    size="small"
+                                                >
+                                                    <EditIcon />
+                                                </IconButton>
+                                            )}
+                                        </StyledTableCell>
+                                    </TableRow>
+                                ))
                         )}
                     </TableBody>
                 </Table>
+                <TablePagination
+                    rowsPerPageOptions={[10, 25, 50]}
+                    component="div"
+                    count={filteredSummaries.length}
+                    rowsPerPage={rowsPerPage}
+                    page={page}
+                    onPageChange={handleChangePage}
+                    onRowsPerPageChange={handleChangeRowsPerPage}
+                />
             </TableContainer>
 
             {/* Form thêm mới */}
-            <Dialog open={openForm} onClose={() => setOpenForm(false)} maxWidth="md" fullWidth>
+            <Dialog open={openForm} onClose={() => setOpenForm(false)} maxWidth="sm" fullWidth>
                 <DialogTitle textAlign="center">Thêm khẩu phần ăn mới</DialogTitle>
                 <DialogContent>
                     <FeedPlanForm
@@ -228,7 +250,7 @@ const FeedSummaryTable = () => {
             </Dialog>
 
             {/* Form cập nhật */}
-            <Dialog open={openEditForm} onClose={() => setOpenEditForm(false)} maxWidth="md" fullWidth>
+            <Dialog open={openEditForm} onClose={() => setOpenEditForm(false)} maxWidth="sm" fullWidth>
                 <DialogTitle textAlign="center">Cập nhật khẩu phần ăn</DialogTitle>
                 <DialogContent>
                     {selectedItem && (
@@ -244,7 +266,7 @@ const FeedSummaryTable = () => {
                 </DialogContent>
             </Dialog>
 
-            {/* Thông báo snackbar */}
+            {/* Snackbar thông báo */}
             <Snackbar
                 open={notification.open}
                 autoHideDuration={3000}

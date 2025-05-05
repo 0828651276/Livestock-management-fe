@@ -368,7 +368,6 @@ export default function ExportedAnimalManager() {
                 <Table sx={{minWidth: 650}} aria-label="exported animals table">
                     <TableHead>
                         <TableRow>
-                            <StyledTableHeaderCell>ID</StyledTableHeaderCell>
                             <StyledTableHeaderCell>Tên</StyledTableHeaderCell>
                             <StyledTableHeaderCell>Ngày nhập</StyledTableHeaderCell>
                             <StyledTableHeaderCell>Ngày xuất</StyledTableHeaderCell>
@@ -388,7 +387,6 @@ export default function ExportedAnimalManager() {
                                         '&:hover': {backgroundColor: '#f0f7ff'}
                                     }}
                                 >
-                                    <StyledTableCell>{animal.pigId}</StyledTableCell>
                                     <StyledTableCell>{animal.name}</StyledTableCell>
                                     <StyledTableCell>{formatDate(animal.entryDate)}</StyledTableCell>
                                     <StyledTableCell>{formatDate(animal.exitDate)}</StyledTableCell>
