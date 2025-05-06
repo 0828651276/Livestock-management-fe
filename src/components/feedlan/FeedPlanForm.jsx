@@ -20,18 +20,9 @@ const FeedPlanForm = ({onClose, onSuccess}) => {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                const role = localStorage.getItem('role');
-                const employeeId = localStorage.getItem('employeeId');
-
-                // Lấy danh sách chuồng nuôi
-                let pens;
-                if (role === 'MANAGER') {
-                    pens = await pigPenService.getAllPigPens();
-                } else {
-                    pens = await pigPenService.findByEmployeeId(employeeId);
-                }
+                // Lấy danh sách chuồng nuôi kèm tên động vật (chỉ dùng API mới)
+                const pens = await pigPenService.fetchPigPensWithAnimal();
                 setPigPens(pens);
-
                 // Lấy danh sách loại thức ăn
                 const inventoryData = await fetchFeedInventory();
                 const types = inventoryData.map(item => ({
@@ -46,7 +37,6 @@ const FeedPlanForm = ({onClose, onSuccess}) => {
                 setLoading(false);
             }
         };
-
         fetchData();
     }, []);
 
@@ -107,7 +97,7 @@ const FeedPlanForm = ({onClose, onSuccess}) => {
                             >
                                 {pigPens.map((pen) => (
                                     <MenuItem key={pen.penId} value={pen.penId}>
-                                        {pen.name}
+                                        {pen.penName} - {pen.animalNames}
                                     </MenuItem>
                                 ))}
                             </Select>

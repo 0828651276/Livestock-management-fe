@@ -5,17 +5,17 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { notificationService } from '../../services/NotificationService';
+import '../../styles/bell-shake.css';
+
 dayjs.extend(relativeTime);
 
-// Component hiển thị danh sách thông báo
-const NotificationDropdown = ({ notifications = [], onCreated }) => {
+const NotificationDropdown = ({ notifications = [], onCreated, hasUnread }) => {
     const [anchorEl, setAnchorEl] = useState(null);
     const [userRole, setUserRole] = useState('');
     const [employeeId, setEmployeeId] = useState('');
     const [employeeNotifications, setEmployeeNotifications] = useState([]);
     const open = Boolean(anchorEl);
 
-    // Lấy vai trò và ID người dùng
     useEffect(() => {
         const role = localStorage.getItem('role');
         const id = localStorage.getItem('employeeId');
@@ -23,11 +23,8 @@ const NotificationDropdown = ({ notifications = [], onCreated }) => {
         setEmployeeId(id);
     }, []);
 
-    // Lọc thông báo cho employee dựa trên ID employee
     useEffect(() => {
         if (userRole === 'STAFF' && employeeId && notifications.length > 0) {
-            // Lọc chỉ thông báo dành cho employee này
-            // Backend đã lọc sẵn, chỉ cần hiển thị
             setEmployeeNotifications(notifications);
         }
     }, [userRole, employeeId, notifications]);
@@ -35,25 +32,26 @@ const NotificationDropdown = ({ notifications = [], onCreated }) => {
     const handleOpen = (e) => setAnchorEl(e.currentTarget);
     const handleClose = () => setAnchorEl(null);
 
-    // Hàm reload lại danh sách khi thêm mới thành công
-    const handleCreated = () => {
-        if (typeof window.reloadNotifications === 'function') {
-            window.reloadNotifications();
-        }
-    };
-
-    // Đánh dấu thông báo đã đọc
     const handleMarkAsRead = async (notifId) => {
         try {
             await notificationService.markAsRead(notifId);
-            onCreated && onCreated(); // Reload thông báo
-            handleClose(); // Đóng dropdown sau khi đánh dấu đã đọc
+            onCreated && onCreated();
+            handleClose();
         } catch (err) {
             console.error("Lỗi khi đánh dấu đã đọc:", err);
         }
     };
 
-    // Hàm lấy trạng thái đã đọc, tương thích mọi trường hợp
+    const handleMarkAllAsRead = async () => {
+        try {
+            await notificationService.markAllAsRead(employeeId);
+            onCreated && onCreated();
+            handleClose();
+        } catch (err) {
+            console.error("Lỗi khi đánh dấu tất cả đã đọc:", err);
+        }
+    };
+
     const getIsRead = n => {
         if (typeof n.isRead === 'boolean') return n.isRead;
         if (typeof n.read === 'boolean') return n.read;
@@ -64,12 +62,11 @@ const NotificationDropdown = ({ notifications = [], onCreated }) => {
         return false;
     };
 
-    // Đếm số lượng thông báo chưa đọc
     const unreadCount = employeeNotifications.filter(n => !getIsRead(n)).length;
 
     return (
         <>
-            <IconButton color="inherit" onClick={handleOpen} sx={{ mr: 2 }}>
+            <IconButton color="inherit" onClick={handleOpen} sx={{ mr: 2 }} className={hasUnread ? 'bell-shake' : ''}>
                 <Badge badgeContent={unreadCount} color="error">
                     <NotificationsIcon />
                 </Badge>
@@ -85,6 +82,13 @@ const NotificationDropdown = ({ notifications = [], onCreated }) => {
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2 }}>
                     <Typography sx={{ fontWeight: 'bold' }}>Thông báo</Typography>
                 </Box>
+                <Divider />
+
+                <MenuItem onClick={handleMarkAllAsRead} disabled={unreadCount === 0}>
+                    <Typography variant="body2" color={unreadCount === 0 ? 'text.disabled' : 'primary'}>
+                        Đánh dấu tất cả là đã đọc
+                    </Typography>
+                </MenuItem>
                 <Divider />
 
                 {employeeNotifications.length === 0 ? (

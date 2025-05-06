@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from "react";
-import { animalService } from "../../services/animalService";
-import { pigPenService } from "../../services/pigPenService";
+import React, {useEffect, useState} from "react";
+import {animalService} from "../../services/animalService";
+import {pigPenService} from "../../services/pigPenService";
+import {medicalService} from "../../services/medicalService";
+import CreateMedicalForm from '../medical/CreateMedicalForm';
 import {
     Button,
     TextField,
@@ -12,7 +14,6 @@ import {
     TableRow,
     TablePagination,
     Paper,
-    Stack,
     Box,
     Dialog,
     DialogTitle,
@@ -26,11 +27,9 @@ import {
     MenuItem,
     Select,
     FormControl,
-    InputLabel,
     Grid,
     InputAdornment,
     CircularProgress,
-    Tooltip,
     Menu,
     ListItemIcon,
     ListItemText
@@ -40,27 +39,25 @@ import {
     Edit,
     Delete,
     Search,
-    ArrowBack,
     FilterAlt,
-    VisibilityOutlined,
     LocalShippingOutlined,
-    MoreVert
+    MoreVert,
+    Schedule
 } from "@mui/icons-material";
-import { styled } from "@mui/material/styles";
-import { useNavigate } from "react-router-dom";
+import {styled} from "@mui/material/styles";
 import AnimalFormCreate from "./AnimalFormCreate";
 import AnimalFormUpdate from "./AnimalFormUpdate";
-import { format } from "date-fns";
+import {format} from "date-fns";
 
 // Styled components
-const StyledTableCell = styled(TableCell)(({ theme }) => ({
+const StyledTableCell = styled(TableCell)(({theme}) => ({
     backgroundColor: theme.palette.primary.main,
     color: theme.palette.common.white,
     fontWeight: "bold",
     padding: "16px"
 }));
 
-const StyledPaper = styled(Paper)(({ theme }) => ({
+const StyledPaper = styled(Paper)(({theme}) => ({
     padding: theme.spacing(3),
     marginBottom: theme.spacing(3),
     backgroundColor: "#fff",
@@ -68,7 +65,6 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
 }));
 
 export default function AnimalManager() {
-    const navigate = useNavigate();
     const [animals, setAnimals] = useState([]);
     const [filteredAnimals, setFilteredAnimals] = useState([]);
     const [pigPens, setPigPens] = useState([]);
@@ -77,6 +73,8 @@ export default function AnimalManager() {
     const [selectedAnimal, setSelectedAnimal] = useState(null);
     const [openCreateForm, setOpenCreateForm] = useState(false);
     const [openUpdateForm, setOpenUpdateForm] = useState(false);
+    const [searchLoading, setSearchLoading] = useState(false);
+
     const [notification, setNotification] = useState({
         open: false,
         message: "",
@@ -90,6 +88,9 @@ export default function AnimalManager() {
         open: false,
         animalId: null
     });
+    const [openScheduleDialog, setOpenScheduleDialog] = useState(false);
+    const [selectedAnimalForSchedule, setSelectedAnimalForSchedule] = useState(null);
+    const [medicalRecords, setMedicalRecords] = useState([]);
 
     // Menu thao tác
     const [actionMenu, setActionMenu] = useState({
@@ -110,6 +111,7 @@ export default function AnimalManager() {
 
     useEffect(() => {
         fetchData();
+        fetchMedicalRecords();
     }, []);
 
     useEffect(() => {
@@ -133,6 +135,16 @@ export default function AnimalManager() {
             showNotification("Lỗi khi tải dữ liệu", "error");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchMedicalRecords = async () => {
+        try {
+            const medicalRecordsData = await medicalService.getAllMedical();
+            setMedicalRecords(medicalRecordsData);
+        } catch (err) {
+            console.error("Lỗi khi tải dữ liệu:", err);
+            showNotification("Lỗi khi tải dữ liệu", "error");
         }
     };
 
@@ -168,7 +180,7 @@ export default function AnimalManager() {
     };
 
     const handleCloseNotification = () => {
-        setNotification({ ...notification, open: false });
+        setNotification({...notification, open: false});
     };
 
     const showNotification = (message, severity = "success") => {
@@ -214,6 +226,16 @@ export default function AnimalManager() {
             open: false,
             animalId: null
         });
+    };
+
+    const handleOpenScheduleDialog = (animal) => {
+        setSelectedAnimalForSchedule(animal);
+        setOpenScheduleDialog(true);
+    };
+
+    const handleCloseScheduleDialog = () => {
+        setOpenScheduleDialog(false);
+        setSelectedAnimalForSchedule(null);
     };
 
     // Xử lý menu thao tác
@@ -284,22 +306,28 @@ export default function AnimalManager() {
         }
     };
 
-    // Get pen name
-    const getPenName = (penId) => {
-        if (!penId) return "—";
-        const pen = pigPens.find(p => p.penId === penId);
-        return pen ? pen.name : `Chuồng #${penId}`;
+    // Hàm xác định trạng thái sức khỏe động vật (có đặt lịch chữa trị hay chưa)
+    const getCustomHealthStatus = (animal) => {
+        if (animal.healthStatus === "SICK") {
+            // medicalRecords là mảng các bản ghi điều trị, mỗi bản ghi có thể có trường animal.pigId
+            const hasMedical = medicalRecords.some(r => r.animal && r.animal.pigId === animal.pigId);
+            if (hasMedical) return "SCHEDULED";
+            return "SICK";
+        }
+        return animal.healthStatus;
     };
 
     // Get health status chip
     const getHealthStatusChip = (status) => {
         switch (status) {
             case "ACTIVE":
-                return <Chip label="Khỏe mạnh" color="success" size="small" />;
+                return <Chip label="Khỏe mạnh" color="success" size="small"/>;
             case "SICK":
-                return <Chip label="Bị bệnh" color="error" size="small" />;
+                return <Chip label="Bị bệnh" color="error" size="small"/>;
+            case "SCHEDULED":
+                return <Chip label="Đã đặt lịch chữa trị" color="warning" size="small"/>;
             default:
-                return <Chip label={status} size="small" />;
+                return <Chip label={status} size="small"/>;
         }
     };
 
@@ -307,11 +335,11 @@ export default function AnimalManager() {
     const getRaisingStatusChip = (status) => {
         switch (status) {
             case "RAISING":
-                return <Chip label="Đang nuôi" color="primary" size="small" />;
+                return <Chip label="Đang nuôi" color="primary" size="small"/>;
             case "EXPORTED":
-                return <Chip label="Đã xuất" color="secondary" size="small" />;
+                return <Chip label="Đã xuất" color="secondary" size="small"/>;
             default:
-                return <Chip label={status} size="small" />;
+                return <Chip label={status} size="small"/>;
         }
     };
 
@@ -319,42 +347,24 @@ export default function AnimalManager() {
     const displayedAnimals = filteredAnimals
         .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
+    const handleSearch = async () => {
+    }
     return (
-        <Box sx={{ p: 3 }}>
+        <Box sx={{p: 3}}>
             {/* Header */}
-            <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-                <IconButton
-                    onClick={() => navigate("/dashboard")}
-                    sx={{ mr: 2, bgcolor: "#f5f5f5" }}
-                >
-                    <ArrowBack />
-                </IconButton>
-                <Typography variant="h5" component="h1" sx={{ fontWeight: "bold" }}>
-                    Quản lý động vật
+            <Box sx={{display: "flex", alignItems: "center", mb: 3}}>
+                <Typography variant="h4" component="h1" sx={{fontWeight: "bold"}}>
+                    Quản lý vật nuôi
                 </Typography>
-                <Box sx={{ flexGrow: 1 }} />
-                <Button
-                    variant="contained"
-                    color="primary"
-                    startIcon={<Add />}
-                    onClick={handleCreateAnimal}
-                    sx={{
-                        backgroundColor: "#1E8449",
-                        "&:hover": {
-                            backgroundColor: "#14532d"
-                        }
-                    }}
-                >
-                    Thêm mới
-                </Button>
             </Box>
 
             {/* Thanh tìm kiếm và lọc */}
-            <StyledPaper sx={{ mb: 3, p: 2 }}>
-                <Grid container spacing={2}>
+            <StyledPaper sx={{mb: 3, p: 2}}>
+                <Grid container spacing={2} alignItems="center">
                     <Grid item xs={12} md={6}>
                         <TextField
                             fullWidth
+                            size="small"
                             placeholder="Tìm kiếm theo tên..."
                             variant="outlined"
                             value={nameFilter}
@@ -362,18 +372,34 @@ export default function AnimalManager() {
                             InputProps={{
                                 startAdornment: (
                                     <InputAdornment position="start">
-                                        <Search />
+                                        <Search/>
                                     </InputAdornment>
                                 )
                             }}
                         />
                     </Grid>
-                    <Grid item xs={12} md={6} sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center" }}>
+
+                    <Grid item xs={6} md={2}>
+                        <Button
+                            fullWidth
+                            size="medium"
+                            variant="contained"
+                            color="primary"
+                            startIcon={searchLoading ? <CircularProgress size={20} color="inherit"/> : <Search/>}
+                            onClick={handleSearch}
+                            disabled={searchLoading}
+                            sx={{height: '40px'}}
+                        >
+                            Tìm kiếm
+                        </Button>
+                    </Grid>
+
+                    <Grid item xs={12} md={6} sx={{display: "flex", justifyContent: "flex-end", alignItems: "center"}}>
                         <Button
                             variant="outlined"
-                            startIcon={<FilterAlt />}
+                            startIcon={<FilterAlt/>}
                             onClick={() => setShowFilters(!showFilters)}
-                            sx={{ mr: 1 }}
+                            sx={{mr: 1}}
                         >
                             {showFilters ? "Ẩn bộ lọc" : "Hiện bộ lọc"}
                         </Button>
@@ -389,86 +415,110 @@ export default function AnimalManager() {
                     </Grid>
 
                     {showFilters && (
-                        <>
-                            <Grid item xs={12} md={4} sx={{ mt: 2 }}>
-                                <FormControl fullWidth variant="outlined">
-                                    <InputLabel id="health-status-label">Trạng thái sức khỏe</InputLabel>
-                                    <Select
-                                        labelId="health-status-label"
-                                        value={healthStatusFilter}
-                                        onChange={(e) => setHealthStatusFilter(e.target.value)}
-                                        label="Trạng thái sức khỏe"
-                                    >
-                                        <MenuItem value="">Tất cả</MenuItem>
-                                        <MenuItem value="ACTIVE">Khỏe mạnh</MenuItem>
-                                        <MenuItem value="SICK">Bị bệnh</MenuItem>
-                                    </Select>
-                                </FormControl>
+                        <Grid item xs={12}>
+                            <Grid container spacing={2}>
+                                <Grid item xs={12} md={4}>
+                                    <Typography variant="subtitle2" gutterBottom>
+                                        Trạng thái sức khỏe
+                                    </Typography>
+                                    <FormControl fullWidth size="small">
+                                        <Select
+                                            value={healthStatusFilter}
+                                            onChange={(e) => setHealthStatusFilter(e.target.value)}
+                                            displayEmpty
+                                        >
+                                            <MenuItem value="">Tất cả</MenuItem>
+                                            <MenuItem value="ACTIVE">Khỏe mạnh</MenuItem>
+                                            <MenuItem value="SICK">Bị bệnh</MenuItem>
+                                            <MenuItem value="SCHEDULED">Đã đặt lịch chữa trị</MenuItem>
+                                        </Select>
+                                    </FormControl>
+                                </Grid>
+
+                                <Grid item xs={12} md={4}>
+                                    <Typography variant="subtitle2" gutterBottom>
+                                        Trạng thái nuôi
+                                    </Typography>
+                                    <FormControl fullWidth size="small">
+                                        <Select
+                                            value={raisingStatusFilter}
+                                            onChange={(e) => setRaisingStatusFilter(e.target.value)}
+                                            displayEmpty
+                                        >
+                                            <MenuItem value="">Tất cả</MenuItem>
+                                            <MenuItem value="RAISING">Đang nuôi</MenuItem>
+                                            <MenuItem value="EXPORTED">Đã xuất</MenuItem>
+                                        </Select>
+                                    </FormControl>
+                                </Grid>
+
+                                <Grid item xs={12} md={4}>
+                                    <Typography variant="subtitle2" gutterBottom>
+                                        Chuồng nuôi
+                                    </Typography>
+                                    <FormControl fullWidth size="small">
+                                        <Select
+                                            value={penIdFilter}
+                                            onChange={(e) => setPenIdFilter(e.target.value)}
+                                            displayEmpty
+                                        >
+                                            <MenuItem value="">Tất cả</MenuItem>
+                                            {pigPens.map((pen) => (
+                                                <MenuItem key={pen.penId} value={pen.penId}>
+                                                    {pen.name}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                </Grid>
                             </Grid>
-                            <Grid item xs={12} md={4} sx={{ mt: 2 }}>
-                                <FormControl fullWidth variant="outlined">
-                                    <InputLabel id="raising-status-label">Trạng thái nuôi</InputLabel>
-                                    <Select
-                                        labelId="raising-status-label"
-                                        value={raisingStatusFilter}
-                                        onChange={(e) => setRaisingStatusFilter(e.target.value)}
-                                        label="Trạng thái nuôi"
-                                    >
-                                        <MenuItem value="">Tất cả</MenuItem>
-                                        <MenuItem value="RAISING">Đang nuôi</MenuItem>
-                                        <MenuItem value="EXPORTED">Đã xuất</MenuItem>
-                                    </Select>
-                                </FormControl>
-                            </Grid>
-                            <Grid item xs={12} md={4} sx={{ mt: 2 }}>
-                                <FormControl fullWidth variant="outlined">
-                                    <InputLabel id="pen-label">Chuồng nuôi</InputLabel>
-                                    <Select
-                                        labelId="pen-label"
-                                        value={penIdFilter}
-                                        onChange={(e) => setPenIdFilter(e.target.value)}
-                                        label="Chuồng nuôi"
-                                    >
-                                        <MenuItem value="">Tất cả</MenuItem>
-                                        {pigPens.map(pen => (
-                                            <MenuItem key={pen.penId} value={pen.penId}>
-                                                {pen.name}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                            </Grid>
-                        </>
+                        </Grid>
                     )}
                 </Grid>
             </StyledPaper>
 
             {/* Danh sách động vật */}
             <StyledPaper>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-                    <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                        Danh sách động vật
+                <Box sx={{display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2}}>
+                    <Typography variant="h6" sx={{fontWeight: "bold"}}>
+                        Danh sách vật nuôi
                     </Typography>
-                    <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                    <Typography variant="body2" sx={{color: "text.secondary"}}>
                         Tổng số: {filteredAnimals.length} cá thể
                     </Typography>
                 </Box>
 
+                {/* Move the Add New button here */}
+                <Button
+                    variant="contained"
+                    color="primary"
+                    startIcon={<Add/>}
+                    onClick={handleCreateAnimal}
+                    sx={{
+                        backgroundColor: "#1E8449",
+                        "&:hover": {
+                            backgroundColor: "#14532d"
+                        },
+                        mb: 2 // Add margin bottom for spacing
+                    }}
+                >
+                    Thêm mới
+                </Button>
+
                 {loading ? (
-                    <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
-                        <CircularProgress />
+                    <Box sx={{display: "flex", justifyContent: "center", p: 3}}>
+                        <CircularProgress/>
                     </Box>
                 ) : (
                     <TableContainer component={Paper}>
                         <Table stickyHeader aria-label="sticky table">
                             <TableHead>
                                 <TableRow>
-                                    <StyledTableCell>ID</StyledTableCell>
                                     <StyledTableCell>Tên</StyledTableCell>
                                     <StyledTableCell>Chuồng nuôi</StyledTableCell>
                                     <StyledTableCell>Ngày nhập</StyledTableCell>
                                     <StyledTableCell>Ngày xuất</StyledTableCell>
-                                    <StyledTableCell>Cân nặng (kg)</StyledTableCell>
+                                    <StyledTableCell>Cân nặng (kg/con)</StyledTableCell>
                                     <StyledTableCell>Số lượng</StyledTableCell>
                                     <StyledTableCell>Sức khỏe</StyledTableCell>
                                     <StyledTableCell>Trạng thái</StyledTableCell>
@@ -479,7 +529,6 @@ export default function AnimalManager() {
                                 {displayedAnimals.length > 0 ? (
                                     displayedAnimals.map((animal) => (
                                         <TableRow key={animal.pigId} hover>
-                                            <TableCell>{animal.pigId}</TableCell>
                                             <TableCell>{animal.name}</TableCell>
                                             <TableCell>
                                                 {animal.pigPen ? animal.pigPen.name : "—"}
@@ -488,22 +537,23 @@ export default function AnimalManager() {
                                             <TableCell>{formatDate(animal.exitDate)}</TableCell>
                                             <TableCell>{animal.weight}</TableCell>
                                             <TableCell>{animal.quantity}</TableCell>
-                                            <TableCell>{getHealthStatusChip(animal.healthStatus)}</TableCell>
+                                            <TableCell>{getHealthStatusChip(getCustomHealthStatus(animal))}</TableCell>
                                             <TableCell>{getRaisingStatusChip(animal.raisingStatus)}</TableCell>
                                             <TableCell align="center">
                                                 <IconButton
                                                     aria-label="thao tác"
                                                     size="small"
                                                     onClick={(event) => handleActionMenuOpen(event, animal)}
+                                                    disabled={animal.raisingStatus === "EXPORTED"}
                                                 >
-                                                    <MoreVert />
+                                                    <MoreVert/>
                                                 </IconButton>
                                             </TableCell>
                                         </TableRow>
                                     ))
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={10} align="center">
+                                        <TableCell colSpan={9} align="center">
                                             {(nameFilter || healthStatusFilter || raisingStatusFilter || penIdFilter)
                                                 ? "Không tìm thấy động vật phù hợp với điều kiện tìm kiếm"
                                                 : "Không có dữ liệu"}
@@ -513,7 +563,7 @@ export default function AnimalManager() {
                             </TableBody>
                         </Table>
                         {filteredAnimals.length > 0 && (
-                            <Box sx={{ p: 2 }}>
+                            <Box sx={{p: 2}}>
                                 <TablePagination
                                     rowsPerPageOptions={[10, 25, 50]}
                                     component="div"
@@ -522,7 +572,7 @@ export default function AnimalManager() {
                                     page={page}
                                     onPageChange={handleChangePage}
                                     onRowsPerPageChange={handleChangeRowsPerPage}
-                                    labelDisplayedRows={({ from, to, count }) =>
+                                    labelDisplayedRows={({from, to, count}) =>
                                         `${from}-${to} của ${count}`
                                     }
                                     labelRowsPerPage="Hàng mỗi trang:"
@@ -537,15 +587,15 @@ export default function AnimalManager() {
             <Dialog
                 open={openCreateForm}
                 onClose={() => setOpenCreateForm(false)}
-                maxWidth="md"
-                fullWidth
+                maxWidth="sm"
+                fullWidth={false}
             >
-                <DialogTitle sx={{ fontWeight: "bold" }}>
-                    Thêm động vật mới
+                <DialogTitle sx={{fontWeight: "bold"}}>
+                    Thêm vật nuôi mới
                 </DialogTitle>
                 <DialogContent dividers>
                     <AnimalFormCreate
-                        pigPens={emptyPens}
+                        pigPens={pigPens}
                         onSuccess={() => {
                             setOpenCreateForm(false);
                             setTimeout(() => {
@@ -562,13 +612,13 @@ export default function AnimalManager() {
             <Dialog
                 open={openUpdateForm}
                 onClose={() => setOpenUpdateForm(false)}
-                maxWidth="md"
+                maxWidth="sm"
                 fullWidth
             >
-                <DialogTitle sx={{ fontWeight: "bold" }}>
-                    Cập nhật thông tin động vật
+                <DialogTitle sx={{fontWeight: "bold"}}>
+                    Cập nhật thông tin vật nuôi
                 </DialogTitle>
-                <DialogContent dividers>
+                <DialogContent dividers sx={{ p: 2 }}>
                     {selectedAnimal && (
                         <AnimalFormUpdate
                             animal={selectedAnimal}
@@ -628,8 +678,9 @@ export default function AnimalManager() {
                     <Typography>
                         Bạn có chắc chắn muốn xuất chuồng cá thể động vật này không?
                     </Typography>
-                    <Typography variant="body2" sx={{ mt: 1, color: "text.secondary" }}>
-                        Thao tác này sẽ đánh dấu động vật là đã xuất chuồng và ghi nhận ngày xuất là ngày hôm nay.
+                    <Typography variant="body2" sx={{mt: 1, color: "text.secondary"}}>
+                        Thao tác này sẽ đánh dấu động vật là đã xuất chuồng và ghi nhận ngày xuất là ngày hôm
+                        nay.
                     </Typography>
                 </DialogContent>
                 <DialogActions>
@@ -642,18 +693,33 @@ export default function AnimalManager() {
                 </DialogActions>
             </Dialog>
 
+            {/* Dialog đặt lịch điều trị */}
+            <CreateMedicalForm
+                open={openScheduleDialog}
+                animal={selectedAnimalForSchedule}
+                onCreate={async (data) => {
+                    await medicalService.createMedical(data);
+                    setOpenScheduleDialog(false);
+                    setSelectedAnimalForSchedule(null);
+                    fetchData();
+                    fetchMedicalRecords();
+                    showNotification('Đặt lịch điều trị thành công');
+                }}
+                onCancel={handleCloseScheduleDialog}
+            />
+
             {/* Snackbar thông báo */}
             <Snackbar
                 open={notification.open}
                 autoHideDuration={6000}
                 onClose={handleCloseNotification}
-                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                anchorOrigin={{vertical: "bottom", horizontal: "right"}}
             >
                 <Alert
                     onClose={handleCloseNotification}
                     severity={notification.severity}
                     variant="filled"
-                    sx={{ width: "100%" }}
+                    sx={{width: "100%"}}
                 >
                     {notification.message}
                 </Alert>
@@ -680,33 +746,47 @@ export default function AnimalManager() {
                     }}
                 >
                     <ListItemIcon>
-                        <Edit fontSize="small" color="primary" />
+                        <Edit fontSize="small" color="primary"/>
                     </ListItemIcon>
                     <ListItemText>Chỉnh sửa</ListItemText>
                 </MenuItem>
 
+                <MenuItem
+                    disabled={actionMenu.animal?.healthStatus === "ACTIVE"}
+                    onClick={() => {
+                        handleOpenScheduleDialog(actionMenu.animal);
+                        handleActionMenuClose();
+                    }}
+                >
+                    <ListItemIcon>
+                        <Schedule fontSize="small"/>
+                    </ListItemIcon>
+                    <ListItemText>Đặt lịch điều trị</ListItemText>
+                </MenuItem>
+
                 {actionMenu.animal?.raisingStatus === "RAISING" && (
                     <MenuItem
+                        disabled={actionMenu.animal?.healthStatus === "SICK"}
                         onClick={() => {
-                            handleExportClick(actionMenu.animal?.pigId);
+                            handleExportClick(actionMenu.animal.pigId);
                             handleActionMenuClose();
                         }}
                     >
                         <ListItemIcon>
-                            <LocalShippingOutlined fontSize="small" color="secondary" />
+                            <LocalShippingOutlined fontSize="small"/>
                         </ListItemIcon>
-                        <ListItemText>Xuất chuồng</ListItemText>
+                        <ListItemText primary="Xuất chuồng"/>
                     </MenuItem>
                 )}
 
                 <MenuItem
                     onClick={() => {
-                        handleDeleteClick(actionMenu.animal?.pigId);
+                        handleDeleteClick(actionMenu.animal.pigId);
                         handleActionMenuClose();
                     }}
                 >
                     <ListItemIcon>
-                        <Delete fontSize="small" color="error" />
+                        <Delete fontSize="small" color="error"/>
                     </ListItemIcon>
                     <ListItemText>Xóa</ListItemText>
                 </MenuItem>

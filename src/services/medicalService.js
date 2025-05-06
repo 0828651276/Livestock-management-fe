@@ -43,5 +43,32 @@ export const medicalService = {
         await axios.delete(`${API_URL}/${id}`, {
             headers: { Authorization: `Bearer ${token}` }
         });
+    },
+
+    // Lấy medical records theo status
+    getByStatus: async (status) => {
+        const token = authService.getCurrentUser();
+        const response = await axios.get(`${API_URL}/status/${status}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return response.data;
+    },
+
+    // Lấy medical records theo animal và status
+    getByAnimalAndStatus: async (pigId, status) => {
+        const token = authService.getCurrentUser();
+        const response = await axios.get(`${API_URL}/animal/${pigId}/status/${status}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return response.data;
+    },
+
+    // Lấy medical records theo animal
+    getByAnimal: async (pigId) => {
+        const token = authService.getCurrentUser();
+        const response = await axios.get(`${API_URL}/animal/${pigId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return response.data;
     }
-}; 
+};

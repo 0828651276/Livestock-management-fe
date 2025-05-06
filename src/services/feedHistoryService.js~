@@ -1,0 +1,29 @@
+import axios from 'axios';
+
+export const feedHistoryService = {
+    // Lấy tất cả lịch sử cho ăn
+    getAllFeedHistories: async () => {
+        const response = await axios.get('/api/feed-history');
+        return response.data;
+    },
+
+    // Lấy lịch sử cho ăn theo chuồng
+    getFeedHistoriesByPigPenId: async (pigPenId) => {
+        const response = await axios.get(`/api/feed-history/pig-pen/${pigPenId}`);
+        return response.data;
+    },
+
+    // Lấy lịch sử cho ăn theo khoảng ngày
+    getFeedHistoriesByDateRange: async (startDate, endDate) => {
+        const response = await axios.get(`/api/feed-history/date-range`, {
+            params: { startDate, endDate }
+        });
+        return response.data;
+    },
+
+    // Tạo mới lịch sử cho ăn
+    createFeedHistory: async (feedHistoryData) => {
+        const response = await axios.post('/api/feed-history', feedHistoryData);
+        return response.data;
+    },
+};

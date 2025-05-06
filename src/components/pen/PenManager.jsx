@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { pigPenService } from "../../services/pigPenService";
 import { animalService } from "../../services/animalService";
+import { getFilteredTransactions, fetchFeedInventory } from "../../services/feedWarehouseService";
+import { feedPlanService } from "../../services/feedPlanService";
 import "../styles/PenManager.css";
 import {
     Button,
@@ -38,7 +40,8 @@ import {
     FilterAlt,
     FilterAltOff,
     Refresh,
-    ExitToApp
+    ExitToApp,
+    RestaurantOutlined
 } from "@mui/icons-material";
 import PigPenFormUpdate from "./PenFormUpdate.jsx";
 import AddHomeWorkIcon from "@mui/icons-material/AddHomeWork";
@@ -46,6 +49,15 @@ import { useNavigate } from "react-router-dom";
 import PigPenFormCreate from "./PenFormCreate.jsx";
 import CaretakersList from "./CaretakersList.jsx";
 import { styled } from '@mui/material/styles';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import RestaurantIcon from '@mui/icons-material/Restaurant';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import HistoryIcon from '@mui/icons-material/History';
+import { feedHistoryService } from '../../services/feedHistoryService';
+import FeedHistoryList from './FeedHistoryList';
 
 // Styled components
 const ActionButton = styled(Button)(({ theme }) => ({
@@ -125,7 +137,6 @@ const AnimalNamesList = ({ penId }) => {
 };
 
 export default function PenManager() {
-    const navigate = useNavigate();
     const [pigPens, setPigPens] = useState([]);
     const [filteredPigPens, setFilteredPigPens] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -152,29 +163,127 @@ export default function PenManager() {
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [loading, setLoading] = useState(false);
     const [searchLoading, setSearchLoading] = useState(false);
-    const [userRole, setUserRole] = useState('');
+    // Lấy role và chuẩn hóa về chữ thường
+    const [userRole, setUserRole] = useState(() => {
+        const role = localStorage.getItem('role') || '';
+        return role.toLowerCase();
+    });
     const [employeeId, setEmployeeId] = useState('');
+    // State cho menu thao tác từng pen
+    const [actionMenu, setActionMenu] = useState({anchorEl: null, pen: null});
+    // State for feed data
+    const [feedExports, setFeedExports] = useState({});
+    const [feedLoading, setFeedLoading] = useState(false);
+    const [feedingInProgress, setFeedingInProgress] = useState(false);
+    const [openFeedHistoryDialog, setOpenFeedHistoryDialog] = useState(false);
+    const [selectedPenForHistory, setSelectedPenForHistory] = useState(null);
 
     const handleCloseNotification = () => {
         setNotification({...notification, open: false});
     };
 
     const showNotification = (message, severity = 'success') => {
-        setNotification({
-            open: true,
-            message,
-            severity
-        });
+        // Đóng thông báo hiện tại nếu có
+        setNotification(prev => ({...prev, open: false}));
+        
+        // SetTimeout để đảm bảo thông báo mới hiển thị sau khi thông báo cũ đóng
+        setTimeout(() => {
+            setNotification({
+                open: true,
+                message: message.replace(/\n/g, '<br/>'),
+                severity,
+                autoHideDuration: severity === 'warning' ? 6000 : 3000
+            });
+        }, 100);
+    };
+
+    const handleAutoFeed = async (pen) => {
+        if (!pen || feedingInProgress) return;
+        
+        setFeedingInProgress(true);
+        try {
+            // Lấy thông tin khẩu phần ăn hàng ngày của chuồng
+            const feedPlans = await feedPlanService.getPenDailyFeedPlan(pen.penId);
+            
+            if (!feedPlans || !Array.isArray(feedPlans) || feedPlans.length === 0) {
+                showNotification("Không tìm thấy khẩu phần ăn cho chuồng này", "error");
+                return;
+            }
+            
+            // Tạo lịch sử cho ăn với feed plan đầu tiên
+            const feedPlan = feedPlans[0];
+            
+            // Kiểm tra dữ liệu feed plan
+            if (!feedPlan.id) {
+                showNotification("Khẩu phần ăn không hợp lệ", "error");
+                return;
+            }
+
+            // Kiểm tra tồn kho trước khi cho ăn
+            const inventory = await fetchFeedInventory();
+            const feedType = feedPlan.feedType;
+            const feedInventory = inventory.find(item => item.feedType === feedType);
+            
+            if (!feedInventory) {
+                showNotification(`Không tìm thấy loại thức ăn ${feedType} trong kho`, "error");
+                return;
+            }
+
+            // Chỉ chặn khi tồn kho nhỏ hơn khẩu phần ăn hàng ngày
+            if (feedInventory.remainingQuantity < feedPlan.dailyFood) {
+                showNotification(
+                    `Không đủ thức ăn! Cần: ${feedPlan.dailyFood}kg, Còn lại: ${feedInventory.remainingQuantity}kg. \nVui lòng xuất thêm thức ăn từ kho!`,
+                    "error"
+                );
+                return;
+            }
+
+            const currentTime = new Date();
+            const employeeId = localStorage.getItem('employeeId');
+
+            // Đảm bảo các giá trị là số và ngày giờ đúng định dạng
+            const feedHistoryData = {
+                pigPenId: parseInt(pen.penId),
+                feedPlanId: parseInt(feedPlan.id),
+                feedingTime: currentTime.toISOString().replace('Z', ''),
+                dailyFood: parseInt(feedPlan.dailyFood || 0),
+                createdById: parseInt(employeeId)
+            };
+
+            // Tạo lịch sử cho ăn
+            await feedHistoryService.createFeedHistory(feedHistoryData);
+            showNotification("Đã cho ăn thành công", "success");
+            
+            // Cập nhật lại dữ liệu thức ăn
+            await fetchFeedData();
+
+            // Sau khi thông báo thành công, kiểm tra cảnh báo tồn kho thấp
+            setTimeout(() => {
+                const latestInventory = inventory.find(item => item.feedType === feedType);
+                if (latestInventory && latestInventory.remainingQuantity <= feedPlan.dailyFood * 4) {
+                    showNotification(
+                        `Cảnh báo: Lượng thức ăn còn lại chỉ đủ cho ${Math.floor(latestInventory.remainingQuantity / feedPlan.dailyFood)} lần cho ăn!\nCòn lại: ${latestInventory.remainingQuantity}kg, Khẩu phần mỗi lần: ${feedPlan.dailyFood}kg`,
+                        "warning"
+                    );
+                }
+            }, 1200); // Đợi 1.2 giây để thông báo thành công hiển thị trước
+        } catch (error) {
+            console.error("Lỗi chi tiết khi cho ăn:", error);
+            showNotification(error.response?.data || "Có lỗi xảy ra khi cho ăn", "error");
+        } finally {
+            setFeedingInProgress(false);
+        }
     };
 
     useEffect(() => {
         const role = localStorage.getItem('role');
         const id = localStorage.getItem('employeeId');
-        setUserRole(role);
+        setUserRole(role.toLowerCase());
         setEmployeeId(id);
 
         // Gọi hàm fetch dữ liệu
-        fetchPigPens(role, id);
+        fetchPigPens(role.toLowerCase(), id);
+        fetchFeedData();
     }, []);
 
     const fetchPigPens = async (role, id) => {
@@ -182,7 +291,7 @@ export default function PenManager() {
         try {
             let res;
             // Nếu là MANAGER, lấy tất cả chuồng
-            if (role === 'MANAGER') {
+            if (role === 'manager') {
                 res = await pigPenService.getAllPigPens();
             }
             // Nếu là STAFF, chỉ lấy chuồng mà nhân viên đó chăm sóc
@@ -206,6 +315,107 @@ export default function PenManager() {
         }
     };
 
+    // Fetch feed export data for all pens
+    const fetchFeedData = async () => {
+        setFeedLoading(true);
+        try {
+            // Get current feed inventory
+            const inventory = await fetchFeedInventory();
+            
+            // Get all feed export transactions
+            const transactions = await getFilteredTransactions({});
+
+            // Organize feed exports by pen
+            const feedByPen = {};
+
+            // Initialize with total inventory amounts for each feed type
+            inventory.forEach(item => {
+                feedByPen[item.feedType] = {
+                    total: item.remainingQuantity || 0,
+                    byPen: {}
+                };
+            });
+
+            // Process all transactions
+            transactions.forEach(transaction => {
+                // Only process EXPORT transactions
+                if (transaction.transactionType !== "EXPORT") return;
+
+                // Check for the pen name in various formats
+                let penName = null;
+
+                // Try different field names that might contain the pen reference
+                if (transaction.chuồng) {
+                    penName = transaction.chuồng;
+                } else if (transaction.barn) {
+                    penName = transaction.barn;
+                } else if (transaction.barnName) {
+                    penName = transaction.barnName;
+                }
+
+                // Check in the note field for pen references
+                if (!penName && transaction.note) {
+                    // Look for patterns like "Chuồng 1" in the note
+                    const noteMatch = transaction.note.match(/Chuồng\s+(\d+)/i);
+                    if (noteMatch) {
+                        penName = `Chuồng ${noteMatch[1]}`;
+                    }
+                }
+
+                // If we found a pen name and have a feed type, track the export
+                if (penName && transaction.feedType) {
+                    if (!feedByPen[transaction.feedType]) {
+                        feedByPen[transaction.feedType] = {
+                            total: 0,
+                            byPen: {}
+                        };
+                    }
+                    if (!feedByPen[transaction.feedType].byPen[penName]) {
+                        feedByPen[transaction.feedType].byPen[penName] = 0;
+                    }
+                    feedByPen[transaction.feedType].byPen[penName] += transaction.quantity || 0;
+                }
+            });
+
+            console.log("Feed data by pen and type:", feedByPen);
+            setFeedExports(feedByPen);
+        } catch (err) {
+            console.error("Lỗi khi lấy dữ liệu xuất thức ăn:", err);
+        } finally {
+            setFeedLoading(false);
+        }
+    };
+
+    // Helper function to get feed amount for a specific pen
+    const getFeedAmountForPen = (pen) => {
+        if (feedLoading) return <CircularProgress size={16}/>;
+
+        // Get all feed types and their amounts for this pen
+        const penFeeds = [];
+        Object.entries(feedExports).forEach(([feedType, data]) => {
+            const penAmount = data.byPen[pen.name] || 0;
+            if (penAmount > 0) {
+                penFeeds.push({
+                    feedType,
+                    amount: penAmount
+                });
+            }
+        });
+
+        if (penFeeds.length === 0) return "N/A";
+
+        return (
+            <Box>
+                {penFeeds.map((feed, index) => (
+                    <Typography key={feed.feedType} variant="body2" component="div">
+                        {`${feed.feedType}: ${feed.amount} kg`}
+                        {index < penFeeds.length - 1 && <br />}
+                    </Typography>
+                ))}
+            </Box>
+        );
+    };
+
     const handleSearch = async () => {
         setSearchLoading(true);
         try {
@@ -213,7 +423,7 @@ export default function PenManager() {
             if (dateRange.startDate || dateRange.endDate) {
                 // Dựa trên vai trò để quyết định tìm tất cả hay chỉ tìm theo caretaker
                 let res;
-                if (userRole === 'MANAGER') {
+                if (userRole === 'manager') {
                     res = await pigPenService.searchByDateRange(
                         dateRange.startDate,
                         dateRange.endDate
@@ -243,7 +453,7 @@ export default function PenManager() {
             // Tìm theo tên
             else if (searchTerm) {
                 let res;
-                if (userRole === 'MANAGER') {
+                if (userRole === 'manager') {
                     res = await pigPenService.searchByName(searchTerm);
                 } else {
                     // Tìm theo tên trong phạm vi chuồng nhân viên chăm sóc
@@ -364,6 +574,20 @@ export default function PenManager() {
         } finally {
             handleLeavePenCancel();
         }
+    };
+
+    const handleActionMenuOpen = (event, pen) => {
+        setActionMenu({anchorEl: event.currentTarget, pen});
+    };
+
+    const handleActionMenuClose = () => {
+        setActionMenu({anchorEl: null, pen: null});
+    };
+
+    const handleOpenFeedHistory = (pen) => {
+        setSelectedPenForHistory(pen);
+        setOpenFeedHistoryDialog(true);
+        handleActionMenuClose();
     };
 
     const paginatedPigPens = filteredPigPens.slice(
@@ -517,13 +741,22 @@ export default function PenManager() {
                     <TableHead>
                         <TableRow>
                             <StyledTableHeaderCell>Tên chuồng</StyledTableHeaderCell>
-                            {userRole === 'MANAGER' && (
+                            {userRole === 'manager' && (
                                 <StyledTableHeaderCell>Người chăm sóc</StyledTableHeaderCell>
                             )}
                             <StyledTableHeaderCell>Đang nuôi</StyledTableHeaderCell>
                             <StyledTableHeaderCell>Ngày tạo</StyledTableHeaderCell>
                             <StyledTableHeaderCell>Ngày đóng</StyledTableHeaderCell>
                             <StyledTableHeaderCell>Số lượng</StyledTableHeaderCell>
+                            {/* New feed column */}
+                            <StyledTableHeaderCell>
+                                <Tooltip title="Lượng thức ăn mỗi ngày">
+                                    <Box sx={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                                        <RestaurantOutlined sx={{mr: 0.5}}/>
+                                        Thức ăn
+                                    </Box>
+                                </Tooltip>
+                            </StyledTableHeaderCell>
                             <StyledTableHeaderCell>Trạng thái</StyledTableHeaderCell>
                             <StyledTableHeaderCell align="center">Hành động</StyledTableHeaderCell>
                         </TableRow>
@@ -539,7 +772,7 @@ export default function PenManager() {
                                     }}
                                 >
                                     <StyledTableCell sx={{fontWeight: 'medium'}}>{pen.name}</StyledTableCell>
-                                    {userRole === 'MANAGER' && (
+                                    {userRole === 'manager' && (
                                         <StyledTableCell>
                                             <CaretakersList
                                                 caretakers={pen.caretakers}/>
@@ -551,6 +784,10 @@ export default function PenManager() {
                                     <StyledTableCell>{formatDate(pen.createdDate)}</StyledTableCell>
                                     <StyledTableCell>{formatDate(pen.closedDate) || "Đang hoạt động"}</StyledTableCell>
                                     <StyledTableCell>{pen.quantity}</StyledTableCell>
+                                    {/* Feed amount cell */}
+                                    <StyledTableCell>
+                                        {getFeedAmountForPen(pen)}
+                                    </StyledTableCell>
                                     <StyledTableCell>
                                         <Chip
                                             label={pen.status === "ACTIVE" ? "Đang hoạt động" : "Đã đóng"}
@@ -558,96 +795,19 @@ export default function PenManager() {
                                             size="small"
                                         />
                                     </StyledTableCell>
-                                    {userRole === 'MANAGER' ? (
-                                        <StyledTableCell align="center">
-                                            <Stack direction="row" spacing={1} justifyContent="center">
-                                                <Tooltip title="Sửa">
-                                                    <ActionButton
-                                                        size="small"
-                                                        variant="contained"
-                                                        color="warning"
-                                                        onClick={() => {
-                                                            setSelectedPigPen(pen);
-                                                            setOpenUpdateForm(true);
-                                                        }}
-                                                        className="action-button"
-                                                    >
-                                                        <Edit fontSize="small"/>
-                                                        <Box component="span"
-                                                             sx={{
-                                                                 ml: 0.5,
-                                                                 display: {xs: 'none', sm: 'inline'}
-                                                             }}>SỬA</Box>
-                                                    </ActionButton>
-                                                </Tooltip>
-                                                <Tooltip title="Xóa">
-                                                    <ActionButton
-                                                        size="small"
-                                                        variant="contained"
-                                                        color="error"
-                                                        onClick={() => handleDeleteClick(pen.penId)}
-                                                        className="action-button"
-                                                    >
-                                                        <Delete fontSize="small"/>
-                                                        <Box component="span"
-                                                             sx={{
-                                                                 ml: 0.5,
-                                                                 display: {xs: 'none', sm: 'inline'}
-                                                             }}>XÓA</Box>
-                                                    </ActionButton>
-                                                </Tooltip>
-                                            </Stack>
-                                        </StyledTableCell>
-                                    ) : (
-                                        <StyledTableCell align="center">
-                                            <Stack direction="row" spacing={1} justifyContent="center">
-                                                {pen.caretakers?.some(caretaker => caretaker.employeeId === employeeId) && (
-                                                    <>
-                                                        <Tooltip title="Sửa">
-                                                            <ActionButton
-                                                                size="small"
-                                                                variant="contained"
-                                                                color="warning"
-                                                                onClick={() => {
-                                                                    setSelectedPigPen(pen);
-                                                                    setOpenUpdateForm(true);
-                                                                }}
-                                                                className="action-button"
-                                                            >
-                                                                <Edit fontSize="small"/>
-                                                                <Box component="span"
-                                                                     sx={{
-                                                                         ml: 0.5,
-                                                                         display: {xs: 'none', sm: 'inline'}
-                                                                     }}>SỬA</Box>
-                                                            </ActionButton>
-                                                        </Tooltip>
-                                                        <Tooltip title="Rời chuồng">
-                                                            <ActionButton
-                                                                size="small"
-                                                                variant="contained"
-                                                                color="error"
-                                                                onClick={() => handleLeavePenClick(pen.penId, pen.name)}
-                                                                className="action-button"
-                                                            >
-                                                                <ExitToApp fontSize="small"/>
-                                                                <Box component="span"
-                                                                     sx={{
-                                                                         ml: 0.5,
-                                                                         display: {xs: 'none', sm: 'inline'}
-                                                                     }}>RỜI</Box>
-                                                            </ActionButton>
-                                                        </Tooltip>
-                                                    </>
-                                                )}
-                                            </Stack>
-                                        </StyledTableCell>
-                                    )}
+                                    <StyledTableCell align="center">
+                                        <IconButton
+                                            onClick={(event) => handleActionMenuOpen(event, pen)}
+                                            size="small"
+                                        >
+                                            <MoreVertIcon />
+                                        </IconButton>
+                                    </StyledTableCell>
                                 </TableRow>
                             ))
                         ) : !loading && (
                             <TableRow>
-                                <TableCell colSpan={userRole === 'MANAGER' ? 8 : 7} align="center" sx={{py: 3}}>
+                                <TableCell colSpan={userRole === 'manager' ? 9 : 8} align="center" sx={{py: 3}}>
                                     <Typography variant="body1" color="text.secondary">
                                         Không có dữ liệu
                                     </Typography>
@@ -656,6 +816,45 @@ export default function PenManager() {
                         )}
                     </TableBody>
                 </Table>
+                {/* Menu thao tác cho pen */}
+                <Menu
+                    anchorEl={actionMenu.anchorEl}
+                    open={Boolean(actionMenu.anchorEl)}
+                    onClose={handleActionMenuClose}
+                    anchorOrigin={{vertical: 'bottom', horizontal: 'right'}}
+                    transformOrigin={{vertical: 'top', horizontal: 'right'}}
+                >
+                    <MenuItem onClick={() => {
+                        setSelectedPigPen(actionMenu.pen);
+                        setOpenUpdateForm(true);
+                        handleActionMenuClose();
+                    }}>
+                        <ListItemIcon><Edit fontSize="small" color="primary"/></ListItemIcon>
+                        <ListItemText>Chỉnh sửa</ListItemText>
+                    </MenuItem>
+                    <MenuItem onClick={() => {
+                        handleOpenFeedHistory(actionMenu.pen);
+                    }}>
+                        <ListItemIcon><HistoryIcon fontSize="small" color="primary"/></ListItemIcon>
+                        <ListItemText>Lịch sử cho ăn</ListItemText>
+                    </MenuItem>
+                    {/*{userRole === 'staff' && (*/}
+                        <MenuItem onClick={() => {
+                            handleAutoFeed(actionMenu.pen);
+                            handleActionMenuClose();
+                        }}>
+                            <ListItemIcon><RestaurantIcon fontSize="small" color="success"/></ListItemIcon>
+                            <ListItemText>Cho ăn</ListItemText>
+                        </MenuItem>
+                    {/*)}*/}
+                    <MenuItem onClick={() => {
+                        handleDeleteClick(actionMenu.pen.penId);
+                        handleActionMenuClose();
+                    }}>
+                        <ListItemIcon><Delete fontSize="small" color="error"/></ListItemIcon>
+                        <ListItemText>Xóa</ListItemText>
+                    </MenuItem>
+                </Menu>
             </TableContainer>
 
             {/* Pagination */}
@@ -674,7 +873,7 @@ export default function PenManager() {
             {/* Notification */}
             <Snackbar
                 open={notification.open}
-                autoHideDuration={3000}
+                autoHideDuration={notification.autoHideDuration || 3000}
                 onClose={handleCloseNotification}
                 anchorOrigin={{vertical: 'top', horizontal: 'right'}}
             >
@@ -682,7 +881,13 @@ export default function PenManager() {
                     onClose={handleCloseNotification}
                     severity={notification.severity}
                     variant="filled"
-                    sx={{width: '100%'}}
+                    sx={{
+                        width: '100%',
+                        whiteSpace: 'pre-line',
+                        '& .MuiAlert-message': {
+                            maxWidth: '300px'
+                        }
+                    }}
                 >
                     {notification.message}
                 </Alert>
@@ -713,6 +918,7 @@ export default function PenManager() {
                             if (success) {
                                 showNotification("Thêm chuồng nuôi thành công");
                                 fetchPigPens(userRole, employeeId);
+                                fetchFeedData();
                             }
                         }}
                     />
@@ -745,6 +951,7 @@ export default function PenManager() {
                             if (success) {
                                 showNotification("Cập nhật chuồng nuôi thành công");
                                 fetchPigPens(userRole, employeeId);
+                                fetchFeedData();
                             }
                         }}
                     />
@@ -801,6 +1008,37 @@ export default function PenManager() {
                     </Button>
                     <Button onClick={handleLeavePenConfirm} color="error" variant="contained" autoFocus>
                         Xác nhận rời
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog
+                open={openFeedHistoryDialog}
+                onClose={() => setOpenFeedHistoryDialog(false)}
+                maxWidth="md"
+                fullWidth
+                PaperProps={{sx: {maxWidth: '800px', borderRadius: '8px'}}}
+            >
+                <DialogTitle sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    bgcolor: '#f5f5f5',
+                    borderBottom: '1px solid #e0e0e0'
+                }}>
+                    <HistoryIcon color="primary"/>
+                    <Typography variant="h6" component="div">
+                        Lịch sử cho ăn - {selectedPenForHistory?.name}
+                    </Typography>
+                </DialogTitle>
+                <DialogContent sx={{p: 2, mt: 1}}>
+                    {selectedPenForHistory && (
+                        <FeedHistoryList penId={selectedPenForHistory.penId} />
+                    )}
+                </DialogContent>
+                <DialogActions sx={{px: 3, py: 2}}>
+                    <Button onClick={() => setOpenFeedHistoryDialog(false)} variant="contained">
+                        Đóng
                     </Button>
                 </DialogActions>
             </Dialog>

@@ -1,15 +1,18 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { fetchFeedInventory, searchFeedInventory } from "../../services/feedWarehouseService.js";
+import {
+    fetchFeedInventory,
+    searchFeedInventory
+} from "../../services/feedWarehouseService.js";
 import {
     Button, TextField, Table, TableBody, TableCell, TableContainer,
     TableHead, TableRow, Paper, Stack, Box, Typography, Snackbar,
-    Alert, InputAdornment, Dialog, DialogTitle, DialogContent
+    Alert, InputAdornment, Dialog, DialogTitle, DialogContent, TablePagination
 } from "@mui/material";
 import { Search, Upload, Download } from "@mui/icons-material";
 import { styled } from '@mui/material/styles';
 import ImportFeedForm from "./ImportFeedForm.jsx";
 import ExportFeedForm from "./ExportFeedForm.jsx";
-import {Link, useNavigate} from "react-router-dom";
+import { Link } from "react-router-dom";
 import { authService } from "../../services/authService";
 
 const StyledTableCell = styled(TableCell)(() => ({
@@ -39,17 +42,15 @@ export default function FeedInventoryManager() {
         severity: 'success'
     });
     const [searchTimeout, setSearchTimeout] = useState(null);
-    const navigate = useNavigate();
     const [userRole, setUserRole] = useState('');
+
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
 
     useEffect(() => {
         const role = authService.getRole();
         setUserRole(role);
     }, []);
-
-    const goToDetailPage = (feedType) => {
-        navigate(`/feed-transactions/${encodeURIComponent(feedType)}`);
-    };
 
     const fetchInventory = async () => {
         try {
@@ -78,6 +79,7 @@ export default function FeedInventoryManager() {
                 const searchResults = await searchFeedInventory(keyword);
                 setFilteredInventory(searchResults);
             }
+            setPage(0); // reset về trang đầu khi tìm kiếm
         } catch (err) {
             console.error("Lỗi khi tìm kiếm:", err);
             setNotification({
@@ -92,20 +94,17 @@ export default function FeedInventoryManager() {
         const value = e.target.value;
         setSearchKeyword(value);
 
-        // Xóa timeout cũ nếu có
         if (searchTimeout) {
             clearTimeout(searchTimeout);
         }
 
-        // Tạo timeout mới
         const timeout = setTimeout(() => {
             handleSearch(value);
-        }, 500); // Đợi 500ms sau khi người dùng ngừng gõ
+        }, 500);
 
         setSearchTimeout(timeout);
     };
 
-    // Cleanup timeout khi component unmount
     useEffect(() => {
         return () => {
             if (searchTimeout) {
@@ -113,6 +112,20 @@ export default function FeedInventoryManager() {
             }
         };
     }, [searchTimeout]);
+
+    const handleChangePage = (event, newPage) => {
+        setPage(newPage);
+    };
+
+    const handleChangeRowsPerPage = (event) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPage(0);
+    };
+
+    const paginatedData = filteredInventory.slice(
+        page * rowsPerPage,
+        page * rowsPerPage + rowsPerPage
+    );
 
     return (
         <Box sx={{ py: 2 }}>
@@ -146,7 +159,8 @@ export default function FeedInventoryManager() {
                             flexShrink: 0,
                             fontWeight: 'bold',
                             textTransform: 'uppercase'
-                        }}                    >
+                        }}
+                    >
                         Tìm kiếm
                     </Button>
                 </Stack>
@@ -164,7 +178,7 @@ export default function FeedInventoryManager() {
                         >
                             Nhập kho
                         </Button>
-                        <Button
+                         <Button
                             variant="contained"
                             color="secondary"
                             startIcon={<Download />}
@@ -184,27 +198,27 @@ export default function FeedInventoryManager() {
                             <StyledTableHeaderCell>Loại thức ăn</StyledTableHeaderCell>
                             <StyledTableHeaderCell>Số lượng còn</StyledTableHeaderCell>
                             {userRole === 'MANAGER' && (
-                            <StyledTableHeaderCell>Hành động</StyledTableHeaderCell>
+                                <StyledTableHeaderCell>Hành động</StyledTableHeaderCell>
                             )}
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {filteredInventory.length > 0 ? (
-                            filteredInventory.map((item, index) => (
+                        {paginatedData.length > 0 ? (
+                            paginatedData.map((item, index) => (
                                 <TableRow key={item.id || index}>
                                     <StyledTableCell>{item.feedType}</StyledTableCell>
                                     <StyledTableCell>{item.remainingQuantity} kg</StyledTableCell>
                                     {userRole === 'MANAGER' && (
-                                    <StyledTableCell>
-                                        <Button
-                                            variant="outlined"
-                                            size="small"
-                                            component={Link}
-                                            to={`/dashboard/feed-inventory/${item.feedType}`}
-                                        >
-                                            Chi tiết
-                                        </Button>
-                                    </StyledTableCell>
+                                        <StyledTableCell>
+                                            <Button
+                                                variant="outlined"
+                                                size="small"
+                                                component={Link}
+                                                to={`/dashboard/feed-inventory/${item.feedType}`}
+                                            >
+                                                Chi tiết
+                                            </Button>
+                                        </StyledTableCell>
                                     )}
                                 </TableRow>
                             ))
@@ -220,6 +234,16 @@ export default function FeedInventoryManager() {
                     </TableBody>
                 </Table>
             </TableContainer>
+
+            <TablePagination
+                component="div"
+                count={filteredInventory.length}
+                page={page}
+                onPageChange={handleChangePage}
+                rowsPerPage={rowsPerPage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+                rowsPerPageOptions={[10, 25, 50]}
+            />
 
             <Snackbar
                 open={notification.open}
@@ -240,7 +264,7 @@ export default function FeedInventoryManager() {
             <Dialog
                 open={openImportForm}
                 onClose={() => setOpenImportForm(false)}
-                maxWidth="md"
+                maxWidth="sm"
                 fullWidth
             >
                 <DialogTitle textAlign="center">Nhập kho thức ăn</DialogTitle>
@@ -263,7 +287,7 @@ export default function FeedInventoryManager() {
             <Dialog
                 open={openExportForm}
                 onClose={() => setOpenExportForm(false)}
-                maxWidth="md"
+                maxWidth="sm"
                 fullWidth
             >
                 <DialogTitle textAlign="center">Xuất kho thức ăn</DialogTitle>

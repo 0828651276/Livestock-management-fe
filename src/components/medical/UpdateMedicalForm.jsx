@@ -14,7 +14,7 @@ import { medicalService } from '../../services/medicalService';
 /**
  * Component for updating medical treatment records
  */
-const UpdateMedicalForm = ({ open, medical, animals, onSuccess, onCancel }) => {
+const UpdateMedicalForm = ({ open, medical, onSuccess, onCancel }) => {
     const [form, setForm] = useState({
         treatmentDate: '',
         treatmentMethod: 'INJECTION',
@@ -49,7 +49,8 @@ const UpdateMedicalForm = ({ open, medical, animals, onSuccess, onCancel }) => {
                 treatmentDate: form.treatmentDate,
                 treatmentMethod: form.treatmentMethod,
                 veterinarian: form.veterinarian,
-                notes: form.notes
+                notes: form.notes,
+                status: medical.status
             });
 
             onSuccess();
@@ -63,7 +64,7 @@ const UpdateMedicalForm = ({ open, medical, animals, onSuccess, onCancel }) => {
     return (
         <Dialog open={open} onClose={onCancel} maxWidth="sm" fullWidth>
             <DialogTitle>
-                Cập nhật điều trị
+                Cập nhật lịch khám chữa bệnh
                 {medical?.animal && ` - ${medical.animal.name}`}
             </DialogTitle>
             <DialogContent>

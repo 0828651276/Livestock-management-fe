@@ -247,5 +247,13 @@ export const pigPenService = {
             console.error(`Lỗi khi xóa nhân viên ${employeeId} khỏi chuồng ${penId}:`, error);
             throw error;
         }
+    },
+
+    fetchPigPensWithAnimal: async () => {
+        const response = await fetch('http://localhost:8080/api/pigpens/with-animal');
+        if (!response.ok) throw new Error('Lỗi khi lấy danh sách chuồng');
+        return response.json();
     }
 };
+
+export const fetchPigPensWithAnimal = pigPenService.fetchPigPensWithAnimal;

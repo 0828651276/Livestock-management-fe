@@ -1,0 +1,101 @@
+/* medical-calendar.css - Chủ đề xanh lá nhạt hơn */
+.fc {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+    font-family: 'Roboto', Arial, sans-serif;
+    padding: 20px;
+}
+
+/* Tiêu đề lịch */
+.fc-toolbar-title {
+    font-size: 2rem;
+    color: #388e3c; /* xanh lá nhạt hơn */
+    font-weight: bold;
+}
+
+/* Thanh điều khiển */
+.fc-header-toolbar {
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Nút điều hướng */
+.fc-button {
+    background: #66bb6a !important; /* xanh lá tươi */
+    color: #fff !important;
+    border-radius: 6px !important;
+    border: none !important;
+    margin: 0 3px;
+    transition: background 0.2s;
+}
+.fc-button:hover, .fc-button:focus {
+    background: #4caf50 !important;
+}
+
+/* Ngày thường */
+.fc-daygrid-day-number {
+    color: #388e3c;
+    font-weight: 500;
+}
+
+/* Ngày hôm nay */
+.fc-day-today {
+    background: #e8f5e9 !important;
+    border-radius: 6px;
+}
+
+/* Sự kiện */
+.fc-event {
+    background: #43a047 !important;
+    border: none !important;
+    color: #fff !important;
+    border-radius: 8px !important;
+    font-weight: 500;
+    padding: 2px 8px;
+}
+.fc-event:hover {
+    background-color: #2e7d32 !important;
+}
+
+/* Dấu chấm sự kiện */
+.fc-daygrid-event-dot {
+    background-color: #66bb6a !important;
+}
+
+/* Hover ô ngày */
+.fc-daygrid-day:hover {
+    background-color: #f1f8e9;
+    cursor: pointer;
+}
+
+/* Ngày được chọn (nếu có) */
+.fc-daygrid-day.fc-day-selected {
+    background-color: #c8e6c9 !important;
+    border-radius: 8px;
+}
+
+/* Ẩn thời gian nếu không cần */
+.fc-event-time {
+    display: none;
+}
+
+/* Tiêu đề cột thứ, hai, ba... */
+.fc .fc-col-header-cell-cushion {
+    color: #4caf50;
+    font-weight: bold;
+}
+
+/* Responsive cho mobile */
+@media (max-width: 768px) {
+    .fc-toolbar-title {
+        font-size: 1.4rem;
+    }
+
+    .fc-button {
+        font-size: 0.75rem !important;
+        padding: 4px 8px !important;
+    }
+}

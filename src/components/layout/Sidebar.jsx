@@ -2,16 +2,12 @@ import React, {useState, useEffect} from 'react';
 import {
     Drawer, Toolbar, List, ListItem, ListItemIcon, ListItemText
 } from '@mui/material';
-import DashboardIcon from '@mui/icons-material/Dashboard';
 import HouseIcon from '@mui/icons-material/House';
 import PetsIcon from '@mui/icons-material/Pets';
-import PeopleIcon from '@mui/icons-material/People';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import MedicationIcon from '@mui/icons-material/Medication';
-import VaccinesIcon from '@mui/icons-material/Vaccines';
 import {useNavigate} from "react-router-dom";
 import {Collapse} from '@mui/material';
 import ExpandLess from '@mui/icons-material/ExpandLess';
@@ -183,6 +179,12 @@ const Sidebar = ({drawerWidth, activeMenu, setActiveMenu}) => {
                                 >
                                     <ListItemText primary="Quản lý khẩu phần ăn"/>
                                 </ListItem>
+                                <ListItem
+                                    onClick={() => handleMenuClick('feed-history')}
+                                    sx={{...menuItemStyle, pl: 4}}
+                                >
+                                    <ListItemText primary="Lịch sử cho ăn"/>
+                                </ListItem>
                             </List>
                         </Collapse>
                         <ListItem onClick={toggleMenuHospital} sx={{...menuItemStyle, backgroundColor: '#222'}}>
@@ -198,7 +200,7 @@ const Sidebar = ({drawerWidth, activeMenu, setActiveMenu}) => {
                                     onClick={() => handleMenuClick('medical')}
                                     sx={{...menuItemStyle, pl: 4}}
                                 >
-                                    <ListItemText primary="Lịch điều trị"/>
+                                    <ListItemText primary="Lịch khám chữa bệnh"/>
                                 </ListItem>
                                 <ListItem
                                     onClick={() => handleMenuClick('vaccinations')}

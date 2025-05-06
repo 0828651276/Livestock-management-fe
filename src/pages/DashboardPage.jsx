@@ -25,7 +25,6 @@ function DashboardPage() {
     }, []);
 
     const handleDrawerToggle = () => setMobileOpen(!mobileOpen);
-    const handleMenuClick = (menuId) => setActiveMenu(menuId);
 
     if (loading) {
         return (

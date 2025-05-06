@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     Box,
     TextField,
@@ -34,39 +34,46 @@ const initialFormState = {
     quantity: 1
 };
 
-/**
- * Form component for creating new animals
- */
 const AnimalFormCreate = ({ pigPens, onSuccess, onCancel }) => {
     const [formData, setFormData] = useState(initialFormState);
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
+    const [pensWithAnimals, setPensWithAnimals] = useState([]);
 
-    /**
-     * Validates the form data
-     * @returns {boolean} true if form is valid
-     */
+    // Fetch pens that already have animals
+    useEffect(() => {
+        const fetchPensWithAnimals = async () => {
+            try {
+                const allAnimals = await animalService.getAll();
+                const activePensWithAnimals = allAnimals
+                    .filter(animal => animal.raisingStatus === "RAISING" && animal.pigPen)
+                    .map(animal => animal.pigPen.penId);
+                setPensWithAnimals(activePensWithAnimals);
+            } catch (error) {
+                console.error("Error fetching animals:", error);
+            }
+        };
+
+        fetchPensWithAnimals();
+    }, []);
+
     const validateForm = () => {
         const newErrors = {};
 
-        // Name validation
         if (!formData.name.trim()) {
             newErrors.name = "Tên không được để trống";
         } else if (formData.name.length < 2 || formData.name.length > 100) {
             newErrors.name = "Tên phải từ 2 đến 100 ký tự";
         }
 
-        // Entry date validation
         if (!formData.entryDate) {
             newErrors.entryDate = "Ngày nhập không được để trống";
         }
 
-        // Exit date validation
         if (formData.exitDate && formData.entryDate && formData.exitDate < formData.entryDate) {
             newErrors.exitDate = "Ngày xuất phải sau ngày nhập";
         }
 
-        // Weight validation
         if (!formData.weight) {
             newErrors.weight = "Cân nặng không được để trống";
         } else if (isNaN(Number(formData.weight)) || Number(formData.weight) <= 0) {
@@ -75,7 +82,6 @@ const AnimalFormCreate = ({ pigPens, onSuccess, onCancel }) => {
             newErrors.weight = "Cân nặng không được vượt quá 1000kg";
         }
 
-        // Quantity validation
         if (!formData.quantity) {
             newErrors.quantity = "Số lượng không được để trống";
         } else if (isNaN(Number(formData.quantity)) || Number(formData.quantity) <= 0) {
@@ -84,7 +90,6 @@ const AnimalFormCreate = ({ pigPens, onSuccess, onCancel }) => {
             newErrors.quantity = "Số lượng không được vượt quá 1000";
         }
 
-        // PenId validation
         if (formData.raisingStatus === "RAISING" && !formData.penId) {
             newErrors.penId = "Vui lòng chọn chuồng nuôi cho động vật đang nuôi";
         }
@@ -93,31 +98,25 @@ const AnimalFormCreate = ({ pigPens, onSuccess, onCancel }) => {
         return Object.keys(newErrors).length === 0;
     };
 
-    // Handle standard input changes
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    // Handle date picker changes
     const handleDateChange = (name, date) => {
         setFormData((prev) => ({ ...prev, [name]: date }));
     };
 
-    // Handle raising status changes with special logic
     const handleRaisingStatusChange = (e) => {
         const { value } = e.target;
         setFormData((prev) => ({
             ...prev,
             raisingStatus: value,
-            // Auto-set exit date to today if status is EXPORTED and no date is set
             exitDate: value === "EXPORTED" && !prev.exitDate ? new Date() : prev.exitDate,
-            // Clear pen ID if status is EXPORTED
             penId: value === "EXPORTED" ? "" : prev.penId
         }));
     };
 
-    // Form submission handler
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -128,7 +127,6 @@ const AnimalFormCreate = ({ pigPens, onSuccess, onCancel }) => {
         setLoading(true);
 
         try {
-            // Prepare payload
             const payload = {
                 name: formData.name,
                 entryDate: formData.entryDate.toISOString().split('T')[0],
@@ -142,7 +140,6 @@ const AnimalFormCreate = ({ pigPens, onSuccess, onCancel }) => {
 
             await animalService.create(payload);
 
-            // Small delay to ensure backend has processed
             setTimeout(() => {
                 onSuccess();
             }, 300);
@@ -158,10 +155,9 @@ const AnimalFormCreate = ({ pigPens, onSuccess, onCancel }) => {
     };
 
     return (
-        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ p: 2 }}>
+        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ p: 2, maxWidth: 600, mx: "auto" }}>
             <Card elevation={0} sx={{ mb: 3 }}>
                 <CardContent>
-                    {/* Form Title - Hidden */}
                     <Typography variant="h6" gutterBottom component="div" sx={{
                         borderBottom: '1px solid #e0e0e0',
                         pb: 2,
@@ -171,276 +167,204 @@ const AnimalFormCreate = ({ pigPens, onSuccess, onCancel }) => {
                         Thêm động vật mới
                     </Typography>
 
-                    <Grid container spacing={3}>
-                        {/* Left Column - Labels */}
-                        <Grid item xs={12} md={3}>
-                            {/* Basic Information Section */}
-                            <Typography variant="subtitle1" gutterBottom sx={{
-                                fontWeight: 600,
-                                color: '#333',
-                                backgroundColor: '#f5f5f5',
-                                p: 1,
-                                borderRadius: 1
-                            }}>
-                                Thông tin cơ bản
-                            </Typography>
+                    <Grid container direction="column" spacing={3}>
+                        <Grid item xs={12}>
+                            <TextField
+                                fullWidth
+                                required
+                                label="Tên vật nuôi"
+                                name="name"
+                                value={formData.name}
+                                onChange={handleInputChange}
+                                error={!!errors.name}
+                                helperText={errors.name || ""}
+                                size="medium"
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: 1
+                                    }
+                                }}
+                            />
                         </Grid>
 
-                        {/* Right Column - Input Fields */}
-                        <Grid item xs={12} md={9}>
-                            <Grid container spacing={3}>
-                                {/* Name Field */}
-                                <Grid item xs={12} md={6}>
-                                    <TextField
-                                        fullWidth
-                                        required
-                                        label="Tên động vật"
-                                        name="name"
-                                        value={formData.name}
-                                        onChange={handleInputChange}
-                                        error={!!errors.name}
-                                        helperText={errors.name || ""}
-                                        size="medium"
-                                        sx={{
-                                            '& .MuiOutlinedInput-root': {
-                                                borderRadius: 1
-                                            }
-                                        }}
-                                    />
-                                </Grid>
+                        <Grid item xs={12}>
+                            <TextField
+                                fullWidth
+                                required
+                                label="Cân nặng (kg)"
+                                name="weight"
+                                type="number"
+                                value={formData.weight}
+                                onChange={handleInputChange}
+                                error={!!errors.weight}
+                                helperText={errors.weight || ""}
+                                InputProps={{
+                                    endAdornment: <InputAdornment position="end">kg</InputAdornment>
+                                }}
+                                size="medium"
+                                sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: 1
+                                    }
+                                }}
+                            />
+                        </Grid>
 
-                                {/* Weight Field */}
-                                <Grid item xs={12} md={6}>
-                                    <TextField
-                                        fullWidth
-                                        required
-                                        label="Cân nặng (kg)"
-                                        name="weight"
-                                        type="number"
-                                        value={formData.weight}
-                                        onChange={handleInputChange}
-                                        error={!!errors.weight}
-                                        helperText={errors.weight || ""}
-                                        InputProps={{
-                                            endAdornment: <InputAdornment position="end">kg</InputAdornment>
-                                        }}
-                                        size="medium"
-                                        sx={{
-                                            '& .MuiOutlinedInput-root': {
-                                                borderRadius: 1
-                                            }
-                                        }}
-                                    />
-                                </Grid>
-
-                                {/* Entry Date Field */}
-                                <Grid item xs={12} md={6}>
-                                    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={viLocale}>
-                                        <DatePicker
-                                            label="Ngày nhập *"
-                                            value={formData.entryDate}
-                                            onChange={(date) => handleDateChange("entryDate", date)}
-                                            renderInput={(params) => (
-                                                <TextField
-                                                    {...params}
-                                                    fullWidth
-                                                    required
-                                                    error={!!errors.entryDate}
-                                                    helperText={errors.entryDate || ""}
-                                                    size="medium"
-                                                    sx={{
-                                                        '& .MuiOutlinedInput-root': {
-                                                            borderRadius: 1
-                                                        }
-                                                    }}
-                                                />
-                                            )}
-                                            maxDate={new Date()}
-                                        />
-                                    </LocalizationProvider>
-                                </Grid>
-
-                                {/* Quantity Field */}
-                                <Grid item xs={12} md={6}>
-                                    <TextField
-                                        fullWidth
-                                        required
-                                        label="Số lượng"
-                                        name="quantity"
-                                        type="number"
-                                        value={formData.quantity}
-                                        onChange={handleInputChange}
-                                        error={!!errors.quantity}
-                                        helperText={errors.quantity || ""}
-                                        InputProps={{
-                                            inputProps: { min: 1 }
-                                        }}
-                                        size="medium"
-                                        sx={{
-                                            '& .MuiOutlinedInput-root': {
-                                                borderRadius: 1
-                                            }
-                                        }}
-                                    />
-                                </Grid>
-
-                                {/* Health Status Field */}
-                                <Grid item xs={12} md={6}>
-                                    <FormControl fullWidth required sx={{
-                                        '& .MuiOutlinedInput-root': {
-                                            borderRadius: 1
-                                        }
-                                    }}>
-                                        <InputLabel>Trạng thái sức khỏe</InputLabel>
-                                        <Select
-                                            name="healthStatus"
-                                            value={formData.healthStatus}
-                                            onChange={handleInputChange}
-                                            label="Trạng thái sức khỏe"
-                                            size="medium"
-                                        >
-                                            <MenuItem value="ACTIVE">Khỏe mạnh</MenuItem>
-                                            <MenuItem value="SICK">Bị bệnh</MenuItem>
-                                        </Select>
-                                    </FormControl>
-                                </Grid>
-
-                                {/* Raising Status Field */}
-                                <Grid item xs={12} md={6}>
-                                    <FormControl fullWidth required sx={{
-                                        '& .MuiOutlinedInput-root': {
-                                            borderRadius: 1
-                                        }
-                                    }}>
-                                        <InputLabel>Trạng thái nuôi</InputLabel>
-                                        <Select
-                                            name="raisingStatus"
-                                            value={formData.raisingStatus}
-                                            onChange={handleRaisingStatusChange}
-                                            label="Trạng thái nuôi"
-                                            size="medium"
-                                        >
-                                            <MenuItem value="RAISING">Đang nuôi</MenuItem>
-                                            <MenuItem value="EXPORTED">Đã xuất chuồng</MenuItem>
-                                        </Select>
-                                    </FormControl>
-                                </Grid>
-
-                                {/* Conditional Exit Date Field (only if EXPORTED) */}
-                                {formData.raisingStatus === "EXPORTED" && (
-                                    <Grid item xs={12} md={6}>
-                                        <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={viLocale}>
-                                            <DatePicker
-                                                label="Ngày xuất chuồng"
-                                                value={formData.exitDate}
-                                                onChange={(date) => handleDateChange("exitDate", date)}
-                                                renderInput={(params) => (
-                                                    <TextField
-                                                        {...params}
-                                                        fullWidth
-                                                        error={!!errors.exitDate}
-                                                        helperText={errors.exitDate || ""}
-                                                        size="medium"
-                                                        sx={{
-                                                            '& .MuiOutlinedInput-root': {
-                                                                borderRadius: 1
-                                                            }
-                                                        }}
-                                                    />
-                                                )}
-                                                minDate={formData.entryDate}
-                                                maxDate={new Date()}
-                                            />
-                                        </LocalizationProvider>
-                                    </Grid>
-                                )}
-
-                                {/* Conditional Pen Selection Field (only if RAISING) */}
-                                {formData.raisingStatus === "RAISING" && (
-                                    <Grid item xs={12} md={6}>
-                                        <FormControl fullWidth required error={!!errors.penId} sx={{
-                                            '& .MuiOutlinedInput-root': {
-                                                borderRadius: 1
-                                            }
-                                        }}>
-                                            <InputLabel>Chuồng nuôi</InputLabel>
-                                            <Select
-                                                name="penId"
-                                                value={formData.penId}
-                                                onChange={handleInputChange}
-                                                label="Chuồng nuôi"
+                        <Grid container direction="row" spacing={3}>
+                            <Grid item xs={6}>
+                                <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={viLocale}>
+                                    <DatePicker
+                                        label="Ngày nhập *"
+                                        value={formData.entryDate}
+                                        onChange={(date) => handleDateChange("entryDate", date)}
+                                        renderInput={(params) => (
+                                            <TextField
+                                                {...params}
+                                                fullWidth
+                                                required
+                                                error={!!errors.entryDate}
+                                                helperText={errors.entryDate || ""}
                                                 size="medium"
-                                            >
-                                                {pigPens && pigPens.length > 0 ? (
-                                                    // Only show active pens
-                                                    pigPens
-                                                        .filter(pen => pen.status === "ACTIVE")
-                                                        .map((pen) => (
-                                                            <MenuItem key={pen.penId} value={pen.penId}>
-                                                                {pen.name}
-                                                            </MenuItem>
-                                                        ))
-                                                ) : (
-                                                    <MenuItem disabled>Không có chuồng nuôi</MenuItem>
-                                                )}
-                                            </Select>
-                                            {errors.penId && <FormHelperText>{errors.penId}</FormHelperText>}
-                                        </FormControl>
-                                    </Grid>
-                                )}
+                                                sx={{
+                                                    '& .MuiOutlinedInput-root': {
+                                                        borderRadius: 1
+                                                    }
+                                                }}
+                                            />
+                                        )}
+                                        maxDate={new Date()}
+                                    />
+                                </LocalizationProvider>
+                            </Grid>
 
-                                {/* Submit Error Display */}
-                                {errors.submit && (
-                                    <Grid item xs={12}>
-                                        <FormHelperText error>{errors.submit}</FormHelperText>
-                                    </Grid>
-                                )}
+                            <Grid item xs={6}>
+                                <TextField
+                                    fullWidth
+                                    required
+                                    label="Số lượng"
+                                    name="quantity"
+                                    type="number"
+                                    value={formData.quantity}
+                                    onChange={handleInputChange}
+                                    error={!!errors.quantity}
+                                    helperText={errors.quantity || ""}
+                                    InputProps={{
+                                        inputProps: { min: 1 }
+                                    }}
+                                    size="medium"
+                                    sx={{
+                                        '& .MuiOutlinedInput-root': {
+                                            borderRadius: 1
+                                        }
+                                    }}
+                                />
                             </Grid>
                         </Grid>
+
+                        <Grid item xs={12}>
+                            <FormControl fullWidth required sx={{
+                                '& .MuiOutlinedInput-root': {
+                                    borderRadius: 1
+                                }
+                            }}>
+                                <InputLabel>Trạng thái sức khỏe</InputLabel>
+                                <Select
+                                    name="healthStatus"
+                                    value={formData.healthStatus}
+                                    onChange={handleInputChange}
+                                    label="Trạng thái sức khỏe"
+                                    size="medium"
+                                >
+                                    <MenuItem value="ACTIVE">Khỏe mạnh</MenuItem>
+                                    <MenuItem value="SICK">Bị bệnh</MenuItem>
+                                </Select>
+                            </FormControl>
+                        </Grid>
+
+                        {formData.raisingStatus === "EXPORTED" && (
+                            <Grid item xs={12}>
+                                <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={viLocale}>
+                                    <DatePicker
+                                        label="Ngày xuất chuồng"
+                                        value={formData.exitDate}
+                                        onChange={(date) => handleDateChange("exitDate", date)}
+                                        renderInput={(params) => (
+                                            <TextField
+                                                {...params}
+                                                fullWidth
+                                                error={!!errors.exitDate}
+                                                helperText={errors.exitDate || ""}
+                                                size="medium"
+                                                sx={{
+                                                    '& .MuiOutlinedInput-root': {
+                                                        borderRadius: 1
+                                                    }
+                                                }}
+                                            />
+                                        )}
+                                        minDate={formData.entryDate}
+                                        maxDate={new Date()}
+                                    />
+                                </LocalizationProvider>
+                            </Grid>
+                        )}
+
+                        {formData.raisingStatus === "RAISING" && (
+                            <Grid item xs={12}>
+                                <FormControl fullWidth required error={!!errors.penId} sx={{
+                                    '& .MuiOutlinedInput-root': {
+                                        borderRadius: 1
+                                    }
+                                }}>
+                                    <InputLabel>Chuồng nuôi</InputLabel>
+                                    <Select
+                                        name="penId"
+                                        value={formData.penId}
+                                        onChange={handleInputChange}
+                                        label="Chuồng nuôi"
+                                        size="medium"
+                                    >
+                                        {pigPens && pigPens.length > 0 ? (
+                                            pigPens
+                                                .filter(pen => pen && pen.status === "ACTIVE" && !pensWithAnimals.includes(pen.penId))
+                                                .map((pen) => (
+                                                    <MenuItem key={pen.penId} value={pen.penId}>
+                                                        {pen.name}
+                                                    </MenuItem>
+                                                ))
+                                        ) : (
+                                            <MenuItem disabled>Không có chuồng nuôi</MenuItem>
+                                        )}
+                                    </Select>
+                                    {errors.penId && <FormHelperText>{errors.penId}</FormHelperText>}
+                                </FormControl>
+                            </Grid>
+                        )}
+
+                        {errors.submit && (
+                            <Grid item xs={12}>
+                                <FormHelperText error>{errors.submit}</FormHelperText>
+                            </Grid>
+                        )}
                     </Grid>
                 </CardContent>
             </Card>
 
-            {/* Action Buttons */}
             <Box sx={{
                 display: "flex",
                 justifyContent: "flex-end",
                 mt: 2,
                 borderTop: '1px solid #e0e0e0',
-                pt: 3
+                pt: 1
             }}>
+                <Button variant="contained" color="secondary" sx={{ mr: 2 }} onClick={onCancel}>Hủy</Button>
                 <Button
-                    onClick={onCancel}
-                    sx={{
-                        mr: 2,
-                        borderRadius: 1,
-                        minWidth: 100,
-                        textTransform: 'uppercase',
-                        fontWeight: 'medium'
-                    }}
-                    variant="outlined"
-                    color="error"
-                >
-                    Hủy
-                </Button>
-                <Button
-                    type="submit"
                     variant="contained"
                     color="primary"
+                    type="submit"
                     disabled={loading}
-                    startIcon={loading && <CircularProgress size={20} />}
-                    sx={{
-                        minWidth: 120,
-                        backgroundColor: '#1E8449',
-                        '&:hover': {
-                            backgroundColor: '#14532d'
-                        },
-                        borderRadius: 1,
-                        textTransform: 'uppercase',
-                        fontWeight: 'medium'
-                    }}
                 >
-                    Thêm mới
+                    {loading ? <CircularProgress size={24} /> : "Lưu"}
                 </Button>
             </Box>
         </Box>
