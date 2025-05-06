@@ -244,13 +244,13 @@ const FeedSummaryTable = () => {
                                                     >
                                                         <EditIcon />
                                                     </IconButton>
-                                                    <IconButton
-                                                        onClick={() => handleDeleteClick(item)}
-                                                        color="error"
-                                                        size="small"
-                                                    >
-                                                        <Delete />
-                                                    </IconButton>
+                                                    {/*<IconButton*/}
+                                                    {/*    onClick={() => handleDeleteClick(item)}*/}
+                                                    {/*    color="error"*/}
+                                                    {/*    size="small"*/}
+                                                    {/*>*/}
+                                                    {/*    <Delete />*/}
+                                                    {/*</IconButton>*/}
                                                 </>
                                             )}
                                         </StyledTableCell>

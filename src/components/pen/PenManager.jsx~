@@ -402,7 +402,7 @@ export default function PenManager() {
             }
         });
 
-        if (penFeeds.length === 0) return "0 kg";
+        if (penFeeds.length === 0) return "N/A";
 
         return (
             <Box>
