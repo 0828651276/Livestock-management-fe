@@ -54,7 +54,7 @@ const CreateVaccinationForm = ({ open, animal, animals = [], onCreate, onCancel 
     const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name]: value }));
     
-    // Kiểm tra trạng thái sức khỏe nếu đang thay đổi con vật
+    // Kiểm tra trạng thái sức khỏe nếu đang thay đổi con vật !
     if (name === 'animal') {
       const selectedAnimal = animals.find(a => a.pigId === value);
       if (selectedAnimal) {
