@@ -236,14 +236,17 @@ function Home() {
                     <Box
                         sx={{
                             position: 'absolute',
-                            bottom: -40,
+                            bottom: 10,
                             right: 60,
-                            width: 100,
-                            height: 100,
+                            width: 105,
+                            height: 105,
                             borderRadius: '50%',
-                            backgroundColor: 'rgba(255,255,255,0.1)'
+                            backgroundColor: 'rgba(255,255,255,0.1)',
+                            overflow: 'hidden'
                         }}
-                    />
+                    >
+                        <img src="https://hienlaptop.com/wp-content/uploads/2024/11/Download-Mien-Phi-File-Vector-PNG-PSD-Hinh-Con-Heo-Dep-Doc-Dao-2.png" alt="Pig" style={{ width: '100%', height: '100%' }} />
+                    </Box>
 
                     <Grid container spacing={2} alignItems="center">
                         <Grid item xs={12} md={8}>
