@@ -238,11 +238,13 @@ function Home() {
                             position: 'absolute',
                             bottom: 10,
                             right: 60,
-                            width: 105,
-                            height: 105,
+                            width: 100,
+                            height: 100,
                             borderRadius: '50%',
-                            backgroundColor: 'rgba(255,255,255,0.1)',
-                            overflow: 'hidden'
+                            backgroundColor: 'transparent',
+                            overflow: 'hidden',
+                            border: 'none',
+                            boxShadow: 'none'
                         }}
                     >
                         <img src="https://hienlaptop.com/wp-content/uploads/2024/11/Download-Mien-Phi-File-Vector-PNG-PSD-Hinh-Con-Heo-Dep-Doc-Dao-2.png" alt="Pig" style={{ width: '100%', height: '100%' }} />
