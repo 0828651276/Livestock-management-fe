@@ -5,8 +5,8 @@ import {
     Stack, Snackbar, Dialog, DialogTitle, DialogContent, InputAdornment,
     TablePagination
 } from '@mui/material';
-import { Edit as EditIcon, Add, Search } from '@mui/icons-material';
-import { getDailyFeedSummary, searchByPenName } from '../../services/feedPlanService';
+import { Edit as EditIcon, Add, Search, Delete } from '@mui/icons-material';
+import { getDailyFeedSummary, searchByPenName, feedPlanService } from '../../services/feedPlanService';
 import FeedPlanForm from "./FeedPlanForm.jsx";
 import FeedPlanEditForm from "./FeedPlanEditForm.jsx";
 import { styled } from "@mui/material/styles";
@@ -37,6 +37,7 @@ const FeedSummaryTable = () => {
     const [selectedItem, setSelectedItem] = useState(null);
     const [notification, setNotification] = useState({ open: false, message: '', severity: 'success' });
     const [userRole, setUserRole] = useState('');
+    const [deleteDialog, setDeleteDialog] = useState({ open: false, feedPlanId: null });
 
     // Phân trang
     const [page, setPage] = useState(0);
@@ -50,8 +51,13 @@ const FeedSummaryTable = () => {
         try {
             setLoading(true);
             const data = await getDailyFeedSummary();
-            setSummaries(data);
-            setFilteredSummaries(data);
+            // Normalize data to always have an 'id' field
+            const normalized = data.map(plan => ({
+                ...plan,
+                id: plan.feedPlanId,
+            }));
+            setSummaries(normalized);
+            setFilteredSummaries(normalized);
             setError(null);
         } catch (err) {
             console.error('Error fetching feed summary:', err);
@@ -112,6 +118,26 @@ const FeedSummaryTable = () => {
     const handleChangeRowsPerPage = (event) => {
         setRowsPerPage(parseInt(event.target.value, 10));
         setPage(0);
+    };
+
+    const handleDeleteClick = (item) => {
+        setDeleteDialog({ open: true, feedPlanId: item.id });
+    };
+
+    const handleDeleteCancel = () => {
+        setDeleteDialog({ open: false, feedPlanId: null });
+    };
+
+    const handleDeleteConfirm = async () => {
+        try {
+            await feedPlanService.deleteFeedPlan(deleteDialog.feedPlanId);
+            setNotification({ open: true, message: 'Xóa khẩu phần ăn thành công!', severity: 'success' });
+            fetchData();
+        } catch (error) {
+            setNotification({ open: true, message: 'Xóa khẩu phần ăn thất bại!', severity: 'error' });
+        } finally {
+            handleDeleteCancel();
+        }
     };
 
     if (loading) {
@@ -210,13 +236,22 @@ const FeedSummaryTable = () => {
                                         <StyledTableCell>{item.totalDailyFood}</StyledTableCell>
                                         <StyledTableCell>
                                             {userRole === 'MANAGER' && (
-                                                <IconButton
-                                                    onClick={() => handleEdit(item)}
-                                                    color="primary"
-                                                    size="small"
-                                                >
-                                                    <EditIcon />
-                                                </IconButton>
+                                                <>
+                                                    <IconButton
+                                                        onClick={() => handleEdit(item)}
+                                                        color="primary"
+                                                        size="small"
+                                                    >
+                                                        <EditIcon />
+                                                    </IconButton>
+                                                    <IconButton
+                                                        onClick={() => handleDeleteClick(item)}
+                                                        color="error"
+                                                        size="small"
+                                                    >
+                                                        <Delete />
+                                                    </IconButton>
+                                                </>
                                             )}
                                         </StyledTableCell>
                                     </TableRow>
@@ -263,6 +298,18 @@ const FeedSummaryTable = () => {
                             }}
                         />
                     )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Dialog xác nhận xóa */}
+            <Dialog open={deleteDialog.open} onClose={handleDeleteCancel}>
+                <DialogTitle>Xác nhận xóa khẩu phần ăn</DialogTitle>
+                <DialogContent>
+                    <Typography>Bạn có chắc chắn muốn xóa khẩu phần ăn này không?</Typography>
+                    <Stack direction="row" spacing={2} justifyContent="flex-end" mt={2}>
+                        <Button onClick={handleDeleteCancel} color="primary" variant="outlined">Hủy</Button>
+                        <Button onClick={handleDeleteConfirm} color="error" variant="contained" autoFocus>Xóa</Button>
+                    </Stack>
                 </DialogContent>
             </Dialog>
 

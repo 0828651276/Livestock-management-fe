@@ -95,6 +95,21 @@ export const feedPlanService = {
             console.error('Lỗi khi tìm kiếm khẩu phần theo tên chuồng:', error);
             throw error;
         }
+    },
+
+    deleteFeedPlan: async (feedPlanId) => {
+        try {
+            const token = authService.getCurrentUser();
+            const response = await axios.delete(`${API_URL}/${feedPlanId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Lỗi khi xóa khẩu phần ăn:', error);
+            throw error;
+        }
     }
 };
 

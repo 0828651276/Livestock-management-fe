@@ -838,7 +838,7 @@ export default function PenManager() {
                         <ListItemIcon><HistoryIcon fontSize="small" color="primary"/></ListItemIcon>
                         <ListItemText>Lịch sử cho ăn</ListItemText>
                     </MenuItem>
-                    {userRole === 'staff' && (
+                    {/*{userRole === 'staff' && (*/}
                         <MenuItem onClick={() => {
                             handleAutoFeed(actionMenu.pen);
                             handleActionMenuClose();
@@ -846,7 +846,7 @@ export default function PenManager() {
                             <ListItemIcon><RestaurantIcon fontSize="small" color="success"/></ListItemIcon>
                             <ListItemText>Cho ăn</ListItemText>
                         </MenuItem>
-                    )}
+                    {/*)}*/}
                     <MenuItem onClick={() => {
                         handleDeleteClick(actionMenu.pen.penId);
                         handleActionMenuClose();

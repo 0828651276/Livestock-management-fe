@@ -24,6 +24,7 @@ import { pigPenService } from '../services/pigPenService';
 import { medicalService } from '../services/medicalService';
 import { fetchFeedInventory } from '../services/feedWarehouseService';
 import Pagination from '@mui/material/Pagination';
+import { vaccinationService } from '../services/VaccinationService';
 
 const StatCard = styled(Paper)(({ theme, color }) => ({
     padding: theme.spacing(2.5),
@@ -85,9 +86,11 @@ function Home() {
     const [medicalLoading, setMedicalLoading] = useState(true);
     const [feedAmount, setFeedAmount] = useState(null);
     const [feedLoading, setFeedLoading] = useState(true);
-    const [historyPage, setHistoryPage] = useState(1);
+    const [upcomingVaccinationPage, setUpcomingVaccinationPage] = useState(1);
     const [schedulePage, setSchedulePage] = useState(1);
     const rowsPerPage = 4;
+    const [vaccinationRecords, setVaccinationRecords] = useState([]);
+    const [vaccinationLoading, setVaccinationLoading] = useState(true);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -129,7 +132,6 @@ function Home() {
             setFeedLoading(true);
             try {
                 const data = await fetchFeedInventory();
-                console.log('Feed inventory data:', data);
                 // Tính tổng tồn kho: cộng tất cả remainingQuantity
                 let total = 0;
                 if (Array.isArray(data)) {
@@ -143,6 +145,19 @@ function Home() {
             }
         };
         fetchFeed();
+
+        const fetchVaccinations = async () => {
+            setVaccinationLoading(true);
+            try {
+                const data = await vaccinationService.getAllMedical();
+                setVaccinationRecords(Array.isArray(data) ? data : []);
+            } catch (e) {
+                setVaccinationRecords([]);
+            } finally {
+                setVaccinationLoading(false);
+            }
+        };
+        fetchVaccinations();
     }, []);
 
     const statistics = [
@@ -177,16 +192,16 @@ function Home() {
 
     // Helper: split records
     const today = new Date();
-    const historyRecords = medicalRecords.filter(r => {
-        const date = new Date(r.treatmentDate);
-        return (r.status === 'completed') || (date < today && r.status !== 'scheduled');
+    const upcomingVaccinations = vaccinationRecords.filter(r => {
+        const date = new Date(r.date);
+        return r.status === 'SCHEDULED' && date >= today;
     });
     const scheduleRecords = medicalRecords.filter(r => {
         const date = new Date(r.treatmentDate);
         return (r.status === 'scheduled' || date >= today);
     });
     // Phân trang
-    const paginatedHistory = historyRecords.slice((historyPage - 1) * rowsPerPage, historyPage * rowsPerPage);
+    const paginatedUpcomingVaccinations = upcomingVaccinations.slice((upcomingVaccinationPage - 1) * rowsPerPage, upcomingVaccinationPage * rowsPerPage);
     const paginatedSchedule = scheduleRecords.slice((schedulePage - 1) * rowsPerPage, schedulePage * rowsPerPage);
 
     return (
@@ -293,9 +308,9 @@ function Home() {
                         }}>
                             <CardContent>
                                 <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1, mt: 2, textAlign: 'center' }}>
-                                    Lịch sử chữa trị
+                                    Lịch tiêm phòng sắp tới
                                 </Typography>
-                                {medicalLoading ? (
+                                {vaccinationLoading ? (
                                     <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
                                         <CircularProgress size={24} />
                                     </Box>
@@ -304,33 +319,33 @@ function Home() {
                                         <Table size="small">
                                             <TableHead>
                                                 <StyledTableRow>
-                                                    <StyledTableHeadCell>NGÀY ĐIỀU TRỊ</StyledTableHeadCell>
+                                                    <StyledTableHeadCell>NGÀY TIÊM</StyledTableHeadCell>
                                                     <StyledTableHeadCell>TÊN ĐỘNG VẬT</StyledTableHeadCell>
-                                                    <StyledTableHeadCell>ĐỊA CHỈ</StyledTableHeadCell>
+                                                    <StyledTableHeadCell>TÊN VẮC-XIN</StyledTableHeadCell>
                                                 </StyledTableRow>
                                             </TableHead>
                                             <TableBody>
-                                                {historyRecords.length === 0 ? (
+                                                {upcomingVaccinations.length === 0 ? (
                                                     <StyledTableRow>
-                                                        <StyledTableCell colSpan={3} align="center">Không có dữ liệu</StyledTableCell>
+                                                        <StyledTableCell colSpan={4} align="center">Không có dữ liệu</StyledTableCell>
                                                     </StyledTableRow>
-                                                ) : paginatedHistory.map((rec, idx) => (
+                                                ) : paginatedUpcomingVaccinations.map((rec, idx) => (
                                                     <StyledTableRow key={rec.id || idx}>
-                                                        <StyledTableCell>{rec.treatmentDate || '-'}</StyledTableCell>
+                                                        <StyledTableCell>{rec.date || '-'}</StyledTableCell>
                                                         <StyledTableCell>{rec.animal?.name || '-'}</StyledTableCell>
-                                                        <StyledTableCell>{rec.veterinarian || '-'}</StyledTableCell>
+                                                        <StyledTableCell>{rec.vaccine || '-'}</StyledTableCell>
                                                     </StyledTableRow>
                                                 ))}
                                             </TableBody>
                                         </Table>
                                     </StyledTableContainer>
                                 )}
-                                {/* Pagination cho lịch sử chữa trị */}
-                                {historyRecords.length > rowsPerPage && (
+                                {/* Pagination cho lịch tiêm phòng sắp tới */}
+                                {upcomingVaccinations.length > rowsPerPage && (
                                     <Pagination
-                                        count={Math.ceil(historyRecords.length / rowsPerPage)}
-                                        page={historyPage}
-                                        onChange={(_, value) => setHistoryPage(value)}
+                                        count={Math.ceil(upcomingVaccinations.length / rowsPerPage)}
+                                        page={upcomingVaccinationPage}
+                                        onChange={(_, value) => setUpcomingVaccinationPage(value)}
                                         color="primary"
                                         sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}
                                     />

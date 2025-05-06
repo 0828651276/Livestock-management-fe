@@ -14,7 +14,6 @@ import {
     TableRow,
     TablePagination,
     Paper,
-    Stack,
     Box,
     Dialog,
     DialogTitle,
@@ -28,11 +27,9 @@ import {
     MenuItem,
     Select,
     FormControl,
-    InputLabel,
     Grid,
     InputAdornment,
     CircularProgress,
-    Tooltip,
     Menu,
     ListItemIcon,
     ListItemText
@@ -42,15 +39,12 @@ import {
     Edit,
     Delete,
     Search,
-    ArrowBack,
     FilterAlt,
-    VisibilityOutlined,
     LocalShippingOutlined,
     MoreVert,
     Schedule
 } from "@mui/icons-material";
 import {styled} from "@mui/material/styles";
-import {useNavigate} from "react-router-dom";
 import AnimalFormCreate from "./AnimalFormCreate";
 import AnimalFormUpdate from "./AnimalFormUpdate";
 import {format} from "date-fns";
@@ -71,7 +65,6 @@ const StyledPaper = styled(Paper)(({theme}) => ({
 }));
 
 export default function AnimalManager() {
-    const navigate = useNavigate();
     const [animals, setAnimals] = useState([]);
     const [filteredAnimals, setFilteredAnimals] = useState([]);
     const [pigPens, setPigPens] = useState([]);

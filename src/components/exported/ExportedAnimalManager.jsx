@@ -181,7 +181,7 @@ export default function ExportedAnimalManager() {
 
     const handleDeleteConfirm = async () => {
         try {
-            await animalService.deleteAnimal(deleteDialog.animalId);
+            await animalService.delete(deleteDialog.animalId);
             setAnimals((prev) => prev.filter((a) => a.pigId !== deleteDialog.animalId));
             setFilteredAnimals((prev) => prev.filter((a) => a.pigId !== deleteDialog.animalId));
             showNotification("Xóa cá thể đã xuất thành công");
