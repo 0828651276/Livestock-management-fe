@@ -175,7 +175,7 @@ export const validatePigPenForm = (pigPen) => {
     const errors = {};
     let isValid = true;
 
-    // Validate name
+    // Kiểm tra tên
     if (!validateField(errors, "name", pigPen.name, [
         (value) => validateRequired(value, "Tên chuồng không được để trống"),
         (value) => validateMaxLength(value, 100, "Tên chuồng không được vượt quá 100 ký tự")
@@ -183,15 +183,15 @@ export const validatePigPenForm = (pigPen) => {
         isValid = false;
     }
 
-    // Validate createdDate
+    // Kiểm tra ngày tạo - đảm bảo cho phép ngày hôm nay
     if (!validateField(errors, "createdDate", pigPen.createdDate, [
         (value) => validateRequired(value, "Ngày tạo không được để trống"),
-        validateNotFutureDate
+        (value) => validateDateNotAfterToday(value, "Ngày tạo không thể là ngày trong tương lai")
     ])) {
         isValid = false;
     }
 
-    // Validate closedDate if provided
+    // Kiểm tra ngày đóng nếu có
     if (pigPen.closedDate) {
         if (!validateField(errors, "closedDate", pigPen.closedDate, [
             (value) => validateDateOrder(value, pigPen.createdDate, "Ngày đóng phải sau ngày tạo")
@@ -200,7 +200,7 @@ export const validatePigPenForm = (pigPen) => {
         }
     }
 
-    // Validate quantity
+    // Kiểm tra số lượng
     if (!validateField(errors, "quantity", pigPen.quantity, [
         validateNonNegative,
         (value) => validateRange(value, 0, 1000, "Số lượng phải từ 0 đến 1000")
@@ -211,6 +211,18 @@ export const validatePigPenForm = (pigPen) => {
     return { isValid, errors };
 };
 
+// Hàm hỗ trợ để kiểm tra ngày không sau ngày hôm nay
+const validateDateNotAfterToday = (value, errorMessage) => {
+    if (!value) return null;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Đặt lại thời gian về đầu ngày
+
+    const inputDate = new Date(value);
+    inputDate.setHours(0, 0, 0, 0); // Đặt lại thời gian về đầu ngày
+
+    return inputDate > today ? errorMessage : null;
+};
 /**
  * Validates an employee form
  * @param {Object} employee - The employee data
