@@ -38,24 +38,6 @@ export const notificationService = {
         return res.data;
     },
 
-    // Cập nhật thông báo
-    update: async (id, notification) => {
-        const token = authService.getCurrentUser();
-
-        // Đặt trạng thái read về false để reset thông báo thành "chưa đọc"
-        const updatedNotification = {
-            ...notification,
-            read: false
-        };
-
-        const res = await axios.put(`${API_URL}/${id}`, updatedNotification, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-        });
-        return res.data;
-    },
 
     // Xóa thông báo
     delete: async (id) => {
